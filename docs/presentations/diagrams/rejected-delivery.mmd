@@ -1,0 +1,18 @@
+flowchart LR
+%% @name rejected-delivery
+%% @lane dev 0 0 470 260
+%% @lane prod 515 0 365 260
+subgraph dev["原提案：開發側直接交付"]
+ A["GitLab Runner<br/>自動建置工具"]
+ B["送出換版檔案<br/>尚未執行換版"]
+end
+subgraph prod["正式環境：仍需存取權"]
+ C["寫入正式主機<br/>已構成存取"]
+end
+%% @node A 25 95 180 80
+%% @node B 255 95 190 80
+%% @node C 555 95 285 80
+A --> B
+B -.->|"方案否決"| C
+class C blocked
+classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030

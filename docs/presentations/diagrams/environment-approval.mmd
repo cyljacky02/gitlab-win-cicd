@@ -1,0 +1,25 @@
+flowchart LR
+%% @name environment-approval
+ A["GitLab CI<br/>建置固定版本"]
+ B{"來源分支<br/>對應環境"}
+ C["master → SIT<br/>自動換版"]
+ D["pre-production → UAT<br/>自動換版"]
+ E["production<br/>部署人員選版放行"]
+ F["正式主機<br/>執行換版"]
+%% @node A 0 90 195 85
+%% @node B 250 85 190 95
+%% @node C 555 0 325 75
+%% @node D 555 95 325 75
+%% @node E 505 190 215 80
+%% @node F 760 190 120 80
+%% @route B C 480 132 480 37
+%% @route B E 460 132 460 230
+A --> B
+B --> C
+B --> D
+B --> E
+E --> F
+class C,D,F target
+class E control
+classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C

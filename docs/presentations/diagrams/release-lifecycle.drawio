@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="release-lifecycle" id="release-lifecycle">
+    <mxGraphModel grid="1" page="1" pageWidth="880" pageHeight="280">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="A" value="部署人員&lt;br/&gt;選版並放行" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FFF1DA;fontColor=#754519;strokeColor=#C57227;">
+          <mxGeometry x="0.0" y="40.0" width="180.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="B" value="準備檔案&lt;br/&gt;驗證版本內容" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="220.0" y="40.0" width="180.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="C" value="執行換版&lt;br/&gt;切換程式版本" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="440.0" y="40.0" width="180.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="D" value="健康檢查&lt;br/&gt;是否正常？" vertex="1" parent="1" style="rhombus;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="690.0" y="35.0" width="190.0" height="100.0" as="geometry" />
+        </mxCell>
+        <mxCell id="E" value="換版完成&lt;br/&gt;留存執行紀錄" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#087F8C;fontColor=#FFFFFF;strokeColor=#087F8C;">
+          <mxGeometry x="715.0" y="200.0" width="165.0" height="70.0" as="geometry" />
+        </mxCell>
+        <mxCell id="F" value="回復前一版本&lt;br/&gt;檢查復原結果" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FCE8E6;fontColor=#922A2A;strokeColor=#A63030;">
+          <mxGeometry x="440.0" y="200.0" width="220.0" height="70.0" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-0" value="" edge="1" parent="1" source="A" target="B" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" value="" edge="1" parent="1" source="B" target="C" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-2" value="" edge="1" parent="1" source="C" target="D" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-3" value="正常" edge="1" parent="1" source="D" target="E" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4" value="異常" edge="1" parent="1" source="D" target="F" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitPerimeter=1;entryPerimeter=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="785.0" y="170.0" />
+              <mxPoint x="550.0" y="170.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

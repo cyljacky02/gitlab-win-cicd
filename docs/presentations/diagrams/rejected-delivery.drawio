@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="rejected-delivery" id="rejected-delivery">
+    <mxGraphModel grid="1" page="1" pageWidth="880" pageHeight="280">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dev" value="原提案：開發側直接交付" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+          <mxGeometry x="0.0" y="0.0" width="470.0" height="260.0" as="geometry" />
+        </mxCell>
+        <mxCell id="prod" value="正式環境：仍需存取權" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+          <mxGeometry x="515.0" y="0.0" width="365.0" height="260.0" as="geometry" />
+        </mxCell>
+        <mxCell id="A" value="GitLab Runner&lt;br/&gt;自動建置工具" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="25.0" y="95.0" width="180.0" height="80.0" as="geometry" />
+        </mxCell>
+        <mxCell id="B" value="送出換版檔案&lt;br/&gt;尚未執行換版" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="255.0" y="95.0" width="190.0" height="80.0" as="geometry" />
+        </mxCell>
+        <mxCell id="C" value="寫入正式主機&lt;br/&gt;已構成存取" vertex="1" parent="prod" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FCE8E6;fontColor=#922A2A;strokeColor=#A63030;">
+          <mxGeometry x="40.0" y="95.0" width="285.0" height="80.0" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-0" value="" edge="1" parent="1" source="A" target="B" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" value="方案否決" edge="1" parent="1" source="B" target="C" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#A63030;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

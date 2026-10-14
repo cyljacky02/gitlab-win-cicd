@@ -1,0 +1,28 @@
+flowchart LR
+%% @name common-deployment
+%% @lane candidate 0 0 220 260
+%% @lane ops 245 0 360 260
+%% @lane prod 630 0 250 260
+subgraph candidate["已交接的候選版本"]
+ A["版本已驗證<br/>固定來源與內容"]
+end
+subgraph ops["授權部署部門"]
+ P["部署人員<br/>選版並放行"]
+ B["部署系統<br/>ADO 主／Rundeck 備"]
+end
+subgraph prod["正式環境"]
+ C["Windows<br/>執行授權換版"]
+end
+%% @node A 20 145 180 80
+%% @node P 285 42 280 70
+%% @node B 285 145 280 80
+%% @node C 655 145 200 80
+%% @label A B 185 114 115
+%% @label B C 548 114 132
+A -->|"固定版本"| B
+P --> B
+B -->|"授權工作"| C
+class P control
+class C target
+classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C

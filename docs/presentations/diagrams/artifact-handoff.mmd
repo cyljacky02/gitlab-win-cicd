@@ -1,0 +1,31 @@
+flowchart LR
+%% @name artifact-handoff
+%% @lane gitlab 0 0 290 260
+%% @lane cd 340 0 540 260
+subgraph gitlab["GitLab：建置及保存版本"]
+ A["三個來源分支<br/>產出換版檔案"]
+end
+subgraph cd["ADO 主方案／Rundeck 備案"]
+ B["定時輪詢<br/>GitLab API 查詢"]
+ C["API 下載指定產物<br/>核對版本與內容"]
+ D["ADO 轉存產物<br/>Rundeck 保存候選"]
+end
+%% @node A 20 90 250 90
+%% @node B 370 45 220 80
+%% @node C 370 165 220 80
+%% @node D 645 165 210 80
+%% @ports B A left top
+%% @route B A 315 85 315 80 145 80
+%% @ports A C bottom left
+%% @route A C 145 205
+%% @label B A 185 45 160
+%% @label A C 195 215 145
+%% @label C D 550 135 140
+B -->|"API 查詢成功建置"| A
+B --> C
+A -->|"API 下載檔案"| C
+C -->|"固定版本交接"| D
+class B control
+class D target
+classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C

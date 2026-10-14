@@ -1,0 +1,18 @@
+flowchart LR
+%% @name production-boundary
+%% @lane dev 0 0 420 260
+%% @lane prod 465 0 415 260
+subgraph dev["開發部門"]
+ A["開發人員<br/>提交程式碼"]
+ B["GitLab CI<br/>產出換版檔案"]
+end
+subgraph prod["僅指定部門可存取"]
+ C["Production<br/>正式主機"]
+end
+%% @node A 25 95 160 80
+%% @node B 225 95 165 80
+%% @node C 615 95 200 80
+A --> B
+B -.->|"禁止直接送檔"| C
+class C target
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C

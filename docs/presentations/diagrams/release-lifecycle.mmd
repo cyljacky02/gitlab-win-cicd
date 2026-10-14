@@ -1,0 +1,29 @@
+flowchart LR
+%% @name release-lifecycle
+ A["部署人員<br/>選版並放行"]
+ B["準備檔案<br/>驗證版本內容"]
+ C["執行換版<br/>切換程式版本"]
+ D{"健康檢查<br/>是否正常？"}
+ E["換版完成<br/>留存執行紀錄"]
+ F["回復前一版本<br/>檢查復原結果"]
+%% @node A 0 40 180 90
+%% @node B 220 40 180 90
+%% @node C 440 40 180 90
+%% @node D 690 35 190 100
+%% @node E 715 200 165 70
+%% @node F 440 200 220 70
+%% @ports D F bottom top
+%% @route D F 785 170 550 170
+%% @label D E 797 153 75
+%% @label D F 588 138 90
+A --> B
+B --> C
+C --> D
+D -->|"正常"| E
+D -->|"異常"| F
+class A control
+class E target
+class F blocked
+classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
+classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
