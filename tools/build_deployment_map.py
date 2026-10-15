@@ -168,6 +168,18 @@ def make_scene():
         s.edge(id,id+'a',id+'b',[(x,1514),(x+100,1514)],kind=kind,color=color)
         s.text(id+'label',x+115,1495,390,38,label,size=26,align='left')
     s.text('footer',1740,1488,1010,65,'分區是責任邊界，非已驗證網段／ACL • 接收器與部署腳本待實作\n可編輯主檔：draw.io；生成器僅初始種子，簡報重建不覆寫手改',size=26,color=MUTED,align='right')
+    # The lower view expands Production VM operations: match its green palette.
+    for n in s.nodes:
+        if 900 <= n.y < 1440 and n.kind in ('box', 'diamond'):
+            if n.id in ('halt',):
+                continue  # Keep the terminal failure alert distinct.
+            n.fill = '#D9EEEA' if n.id in ('complete', 'recovered') else '#E5F2F0'
+            n.stroke = TEAL
+        if n.id in ('rhealthy', 'rverified'):
+            n.color = TEAL
+    for e in s.edges:
+        if e.id in ('rcheck', 'rok', 'rdone'):
+            e.color = TEAL
     return s
 
 

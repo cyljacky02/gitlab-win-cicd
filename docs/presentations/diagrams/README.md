@@ -6,7 +6,7 @@ v0.7 共 5 張圖：第 4 頁為獨立 draw.io 主圖，其餘四張仍由簡報
 |---|---|---|
 | 3 | 正式主機存取邊界／已否決路徑 | [Mermaid](production-boundary.mmd) · [draw.io](production-boundary.drawio) |
 | 4 | 端到端交付架構、多台 Target、F5 換版與復原 | **[draw.io 可編輯主檔](windows-deployment-map.drawio)** · [高清 PNG](windows-deployment-map.png) · [向量 PDF](windows-deployment-map.pdf) |
-| 5 | 三分支與環境放行 | [Mermaid](environment-approval.mmd) · [draw.io](environment-approval.drawio) |
+| 5 | 分支 → CI/CD pipeline → 不同部署策略 | [Mermaid](environment-approval.mmd) · [draw.io](environment-approval.drawio) |
 | 6 | 換版與復原概覽 | [Mermaid](release-lifecycle.mmd) · [draw.io](release-lifecycle.drawio) |
 | 7 | 建議導入時程 | [Mermaid](proposed-timeline.mmd) · [draw.io](proposed-timeline.drawio) |
 
@@ -37,6 +37,8 @@ v0.7 共 5 張圖：第 4 頁為獨立 draw.io 主圖，其餘四張仍由簡報
 - 虛線為控制／授權、實線為程式碼／產物、粗線為 F5 應用流量，另有文字圖例；責任區不等於已驗證的網段或 ACL。
 - 工作箭頭**不是完整網路拓樸**。管理 Agent 主動下載 GitLab artifact，所有 ADO Agents 主動連 Server 取工作；正式放行前不預拷。
 - 使用者已確認下／上 F5 是退出／恢復負載平衡流量。模式、連線等待、pool/member 範圍與控制身分／位置仍待確認，不能假定每台 Agent 都有 F5 憑證。
+- 單台流程以 Production 相同的綠色系表示執行區域；紅色保留給失敗路徑及告警。綠色不是執行成功狀態，仍依判斷節點與文字辨識結果。
+- 分支圖改為左側來源分支、中間 pipeline、右側部署策略；production-bq1／production-bq2／production-nh 等為正式分支示例，不指定地點或實際目標。可有不同流程與機制，但正式放行與精確來源允許清單不可省略。
 - 復原健康才恢復流量，並記錄「部署失敗／復原成功」；復原失敗保持隔離、告警、人工處理，不可記新版本部署完成。任一恢復流量操作／驗證失敗也不得結案。
 - 設計參考與證據範圍見 [架構圖研究](../../research/end-to-end-architecture-diagram-design.md)。尚未完成部署整合、F5 操作或復原實機測試。
 

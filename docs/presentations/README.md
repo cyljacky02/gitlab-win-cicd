@@ -20,7 +20,7 @@
 | 2 | 議程：原因、架構、環境、換版與時程 |
 | 3 | 合併舊版第 2–3 頁：只送檔也算正式主機存取 |
 | 4 | 完整交付架構＋多台 Target＋下／上 F5 的單台換版、退版與失敗隔離流程 |
-| 5 | 三分支各自建置；SIT／UAT 自動，Production 人工選版放行 |
+| 5 | 分支在左：master、pre-production 與多個 production 分支可各有 CI/CD pipeline／換版策略；正式仍須放行 |
 | 6 | 放行後取檔、換版、健康檢查與復原 |
 | 7 | 建議時程：POC → 協調架構部門安裝 ADO → GitLab 整合 → SIT → UAT → Production |
 
@@ -35,6 +35,8 @@
 CI job 直呼 Queue API 有文件化能力基礎，但存在 pipeline 尚未成功的競態及憑證暴露面，故不作首選。[前版輪詢研究](../research/gitlab-cd-artifact-handoff.md) 保留為歷史比較，不再是本版推薦。查證不是現場整合測試；有效 ACL、Express 安裝版行為與零預拷均列入 POC。
 
 不以個人測試環境狀態為對外敘事。其他部門已有 ADO 運行先例是規劃背景，不等於本案通過驗收。
+
+單台換版圖沿用 Production 的綠色系，失敗路徑與告警保留紅色；綠色表示執行區域，不表示每個步驟已成功。第 5 頁以「分支 → pipeline → 部署策略」三欄呈現，正式分支例包含 production-bq1、production-bq2、production-nh。實際映射與機制待確認，不將任何 production 前綴自動授權。
 
 用途是跨部門討論可行性與合規要求，不是正式選型、合規認證或上線批准。技術細節、資料來源與證據範圍留在 Markdown／PPTX 講者備註，不另加附錄投影片。PDF 不含講者備註。
 

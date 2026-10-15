@@ -19,7 +19,7 @@
 - 02｜建置到部署的完整架構
 
 ## 如何運作
-- 03｜三分支、三環境
+- 03｜分支與部署策略
 - 04｜授權換版與失敗復原
 
 ## 如何落地
@@ -80,7 +80,7 @@ classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
 上半部是交付架構：開發人員 push GitLab CE；GitLab 編排 CI，GitLab Runner 建置／測試並上傳 artifact。GitLab pipeline 成功事件通知受保護接收器，接收器驗證、耐久入列、API 複核後，以 Queue Build REST API 排入固定 importer。接收器與驗證／去重邏輯需實作，不是原生 GitLab artifact connector，也不需要新增 GitLab Runner。
 ADO 管理區的 self-hosted Build Agent 重驗專案、pipeline、ref、SHA 與必要品質 jobs，按確切 project/pipeline/job ID 下載 GitLab 產物，驗 ZIP／hash 並保存 manifest，以 PublishBuildArtifacts@1 發布 Server Build Artifacts。不能抓 latest 或使用 Services-only Pipeline Artifacts。GitLab 唯讀憑證只留管理區；管理 Agent、接收器和 CI 都無 Production 存取權。
 ADO 全名 Azure DevOps Server；Express 為 POC 起點，Server 2022／REST 7.0 作文件基線。ADO 控制面、版本庫、管理 Agent 是邏輯元件，不等於必須各有一台 VM。這是文件支持的目標設計，不是現況或實機測通的證明。
-Production 關閉 artifact 自動 release trigger，授權人員選確切 importer build、應用與目標建立 Classic Release，stage 設 Manual only 與具名 pre-deployment approval；允許同一人發起與放行。任何版本／目標變更須重新放行。SIT/UAT 的三分支分流留下一頁說明。
+Production 關閉 artifact 自動 release trigger，授權人員選確切 importer build、應用與目標建立 Classic Release，stage 設 Manual only 與具名 pre-deployment approval；允許同一人發起與放行。任何版本／目標變更須重新放行。分支與部署策略留下一頁說明。
 放行後，各 Windows Target 上的專用 Deployment Group Agent 才取指定工作與產物，在本機執行受保護的部署腳本。Agent 主動連 ADO 取工作；派工箭頭不代表 Server 主動登入 Windows。放行前不得預拷，包含 Production Agent 工作目錄。管理 Agent 與目標 Agent 必須隔離帳號、pool／Deployment Group、主機與憑證，不能執行開發者提供的特權部署腳本。
 Production 圖示 01、02、…、N，可涵蓋數十台主機；不代表所有主機同時換版，也不是 Agent 互相傳檔。暫建議逐台或受控分批，健康後繼續，任一失敗停止後續目標；批次大小、最低容量、先前成功目標是否回復仍待確認。不承諾零停機或跨主機原子交易。
 下半部更新為白話版並統一使用 ①～⑧ 圈號：① 取得已放行版本 → ② 下 F5 → ③ 停止服務 → ④ 備份舊版本 → ⑤ 安裝新版本 → ⑥ 重啟服務 → ⑦ 服務正常？ → ⑧ 上 F5。失敗路徑是還原舊版本、重啟與再檢查；成功恢復後仍記本次換版失敗。原本的鎖、前置閘門、有效備份、流量狀態核對與例外要求仍需實作，僅不放進主流程的長標籤。Agent／主機失聯不是同一個 Agent 能保證自動復原的情況，須另有監控及受控人工／獨立復原手段。
@@ -100,42 +100,47 @@ https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/big-ip-loca
 
 ---
 
-# 三分支各自建置；正式環境多一道人工放行
-> master → SIT；pre-production → UAT；production → Production
+# 不同分支，可以有不同的 CI/CD 與換版方式
+> 來源分支 → 對應 pipeline → 部署策略；以下為示意
 
 ```mermaid
 flowchart LR
 %% @name environment-approval
- A["GitLab CI<br/>建置固定版本"]
- B{"來源分支<br/>驗證與分流"}
- C["master → SIT<br/>匯入後自動換版"]
- D["pre-production → UAT<br/>匯入後自動換版"]
- E["production<br/>部署人員選版放行"]
- F["正式主機<br/>執行換版"]
-%% @node A 0 90 195 85
-%% @node B 250 85 190 95
-%% @node C 555 0 325 75
-%% @node D 555 95 325 75
-%% @node E 505 190 215 80
-%% @node F 760 190 120 80
-%% @route B C 480 132 480 37
-%% @route B E 460 132 460 230
-A --> B
-B --> C
-B --> D
+ A["master"]
+ B["pre-production"]
+ C["production / production-bq1<br/>production-bq2 / production-nh<br/>…（正式分支示例）"]
+ D["SIT pipeline"]
+ E["UAT pipeline"]
+ F["各正式分支<br/>對應的 pipeline"]
+ G["SIT｜可自動換版"]
+ H["UAT｜可自動換版"]
+ I["正式｜授權後換版<br/>依目標採不同策略"]
+%% @node A 0 0 330 65
+%% @node B 0 85 330 65
+%% @node C 0 170 330 110
+%% @node D 375 0 225 65
+%% @node E 375 85 225 65
+%% @node F 375 170 225 110
+%% @node G 645 0 235 65
+%% @node H 645 85 235 65
+%% @node I 645 170 235 110
+A --> D
+D --> G
 B --> E
-E --> F
-class C,D,F target
-class E control
+E --> H
+C --> F
+F --> I
+class G,H,I target
 classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
 classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
 ```
 
 ## 分流原則
-- 成功通知不是正式放行；正式放行綁定確切版本與目標。
+- 分支可採不同建置、測試、目標與換版機制；正式部署仍須授權。
 
 <!-- notes
-保留舊版第 5 頁的三分支映射。三個分支各自建置，不主張同一份內容由 UAT 晉升 Production。接收器與 importer 用 GitLab API 複核固定專案、精確 ref、pipeline source=push、非 tag、SHA、成功狀態與必要 jobs，再路由到三組固定 importer＋單環境 Classic Release。Webhook 與 queue 參數只是提示，不是可信任的環境判斷。
+本頁改以「分支 → 對應 CI/CD pipeline → 換版策略」說明，不再限制為固定三分支。保留 master／SIT、pre-production／UAT 的目前規劃；正式分支可能包括 production、production-bq1、production-bq2、production-nh 等。這些是平行分支名稱，不是 Git 分支內的子分支，不推定名稱所代表的地點。正式分支合併一列不代表共用同一個 pipeline；不同分支可有不同建置、測試、產物、目標集合、逐台／分批、F5／服務操作及復原程序，實際映射待確認。各分支各自建置，不宣稱同一產物跨環境晉升。
+圖為邏輯 CI/CD 流程，不宣稱 GitLab 原生編排 ADO，亦不要求每分支獨立 YAML。初版三組固定 importer／Release 是實作例，擴充分支須同步調整精確來源允許清單、受保護的目標與策略映射；不可自動信任任何 production 前綴。GitLab API 複核專案、精確 ref、pipeline source、SHA 及必要 jobs，不信任事件或參數自稱的環境。正式分支仍須指定人員選確切版本與目標放行。
 ADO importer 儲存串接程式的 repository branch（例如 main）不等於 GitLab 來源分支；不得以 ADO Build.SourceBranch 或原生 build branch filter 推論來源環境。SIT/UAT 自動觸發，Production 關閉 artifact 自動 release trigger，授權人員選固定 importer build 建立 release、手動 stage 並通過 pre-deployment approval。開發者不能編輯部署定義、批准者或 Agent 資源繞過控制；只限制手動 Deploy 按鈕並不足夠。單人放行並執行符合目前需求。
 https://learn.microsoft.com/en-us/azure/devops/pipelines/release/triggers?view=azure-devops-2022
 https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/approvals?view=azure-devops-2022
