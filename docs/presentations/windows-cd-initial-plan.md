@@ -27,7 +27,7 @@
 - 以 12/31 為目標倒排里程碑
 
 <!-- notes
-先交代開發端直接送檔的方案為何不可行，再用同一張完整架構圖依編號說明。為守住總共 7 頁，不增加重複圖頁或動畫頁；講者沿架構圖的 ①～⑤ 說明順序。圖的組織區域、人員與工具分開呈現，技術與權限細節留在講者備註及研究文件。
+先交代開發端直接送檔的方案為何不可行，再用同一張完整架構圖依編號說明。為守住總共 7 頁，不增加重複圖頁或動畫頁；第 4 頁上半部以 ①～⑧ 說明交付架構，下半部展開單台換版與復原。圖的組織區域、人員與工具分開呈現，詳細閱讀可放大獨立 PDF／draw.io。
 -->
 
 ---
@@ -68,86 +68,31 @@ classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
 
 ---
 
-# 建置完成主動通知，ADO 接手匯入與授權部署
-> 分區＝責任邊界；橘色＝人員；箭頭＝工作／產物交接
+# Windows 正式部署：從提交程式碼到多機換版與復原
+> 放行指定版本後才部署；健康才恢復 F5 流量，復原失敗保持隔離
 
-```mermaid
-flowchart LR
-%% @name event-driven-architecture
-%% @lane dev 0 0 240 280
-%% @lane ops 270 0 390 280
-%% @lane prod 690 0 190 280
-subgraph dev["開發區：不持正式權限"]
- P["① 開發人員<br/>推送程式碼"]
- G["GitLab CE<br/>派工／保存產物"]
- R["GitLab Runner<br/>建置／測試"]
-end
-subgraph ops["授權部門管理區（非正式主機）"]
- W["② 事件接收器<br/>驗證成功通知"]
- S["ADO Server<br/>排程／存版本<br/>管理 Release"]
- I["③ 管理 Agent<br/>下載／驗證匯入"]
- D["④ 部署人員<br/>選版與放行"]
-end
-subgraph prod["正式區：授權存取"]
- T["⑤ 部署 Agent<br/>取得授權工作<br/>下載指定版本"]
- A["Windows 應用<br/>切換／檢查"]
-end
-%% @node P 20 40 200 65
-%% @node G 20 120 200 65
-%% @node R 20 210 200 65
-%% @node W 285 40 175 65
-%% @node S 480 40 165 95
-%% @node I 285 200 175 75
-%% @node D 480 200 165 75
-%% @node T 705 40 160 95
-%% @node A 705 200 160 75
-%% @ports G W right left
-%% @route G W 255 152 255 72
-%% @ports G I right left
-%% @route G I 245 152 245 237
-%% @ports S I bottom right
-%% @route S I 562 165 470 165 470 237
-%% @ports I S top left
-%% @route I S 372 150 465 150 465 87
-%% @ports R G right right
-%% @route R G 230 242 230 152
-%% @label S I 390 164 90
-%% @label I S 280 110 175
-P --> G
-G --> R
-R --> G
-G --> W
-W --> S
-G --> I
-S -->|"派工"| I
-I -->|"回存固定版本"| S
-D --> S
-S --> T
-T --> A
-class P,D control
-class T,A target
-classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
-classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
-```
-
-## 架構要點
-- 接收器與匯入邏輯需實作；管理 Agent 不碰正式主機，每台目標另有部署 Agent。
+![Windows 正式部署端到端架構：開發人員提交 GitLab，Runner 建置測試，成功事件通知受控接收器，ADO 管理 Agent 匯入固定產物，授權部署人員放行，由多台 Windows Target 的 Agent 換版；下方展開退出 F5、停服務、備份、換版、重啟、健康檢查與退版分支。](diagrams/windows-deployment-map.png)
 
 <!-- notes
-沿 ①～⑤ 說明同一張完整架構圖，不增加重複頁。ADO 全名 Azure DevOps Server，POC 使用 Express；基線 Server 2022／REST 7.0，實際版本與修補層級待安裝確認。本圖是文件支持的目標架構，不是已實機測通的現況。
-① 開發人員 push 到 GitLab CE；GitLab 編排 CI，GitLab Runner 執行建置／測試並將 artifact 上傳回 GitLab。Runner 沒有 Production 存取權或 ADO 部署憑證。
-② GitLab pipeline 狀態成功後以 Pipeline webhook 主動通知管理側的受保護接收器；不是 GitLab Runner 直接觸發正式部署。接收器驗證認證、限制來源、耐久入列，再以 GitLab API 複核專案、成功狀態、來源分支、SHA 與必要品質 job，最後透過 Queue Build REST API 排入固定 importer。接收器是需實作的服務，不是另一個 GitLab Runner，也不是 ADO 原生 GitLab artifact connector；可評估與管理 Agent 共用非正式主機，但服務身分、憑證與目錄必須隔離。
-③ ADO 需要管理區的 self-hosted Build Agent 執行 importer。圖中 GitLab→管理 Agent 是 API 下載的資料流，實際連線由管理 Agent 發起；ADO→管理 Agent 是派工語意，Agent 主動連 Server 取工作。Importer 重驗固定來源政策，按 project/pipeline/job ID 下載確切 artifact，檢查 ZIP 與內容、計算 hash、保存來源 manifest，再以 PublishBuildArtifacts@1 發布 Server Build Artifacts。不能用 Services-only Pipeline Artifacts，不能在部署時抓 latest。GitLab 唯讀憑證只留管理區。Management Agent 與 Production Deployment Group Agent 不共用主機、帳號或 pool；管理 Agent 不可寫入 Production。圖中 ADO 是控制面與受控版本儲存的概念集合，不代表所有元件必須同機。
-④ 以三組固定 importer／Classic Release 綁定來源環境，下一頁展開。SIT／UAT 可在匯入成功後自動建立 release／部署。Production 關閉 artifact 自動 release trigger，由授權人員選確切 importer build 建立 Release；stage 設 Manual only 與具名 pre-deployment approvers。允許同一授權人員發起與放行，不強制雙人審批。放行綁定應用、目標與確切內容，改版或改目標須重新放行。
-⑤ 圖中 ADO→部署 Agent 是已授權工作的交接，不是 Server 主動登入 Windows。每台 Windows Target 安裝專用 Deployment Group Agent，主動連 ADO 取工作，放行後才下載指定 build 產物並以受保護的部署腳本切換本機應用。此處畫 Production，SIT／UAT 使用各自隔離的 target Agents。沒有另藏一個需要登入正式主機的管理 Runner；本方案使用目標 Agent 本機執行。必須測試未放行時正式主機連 Agent 工作目錄都沒有候選檔案寫入。
-安全邊界：接收器的 PAT／帳號只允許排入固定 importer，不具有 Release／Production 權限；PAT scope 不等於 definition ACL，須測試群組繼承、來源分支／參數覆寫、build service 身分與 OS 帳號的有效權限。部署定義、來源映射與特權腳本由授權部門管理，不能執行 artifact 附帶的特權腳本。記錄人員、版本、目標與結果。
-可靠性：接收器耐久 inbox、去重、重送與 importer 候選唯一鍵，處理 Queue 回應遺失、重複事件及晚到舊版本；不讓重複匯入再觸發部署。必要品質 jobs 必須成功，不能只信任 allow_failure 後仍 success 的 pipeline。正常路徑為事件驅動；漏事件由受控補送走同一驗證流程，並監控 webhook 停用與產物保留期限。
-研究取捨：CI 最後一個 job 直呼 Queue API 有官方功能基礎，但持有匯入排程權限且整條 pipeline 此時可能仍 running，需要事件後有限狀態重查；所以首選成功 webhook。Server 2020.1 起有 incoming webhook 功能，不能說是 Services-only，但其 HMAC 與 GitLab 的驗證格式不可假設相容。採接收器＋Queue API，不依賴未驗證的原生互通性。
-完整查證與 POC 負向測試：docs/research/gitlab-ado-event-trigger.md。
+本頁 v0.7 改為完整架構圖圖片，PPTX 中是高解析圖片，可編輯節點、容器與連線的原檔為 docs/presentations/diagrams/windows-deployment-map.drawio；獨立 PDF 可放大閱讀。圖內主架構與單台換版流程是兩個明確分隔的視圖，不是假裝一張純網路拓樸。圖面研究見 docs/research/end-to-end-architecture-diagram-design.md。
+使用者確認：替換第 4 頁；「下 F5／上 F5」分別表示將目標服務退出／恢復負載平衡流量。具體 pool/member、Disabled 或 Forced Offline、連線等待／逾時、F5 操作位置與身分仍待網路及主機團隊確認。不能從圖推論每台 Agent 持有 F5 管理權；實作時需接上受保護、可稽核的維護操作。F5 流量線指向應用，不是 Agent；一台主機可能有多個 pool members，須確認完整範圍。
+上半部是交付架構：開發人員 push GitLab CE；GitLab 編排 CI，GitLab Runner 建置／測試並上傳 artifact。GitLab pipeline 成功事件通知受保護接收器，接收器驗證、耐久入列、API 複核後，以 Queue Build REST API 排入固定 importer。接收器與驗證／去重邏輯需實作，不是原生 GitLab artifact connector，也不需要新增 GitLab Runner。
+ADO 管理區的 self-hosted Build Agent 重驗專案、pipeline、ref、SHA 與必要品質 jobs，按確切 project/pipeline/job ID 下載 GitLab 產物，驗 ZIP／hash 並保存 manifest，以 PublishBuildArtifacts@1 發布 Server Build Artifacts。不能抓 latest 或使用 Services-only Pipeline Artifacts。GitLab 唯讀憑證只留管理區；管理 Agent、接收器和 CI 都無 Production 存取權。
+ADO 全名 Azure DevOps Server；Express 為 POC 起點，Server 2022／REST 7.0 作文件基線。ADO 控制面、版本庫、管理 Agent 是邏輯元件，不等於必須各有一台 VM。這是文件支持的目標設計，不是現況或實機測通的證明。
+Production 關閉 artifact 自動 release trigger，授權人員選確切 importer build、應用與目標建立 Classic Release，stage 設 Manual only 與具名 pre-deployment approval；允許同一人發起與放行。任何版本／目標變更須重新放行。SIT/UAT 的三分支分流留下一頁說明。
+放行後，各 Windows Target 上的專用 Deployment Group Agent 才取指定工作與產物，在本機執行受保護的部署腳本。Agent 主動連 ADO 取工作；派工箭頭不代表 Server 主動登入 Windows。放行前不得預拷，包含 Production Agent 工作目錄。管理 Agent 與目標 Agent 必須隔離帳號、pool／Deployment Group、主機與憑證，不能執行開發者提供的特權部署腳本。
+Production 圖示 01、02、…、N，可涵蓋數十台主機；不代表所有主機同時換版，也不是 Agent 互相傳檔。暫建議逐台或受控分批，健康後繼續，任一失敗停止後續目標；批次大小、最低容量、先前成功目標是否回復仍待確認。不承諾零停機或跨主機原子交易。
+下半部對每個核准目標重複：放行後下載／驗證、部署鎖與前置檢查 → 下 F5 並確認流量隔離條件 → 停止服務 → 備份目前版本 → 執行換版 → 重啟服務 → 檢查狀態。正常才上 F5，確認恢復成功後記錄新版本完成。
+換版、啟動或健康檢查失敗時，保持隔離，依受控腳本停止失敗版本、回復有效備份、重啟，再做復原健康檢查；正常才上 F5 並記錄「換版失敗、復原成功」，不能記為新版本部署成功。復原不健康或無可用備份時，保持隔離、停止後續換版、告警並交人員處理。
+下 F5／隔離確認失敗時不能繼續停止服務；停止或備份失敗時不能覆寫版本，由受控復原／人工程序決定後續。上 F5 操作或確認失敗不能算完成。檔案備份不等於資料庫回復，資料相容與復原另行設計。服務停止／重啟需依 IIS／Windows Service 細化。備份與復原腳本必須演練，ADO／Agent 不自動提供完整應用復原。
+安全與可靠性驗收：測試 PAT／definition ACL／群組繼承、queue 參數與來源覆寫、build service／OS 身分、特權腳本保護；測試事件偽造、重送、晚到舊版本、Queue 回應遺失、產物到期、零預拷、拒絕或復原失敗時不恢復流量。版本、人員、目標、hash 與結果可追溯。
+完整串接依據：docs/research/gitlab-ado-event-trigger.md。
+https://c4model.com/diagrams/notation
+https://learn.microsoft.com/en-us/azure/well-architected/architect-role/design-diagrams
 https://docs.gitlab.com/user/project/integrations/webhook_events/#pipeline-events
 https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-7.0
-https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/publish-build-artifacts-v1?view=azure-pipelines
 https://learn.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops-2022
+https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/big-ip-local-traffic-management-basics-14-0-0/05.html
 -->
 
 ---
@@ -234,7 +179,7 @@ classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
 - 每台主機由部署 Agent 執行受控腳本；記錄人員、版本、目標與結果。
 
 <!-- notes
-保留並調整舊版第 9 頁。放行前產物只在管理區保存，不能預拷到 Production（包含 Agent 工作目錄）；放行後部署 Agent 取固定 importer build 的 artifact，重新核對內容 hash，保存目前版本與復原資料，再依 IIS／Windows Service 的需求停止或切換、套用環境設定、啟動及健康驗證。不承諾零停機或跨主機原子交易。
+本頁是換版與復原概覽；完整的下 F5、停服務、備份、換版、重啟、健康檢查、恢復流量及復原失敗分支已展開於第 4 頁。復原健康才回池，復原成功仍屬換版失敗，不記新版本部署完成。保留並調整舊版第 9 頁。放行前產物只在管理區保存，不能預拷到 Production（包含 Agent 工作目錄）；放行後部署 Agent 取固定 importer build 的 artifact，重新核對內容 hash，保存目前版本與復原資料，再依 IIS／Windows Service 的需求停止或切換、套用環境設定、啟動及健康驗證。不承諾零停機或跨主機原子交易。
 換版或健康檢查失敗時，依事先驗證的腳本回復前一可用版本並檢查；復原失敗則停止並通知負責人，不能記為成功。資料庫／資料格式變更須另設相容與資料復原方案，不能把回復程式檔案等同資料回滾。多台逐台執行、失敗停止後續換版，是否回復已成功目標由授權人員依既定程序決定。部署鎖避免同一目標衝突，晚到舊版本不可自動降版；顯式授權的回復另留紀錄。Agent 與 ADO 不會自動提供應用程式專用的復原，腳本、資料保留及演練必須實作。
 -->
 

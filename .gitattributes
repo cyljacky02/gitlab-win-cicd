@@ -1,0 +1,4 @@
+# Generated presentation assets must never receive line-ending conversion.
+*.pdf binary
+*.pptx binary
+*.png binary

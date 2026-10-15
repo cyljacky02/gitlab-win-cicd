@@ -1,0 +1,435 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="目標架構與單機換版" id="windows-deployment-map">
+    <mxGraphModel dx="2800" dy="1575" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2800" pageHeight="1575" background="#FFFFFF">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Windows 正式部署｜端到端目標架構與單機換版" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=46;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="25" width="2700" height="65" />
+        </mxCell>
+        <mxCell id="subtitle" value="Production 範圍 • GitLab CE → Azure DevOps Server → Windows Targets • 目標設計／待 POC 驗證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="94" width="2700" height="38" />
+        </mxCell>
+        <mxCell id="dev" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#F0F5FB;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="155" width="570" height="675" />
+        </mxCell>
+        <mxCell id="devtitle" value="開發／CI 區" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=36;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="dev">
+          <mxGeometry as="geometry" x="25" y="15" width="520" height="50" />
+        </mxCell>
+        <mxCell id="ops" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#F1F5FA;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="650" y="155" width="1260" height="675" />
+        </mxCell>
+        <mxCell id="opstitle" value="授權部門管理區" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=36;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="25" y="15" width="1210" height="50" />
+        </mxCell>
+        <mxCell id="prod" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#EDF7F5;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1940" y="155" width="810" height="675" />
+        </mxCell>
+        <mxCell id="prodtitle" value="Production｜授權存取" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=36;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="prod">
+          <mxGeometry as="geometry" x="25" y="15" width="760" height="50" />
+        </mxCell>
+        <mxCell id="developer" value="開發人員" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#FFF3DC;strokeColor=#D5AF6B;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="dev">
+          <mxGeometry as="geometry" x="50" y="80" width="470" height="75" />
+        </mxCell>
+        <mxCell id="gitlab" value="GitLab CE｜程式碼／CI 編排" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="dev">
+          <mxGeometry as="geometry" x="50" y="210" width="470" height="80" />
+        </mxCell>
+        <mxCell id="runner" value="GitLab Runner｜建置／測試" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="dev">
+          <mxGeometry as="geometry" x="50" y="350" width="470" height="80" />
+        </mxCell>
+        <mxCell id="gitartifact" value="GitLab Job Artifacts&#10;確切 project / pipeline / job" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="dev">
+          <mxGeometry as="geometry" x="50" y="510" width="470" height="90" />
+        </mxCell>
+        <mxCell id="pushlabel" value="① push" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="345" y="320" width="200" height="36" />
+        </mxCell>
+        <mxCell id="cilabel" value="② CI 派工" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="345" y="456" width="200" height="36" />
+        </mxCell>
+        <mxCell id="uploadlabel" value="上傳產物" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="345" y="615" width="200" height="36" />
+        </mxCell>
+        <mxCell id="receiver" value="受保護自訂接收器&#10;認證／去重／耐久入列&#10;GitLab API 複核" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="50" y="210" width="360" height="105" />
+        </mxCell>
+        <mxCell id="queue" value="ADO Server&#10;Queue Build API&#10;固定 importer" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="480" y="210" width="350" height="105" />
+        </mxCell>
+        <mxCell id="deployer" value="授權 Deployer｜選版＋目標" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#FFF3DC;strokeColor=#D5AF6B;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="800" y="80" width="420" height="75" />
+        </mxCell>
+        <mxCell id="release" value="Classic Release&#10;Manual only＋事前核准&#10;關閉產物自動觸發" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="900" y="210" width="320" height="140" />
+        </mxCell>
+        <mxCell id="importer" value="管理 Build Agent｜Importer&#10;下載確切 job artifact&#10;驗 ZIP／hash／來源 manifest" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="50" y="510" width="430" height="110" />
+        </mxCell>
+        <mxCell id="store" value="ADO Server Build Artifacts&#10;固定 build 版本 • 不取 latest&#10;來源 SHA／job／hash 可追溯" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="ops">
+          <mxGeometry as="geometry" x="580" y="510" width="640" height="110" />
+        </mxCell>
+        <mxCell id="webhooklabel" value="③ Pipeline success webhook&#10;成功通知 ≠ Production 放行" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="570" y="275" width="820" height="65" />
+        </mxCell>
+        <mxCell id="queuelabel" value="④ 排入 importer" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1040" y="478" width="255" height="38" />
+        </mxCell>
+        <mxCell id="assignlabel" value="派工（Agent 主動取工作）" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1040" y="557" width="430" height="40" />
+        </mxCell>
+        <mxCell id="requestlabel" value="⑤ API 請求確切 job" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="100" y="775" width="470" height="35" />
+        </mxCell>
+        <mxCell id="artifactlabel" value="⑤ 確切 artifact 內容返回" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="700" y="780" width="430" height="36" />
+        </mxCell>
+        <mxCell id="publishlabel" value="⑥ 發布固定 build 產物" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1120" y="620" width="750" height="36" />
+        </mxCell>
+        <mxCell id="approvelabel" value="⑦ 手動放行" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1450" y="315" width="240" height="40" />
+        </mxCell>
+        <mxCell id="selectlabel" value="綁定不可變版本&#10;與核准目標" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1480" y="550" width="260" height="70" />
+        </mxCell>
+        <mxCell id="f5" value="F5 LB｜應用流量" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="prod">
+          <mxGeometry as="geometry" x="360" y="90" width="390" height="85" />
+        </mxCell>
+        <mxCell id="f5note" value="維護控制身分／位置待確認；不預設 Agent 持憑證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="prod">
+          <mxGeometry as="geometry" x="30" y="183" width="750" height="38" />
+        </mxCell>
+        <mxCell id="targets" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#A8CAC4;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="prod">
+          <mxGeometry as="geometry" x="50" y="235" width="710" height="370" />
+        </mxCell>
+        <mxCell id="ingress" value="Deployment Group｜核准工作／指定產物" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=1;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="targets">
+          <mxGeometry as="geometry" x="30" y="15" width="650" height="65" />
+        </mxCell>
+        <mxCell id="win01" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#F6FAFA;strokeColor=#B6D0CC;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="targets">
+          <mxGeometry as="geometry" x="30" y="130" width="210" height="195" />
+        </mxCell>
+        <mxCell id="wintitle01" value="Windows 01" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="win01">
+          <mxGeometry as="geometry" x="0" y="5" width="210" height="40" />
+        </mxCell>
+        <mxCell id="agent01" value="部署 Agent" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="win01">
+          <mxGeometry as="geometry" x="10" y="50" width="190" height="52" />
+        </mxCell>
+        <mxCell id="app01" value="應用服務" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="win01">
+          <mxGeometry as="geometry" x="10" y="130" width="190" height="52" />
+        </mxCell>
+        <mxCell id="win02" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#F6FAFA;strokeColor=#B6D0CC;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="targets">
+          <mxGeometry as="geometry" x="250" y="130" width="210" height="195" />
+        </mxCell>
+        <mxCell id="wintitle02" value="Windows 02" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="win02">
+          <mxGeometry as="geometry" x="0" y="5" width="210" height="40" />
+        </mxCell>
+        <mxCell id="agent02" value="部署 Agent" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="win02">
+          <mxGeometry as="geometry" x="10" y="50" width="190" height="52" />
+        </mxCell>
+        <mxCell id="app02" value="應用服務" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="win02">
+          <mxGeometry as="geometry" x="10" y="130" width="190" height="52" />
+        </mxCell>
+        <mxCell id="winN" value="" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#F6FAFA;strokeColor=#B6D0CC;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="targets">
+          <mxGeometry as="geometry" x="470" y="130" width="210" height="195" />
+        </mxCell>
+        <mxCell id="wintitleN" value="… Windows N" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="winN">
+          <mxGeometry as="geometry" x="0" y="5" width="210" height="40" />
+        </mxCell>
+        <mxCell id="agentN" value="部署 Agent" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="winN">
+          <mxGeometry as="geometry" x="10" y="50" width="190" height="52" />
+        </mxCell>
+        <mxCell id="appN" value="應用服務" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="winN">
+          <mxGeometry as="geometry" x="10" y="130" width="190" height="52" />
+        </mxCell>
+        <mxCell id="worklabel" value="⑧ 已核准工作&#10;各 Agent 本機換版" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1880" y="225" width="400" height="70" />
+        </mxCell>
+        <mxCell id="downloadlabel" value="N 可為數十台；群組線不表示同時部署或主機間派送" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1970" y="795" width="755" height="33" />
+        </mxCell>
+        <mxCell id="architectureguard" value="存取界線｜CI、接收器、管理 Agent 無 Production 存取；放行前不得預拷（含工作目錄）。Agent 主動連 ADO；箭頭為工作／資料語意，非入站連線。" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="842" width="2700" height="38" />
+        </mxCell>
+        <mxCell id="lifetitle" value="⑧ 每一核准 Target｜健康且流量恢復，才可結案" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=36;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="901" width="1600" height="55" />
+        </mxCell>
+        <mxCell id="sequence" value="建議逐台；失敗停止後續 • 批次／最低容量待定" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=right;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1700" y="912" width="1050" height="40" />
+        </mxCell>
+        <mxCell id="fetch" value="1 下載＋驗證&#10;已放行版本&#10;部署鎖／前置檢查" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="1000" width="300" height="110" />
+        </mxCell>
+        <mxCell id="isolate" value="2 down F5&#10;退出 LB 流量&#10;確認隔離／連線條件" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFF5E3;strokeColor=#A36716;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="420" y="1000" width="330" height="110" />
+        </mxCell>
+        <mxCell id="backup" value="3 停止服務&#10;↓&#10;4 備份目前版本" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="820" y="1000" width="300" height="110" />
+        </mxCell>
+        <mxCell id="deploy" value="5 執行換版&#10;↓&#10;6 重啟服務" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1190" y="1000" width="300" height="110" />
+        </mxCell>
+        <mxCell id="health" value="7 健康&#10;檢查？" style="shape=rhombus;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#EBF3FD;strokeColor=#2465A6;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1560" y="1000" width="220" height="110" />
+        </mxCell>
+        <mxCell id="restore" value="8 up F5&#10;恢復 LB 流量&#10;驗證恢復成功" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="1000" width="330" height="110" />
+        </mxCell>
+        <mxCell id="complete" value="新版本部署完成&#10;留存人員／版本／目標／結果" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2350" y="1000" width="380" height="110" />
+        </mxCell>
+        <mxCell id="healthy" value="健康" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1782" y="1010" width="115" height="36" />
+        </mxCell>
+        <mxCell id="verified" value="已驗證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2230" y="1010" width="120" height="36" />
+        </mxCell>
+        <mxCell id="rollback" value="保持隔離／停止失敗服務&#10;回復有效備份&#10;重啟服務" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFF1EC;strokeColor=#B34444;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1190" y="1220" width="330" height="110" />
+        </mxCell>
+        <mxCell id="recoveryhealth" value="復原健康&#10;檢查？" style="shape=rhombus;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFF1EC;strokeColor=#B34444;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1580" y="1220" width="220" height="110" />
+        </mxCell>
+        <mxCell id="recoverrestore" value="up F5｜恢復 LB 流量&#10;驗證恢復成功" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFF5E3;strokeColor=#A36716;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1900" y="1220" width="330" height="110" />
+        </mxCell>
+        <mxCell id="recovered" value="部署失敗／復原成功&#10;非新版本部署完成" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#FFF5E3;strokeColor=#A36716;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2350" y="1220" width="380" height="110" />
+        </mxCell>
+        <mxCell id="failurelabel" value="換版／啟動／檢查失敗" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1280" y="1120" width="490" height="36" />
+        </mxCell>
+        <mxCell id="rhealthy" value="健康" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1805" y="1222" width="95" height="36" />
+        </mxCell>
+        <mxCell id="rverified" value="已驗證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2230" y="1222" width="120" height="36" />
+        </mxCell>
+        <mxCell id="abort" value="前置閘門失敗即中止、告警，不繼續換版&#10;取檔／驗證失敗：不進入隔離；隔離失敗：不得停服務&#10;停服務／備份失敗：不覆寫、保持隔離；確認健康才可回池" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFF5E3;strokeColor=#A36716;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=12;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="1170" width="1070" height="135" />
+        </mxCell>
+        <mxCell id="halt" value="復原不健康／失敗／無有效備份 → 保持隔離、告警、人工處理" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FCEDEC;strokeColor=#B34444;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="1340" width="1070" height="65" />
+        </mxCell>
+        <mxCell id="unhealthylabel" value="不健康 → 停止後續目標" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1420" y="1378" width="440" height="35" />
+        </mxCell>
+        <mxCell id="restoreguard" value="任一 up F5 操作／驗證失敗：不得結案&#10;停止後續、告警並核對實際流量狀態" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1890" y="1352" width="850" height="65" />
+        </mxCell>
+        <mxCell id="f5guard" value="待確認｜F5 pool/member 對應、既有連線與等待上限、健康門檻、控制身分／位置；不預設 Disabled／Forced Offline。檔案復原 ≠ 資料庫復原。" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="1440" width="2700" height="36" />
+        </mxCell>
+        <mxCell id="legendheading" value="圖例" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="50" y="1500" width="120" height="38" />
+        </mxCell>
+        <mxCell id="lca" value="" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="170" y="1514" width="1" height="1" />
+        </mxCell>
+        <mxCell id="lcb" value="" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="270" y="1514" width="1" height="1" />
+        </mxCell>
+        <mxCell id="lclabel" value="控制／授權（虛線）" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="285" y="1495" width="390" height="38" />
+        </mxCell>
+        <mxCell id="lda" value="" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="660" y="1514" width="1" height="1" />
+        </mxCell>
+        <mxCell id="ldb" value="" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="760" y="1514" width="1" height="1" />
+        </mxCell>
+        <mxCell id="ldlabel" value="程式碼／產物（實線）" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="775" y="1495" width="390" height="38" />
+        </mxCell>
+        <mxCell id="lta" value="" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1190" y="1514" width="1" height="1" />
+        </mxCell>
+        <mxCell id="ltb" value="" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1290" y="1514" width="1" height="1" />
+        </mxCell>
+        <mxCell id="ltlabel" value="應用流量（粗線）" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1305" y="1495" width="390" height="38" />
+        </mxCell>
+        <mxCell id="footer" value="分區是責任邊界，非已驗證網段／ACL • 接收器與部署腳本待實作&#10;可編輯主檔：draw.io；生成器僅初始種子，簡報重建不覆寫手改" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=right;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1740" y="1488" width="1010" height="65" />
+        </mxCell>
+        <mxCell id="push" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="developer" target="gitlab">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="ci" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="gitlab" target="runner">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="upload" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="runner" target="gitartifact">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="webhook" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.3125;exitPerimeter=0;entryX=0.0;entryY=0.23809523809523808;entryPerimeter=0;" edge="1" parent="1" source="gitlab" target="receiver">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="enqueue" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5238095238095238;exitPerimeter=0;entryX=0.0;entryY=0.5238095238095238;entryPerimeter=0;" edge="1" parent="1" source="receiver" target="queue">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="assign" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="queue" target="importer">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1305" y="550" />
+              <mxPoint x="915" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="request" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.046511627906976744;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="importer" target="gitartifact">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="720" y="820" />
+              <mxPoint x="85" y="820" />
+              <mxPoint x="85" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="artifact" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.7777777777777778;exitPerimeter=0;entryX=0.0;entryY=0.6363636363636364;entryPerimeter=0;" edge="1" parent="1" source="gitartifact" target="importer">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="publish" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="importer" target="store">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="approve" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.6190476190476191;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="deployer" target="release">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="selectversion" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.828125;exitY=0.0;exitPerimeter=0;entryX=0.65625;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="store" target="release">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="job01" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.007692307692307693;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="ingress" target="agent01">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2025" y="596" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="local01" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="agent01" target="app01">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="traffic01" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=5;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.47058823529411764;exitPerimeter=0;entryX=0.5;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="f5" target="app01">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2730" y="285" />
+              <mxPoint x="2730" y="785" />
+              <mxPoint x="2125" y="785" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="job02" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.34615384615384615;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="ingress" target="agent02">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2245" y="596" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="local02" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="agent02" target="app02">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="traffic02" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=5;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.47058823529411764;exitPerimeter=0;entryX=0.5;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="f5" target="app02">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2730" y="285" />
+              <mxPoint x="2730" y="785" />
+              <mxPoint x="2345" y="785" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jobN" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.6846153846153846;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="ingress" target="agentN">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2465" y="596" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="localN" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="agentN" target="appN">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="trafficN" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=5;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.47058823529411764;exitPerimeter=0;entryX=0.5;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="f5" target="appN">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="2730" y="285" />
+              <mxPoint x="2730" y="785" />
+              <mxPoint x="2565" y="785" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="releasework" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.35714285714285715;exitPerimeter=0;entryX=0.0;entryY=0.15384615384615385;entryPerimeter=0;" edge="1" parent="1" source="release" target="ingress">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="download" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.7692307692307693;entryPerimeter=0;" edge="1" parent="1" source="store" target="ingress">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1945" y="720" />
+              <mxPoint x="1945" y="455" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lifefetch" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="fetch" target="isolate">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="lifeisolate" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="isolate" target="backup">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="lifebackup" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="backup" target="deploy">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="lifedeploy" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="deploy" target="health">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="lifehealth" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="health" target="restore">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="liferestore" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="restore" target="complete">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="deployfail" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B34444;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.16666666666666666;exitY=1.0;exitPerimeter=0;entryX=0.2727272727272727;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="deploy" target="rollback">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1240" y="1185" />
+              <mxPoint x="1280" y="1185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="healthfail" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B34444;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.6363636363636364;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="health" target="rollback">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1670" y="1165" />
+              <mxPoint x="1400" y="1165" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rcheck" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="rollback" target="recoveryhealth">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="rok" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="recoveryhealth" target="recoverrestore">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="rdone" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="recoverrestore" target="recovered">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="rbfail" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B34444;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=1.0;entryY=0.49230769230769234;entryPerimeter=0;" edge="1" parent="1" source="rollback" target="halt">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1355" y="1372" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="unhealthy" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B34444;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=1.0;entryY=0.49230769230769234;entryPerimeter=0;" edge="1" parent="1" source="recoveryhealth" target="halt">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1690" y="1372" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lc" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.0;exitY=0.0;exitPerimeter=0;entryX=0.0;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="lca" target="lcb">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="ld" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=0.0;exitY=0.0;exitPerimeter=0;entryX=0.0;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="lda" target="ldb">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="lt" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=5;dashed=0;dashPattern=8 5;exitX=0.0;exitY=0.0;exitPerimeter=0;entryX=0.0;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="lta" target="ltb">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

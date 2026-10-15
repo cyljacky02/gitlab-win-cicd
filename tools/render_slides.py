@@ -1,7 +1,8 @@
 """Build a concise Markdown deck with native editable flowcharts.
 
 Inputs: # title, > takeaway, ## cards, - bullets, Mermaid flowchart LR,
-and HTML speaker notes. Mermaid comments @node/@lane/@route/@label carry
+and HTML speaker notes. A standalone ![alt](relative.png) creates a full-slide
+image page; its editable source is maintained separately. Mermaid comments @node/@lane/@route/@label carry
 explicit slide coordinates; Mermaid itself ignores them. This is a strict
 subset renderer, not a general-purpose Mermaid layout engine.
 """
@@ -129,6 +130,8 @@ def parse(source):
         block = re.sub(r'<!-- notes\s*.*?-->', '', block, flags=re.S)
         diagrams = re.findall(r'```mermaid\s*\n(.*?)\n```', block, re.S)
         block = re.sub(r'```mermaid\s*\n.*?\n```', '', block, flags=re.S)
+        images = re.findall(r'^!\[([^\]]+)\]\(([^)]+)\)\s*$', block, flags=re.M)
+        block = re.sub(r'^!\[[^\]]+\]\([^)]+\)\s*$', '', block, flags=re.M)
         title, takeaway, cards = None, None, []
         for line in block.splitlines():
             line = line.strip()
@@ -146,12 +149,18 @@ def parse(source):
                 cards[-1]['bullets'].append(line[2:])
             else:
                 raise ValueError(f'Unsupported Markdown: {line}')
-        if not title or not takeaway or not 1 <= len(cards) <= 3 or len(diagrams) > 1:
-            raise ValueError('Slide needs title, takeaway, 1–3 cards, <=1 diagram')
+        if not title or not takeaway or len(diagrams) > 1 or len(images) > 1:
+            raise ValueError('Slide needs title, takeaway, <=1 diagram/image')
+        if images:
+            if diagrams or cards:
+                raise ValueError('Full-slide image cannot contain cards or Mermaid')
+        elif not 1 <= len(cards) <= 3:
+            raise ValueError('Standard slide needs 1–3 cards')
         if diagrams and (len(cards) != 1 or len(cards[0]['bullets']) != 1):
             raise ValueError('Diagram slide must have one short explanatory sentence')
         slides.append(dict(title=title, takeaway=takeaway, cards=cards,
                            diagram=parse_mermaid(diagrams[0]) if diagrams else None,
+                           image=dict(alt=images[0][0], path=images[0][1]) if images else None,
                            notes='\n\n'.join(notes).strip()))
     return slides
 
@@ -271,6 +280,14 @@ def diagram_scene(scene, graph):
 
 
 def make_scene(slide, index, count):
+    if slide.get('image'):
+        from reportlab.lib.utils import ImageReader
+        image = slide['image']
+        iw, ih = ImageReader(str(image['path'])).getSize()
+        scale = min(W / iw, H / ih)
+        return [dict(kind='image', path=str(image['path']), alt=image['alt'],
+                     title=slide['title'], x=(W-iw*scale)/2, y=(H-ih*scale)/2,
+                     w=iw*scale, h=ih*scale)]
     scene = []
     cover = index == 0
     shape(scene, 0, 0, W, H, NAVY if cover else BG)
@@ -315,7 +332,7 @@ def make_scene(slide, index, count):
                     text(scene, '•', x+15, body_y, 12, size, TEAL, True)
                     body_y += text(scene, bullet, x+30, body_y, cw-46, size) + 16
     shape(scene, 40, 505, 880, 1, '#365164' if cover else LINE)
-    text(scene, 'v0.6  |  初步計劃 · 正式上線另需批准', 40, 514, 760, 10,
+    text(scene, 'v0.7  |  初步計劃 · 正式上線另需批准', 40, 514, 760, 10,
          '#A8CCD6' if cover else MUTED)
     text(scene, f'{index+1:02d} / {count:02d}', 859, 514, 61, 10,
          '#A8CCD6' if cover else MUTED)
@@ -329,6 +346,17 @@ def rgb(value):
 def ppt_scene(prs, scene, notes):
     slide = prs.slides.add_slide(prs.slide_layouts[5])
     for item in scene:
+        if item['kind'] == 'image':
+            # Preserve a semantic slide title behind the full-page image.
+            slide.shapes.title.text = item['title']
+            background = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, Pt(W), Pt(H))
+            background.fill.solid()
+            background.fill.fore_color.rgb = rgb('#FFFFFF')
+            background.line.fill.background()
+            picture = slide.shapes.add_picture(item['path'], Pt(item['x']), Pt(item['y']),
+                                               width=Pt(item['w']), height=Pt(item['h']))
+            picture._element.nvPicPr.cNvPr.set('descr', item['alt'])
+            continue
         if item['kind'] == 'arrow':
             pairs = list(zip(item['points'], item['points'][1:]))
             for i, ((x1, y1), (x2, y2)) in enumerate(pairs):
@@ -391,7 +419,10 @@ def ppt_scene(prs, scene, notes):
 
 def pdf_scene(canvas, scene):
     for item in scene:
-        if item['kind'] == 'arrow':
+        if item['kind'] == 'image':
+            canvas.drawImage(item['path'], item['x'], H-item['y']-item['h'],
+                             width=item['w'], height=item['h'])
+        elif item['kind'] == 'arrow':
             canvas.setStrokeColor(item['color'])
             canvas.setFillColor(item['color'])
             canvas.setLineWidth(2)
@@ -492,6 +523,12 @@ def main():
     args = parser.parse_args()
     register_fonts(args.font_dir)
     slides = parse(args.source.read_text(encoding='utf-8'))
+    for slide in slides:
+        if slide['image']:
+            image_path = args.source.parent / slide['image']['path']
+            if not image_path.is_file():
+                raise FileNotFoundError(f'Slide image missing: {image_path}')
+            slide['image']['path'] = image_path
     output = args.output_dir or args.source.parent
     output.mkdir(parents=True, exist_ok=True)
     prs = Presentation()
@@ -511,10 +548,13 @@ def main():
             export_diagram(slide['diagram'], output/'diagrams')
     prs.save(ppt_path)
     canvas.save()
-    minimum = min(i['size'] for scene in scenes for i in scene
-                  if i['kind']=='text' and 160 < i['y'] < 490)
+    sizes = [i['size'] for scene in scenes for i in scene
+             if i['kind']=='text' and 160 < i['y'] < 490]
+    minimum = min(sizes) if sizes else 0
     count = sum(bool(s['diagram']) for s in slides)
-    print(f'Rendered {len(slides)} slides / {count} flowcharts; minimum content font {minimum:g} pt')
+    image_count = sum(bool(s['image']) for s in slides)
+    print(f'Rendered {len(slides)} slides / {count} flowcharts / {image_count} image pages; '
+          f'minimum native content font {minimum:g} pt (excludes images)')
     print(ppt_path)
     print(pdf_path)
 

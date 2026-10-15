@@ -1,0 +1,3 @@
+# Optional: only needed for the one-time architecture map seed generator.
+-r requirements-slides.txt
+PyMuPDF==1.28.2
