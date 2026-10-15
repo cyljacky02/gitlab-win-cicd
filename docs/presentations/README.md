@@ -7,6 +7,7 @@
 - [固定版面 PDF](windows-cd-initial-plan.pdf)
 - [Mermaid／draw.io 圖源](diagrams/README.md)
 - [架構圖 draw.io 原檔](diagrams/windows-deployment-map.drawio) · [高清 PNG](diagrams/windows-deployment-map.png) · [可放大向量 PDF](diagrams/windows-deployment-map.pdf)
+- 拆分原檔：[上半部部署架構](diagrams/windows-deployment-architecture.drawio) · [下半部換版／復原](diagrams/windows-target-release-flow.drawio)（[PNG／PDF 索引](diagrams/README.md)）
 - [端到端架構圖設計研究](../research/end-to-end-architecture-diagram-design.md)
 - [簡報設計研究與官方參考資料](../research/presentation-design-guidance.md)
 
@@ -64,7 +65,7 @@ python -m venv .venv-slides
 2. 匯出 PNG 為同目錄 `windows-deployment-map.png`，使用白底、維持整頁 16:9、至少 2800 像素寬；同時更新獨立 PDF。不要只匯出選取範圍或裁掉留白造成比例改變。
 3. 再執行上面的 `render_slides.py`，將最新 PNG 放入第 4 頁。手改 draw.io 不會自動更新 PNG。
 
-`tools/build_deployment_map.py` 是本次初始產圖種子，使用同一場景資料產出 draw.io、向量 PDF、PNG；**手改後不要再執行，否則會覆寫三個架構圖檔案**。僅需重新生成初始圖時，安裝 `tools/requirements-map.txt` 後顯式執行該工具；它不是簡報重建的一部分。
+`tools/build_deployment_map.py` 是本次初始產圖種子，使用同一場景資料產出 draw.io、向量 PDF、PNG；**手改後不要再執行，否則會覆寫完整圖與兩份拆分圖的 draw.io、PNG、PDF，共九個檔案**。僅需重新生成初始圖時，安裝 `tools/requirements-map.txt` 後顯式執行該工具；它不是簡報重建的一部分。
 
 ## Markdown 格式
 

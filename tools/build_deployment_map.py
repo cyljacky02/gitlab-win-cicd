@@ -1,11 +1,11 @@
 """One-time seed for the editable Windows deployment map (not a deck build step).
 
 Run explicitly: .venv-slides/Scripts/python tools/build_deployment_map.py
-Native draw.io edits are authoritative afterwards: rerunning overwrites all three
-exports. Both exporters consume the same scene; PDF stays vector, PNG is rendered
+Native draw.io edits are authoritative afterwards: rerunning overwrites the full
+map and both split views (nine files). Both exporters consume the same scene; PDF stays vector, PNG is rendered
 from that PDF. Requires Microsoft JhengHei, reportlab and PyMuPDF.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 import math
 import xml.etree.ElementTree as ET
@@ -56,6 +56,8 @@ class Edge:
 class Scene:
     nodes: list = field(default_factory=list)
     edges: list = field(default_factory=list)
+    width: int = W
+    height: int = H
 
     def node(self, id, x, y, w, h, text='', **kw):
         self.nodes.append(Node(id, x, y, w, h, text, **kw))
@@ -175,7 +177,38 @@ def make_scene():
     return s
 
 
+def split_scenes(scene):
+    """Standalone views; keep actual editable cells and connected terminals."""
+    architecture = Scene(width=W, height=990)
+    lifecycle = Scene(width=W, height=695)
+    for destination, select, offset in [
+        (architecture, lambda n: n.y < 900 or n.y >= 1488,
+         lambda n: -590 if n.y >= 1488 else 0),
+        (lifecycle, lambda n: n.y >= 900, lambda n: -880),
+    ]:
+        shifts = {}
+        for n in scene.nodes:
+            if select(n):
+                shifts[n.id] = offset(n)
+                destination.nodes.append(replace(n, y=n.y + offset(n)))
+        ids = set(shifts)
+        for e in scene.edges:
+            if e.source in ids and e.target in ids:
+                assert shifts[e.source] == shifts[e.target], e.id
+                destination.edges.append(replace(e, points=[(x, y + shifts[e.source]) for x, y in e.points]))
+    for n in architecture.nodes:
+        if n.id == 'title':
+            n.text = 'Windows 正式部署｜端到端交付架構'
+    for n in lifecycle.nodes:
+        if n.id == 'lifetitle':
+            n.text = '單台 Target｜換版與復原流程'
+        elif n.id == 'footer':
+            n.text = '適用於每一核准 Target • 已放行指定版本後才執行\n可編輯主檔：draw.io；此圖不代表已完成實機驗證'
+    return architecture, lifecycle
+
+
 def validate(scene):
+    W, H = scene.width, scene.height
     ids={n.id for n in scene.nodes}
     assert len(ids)==len(scene.nodes)
     assert len({e.id for e in scene.edges})==len(scene.edges)
@@ -209,8 +242,15 @@ def validate(scene):
 
 
 def drawio(scene, path):
+    W, H = scene.width, scene.height
+    # mxCodec uses an Array as its ID cache. Bare names such as "push"
+    # resolve to inherited functions, causing obj.setId is not a function.
+    # Namespace every custom cell ID and every reference, retaining roots 0/1.
+    def cell_id(value):
+        return value if value in ('0', '1') else 'wdm-' + value
+
     root=ET.Element('mxfile',host='app.diagrams.net',type='device')
-    diagram=ET.SubElement(root,'diagram',name='目標架構與單機換版',id='windows-deployment-map')
+    diagram=ET.SubElement(root,'diagram',name=path.stem,id=path.stem)
     model=ET.SubElement(diagram,'mxGraphModel',dx=str(W),dy=str(H),grid='1',gridSize='10',page='1',pageScale='1',pageWidth=str(W),pageHeight=str(H),background='#FFFFFF')
     cells=ET.SubElement(model,'root')
     ET.SubElement(cells,'mxCell',id='0')
@@ -223,7 +263,7 @@ def drawio(scene, path):
         style=f'shape={shape};rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize={n.size};fontColor={n.color};fontStyle={1 if n.bold else 0};fillColor={fill};strokeColor={stroke};strokeWidth=2;align={n.align};verticalAlign=middle;spacing=0;spacingLeft={12 if n.kind=="box" and n.align=="left" else 0};'
         if n.kind=='container':
             style+='container=1;collapsible=0;recursiveResize=0;'
-        cell=ET.SubElement(cells,'mxCell',id=n.id,value=n.text,style=style,vertex='1',parent=n.parent)
+        cell=ET.SubElement(cells,'mxCell',id=cell_id(n.id),value=n.text,style=style,vertex='1',parent=cell_id(n.parent))
         parent=nodes.get(n.parent)
         ET.SubElement(cell,'mxGeometry',x=str(n.x-(parent.x if parent else 0)),y=str(n.y-(parent.y if parent else 0)),width=str(n.w),height=str(n.h),attrib={'as':'geometry'})
     for e in scene.edges:
@@ -231,7 +271,7 @@ def drawio(scene, path):
         sx,sy=e.points[0];tx,ty=e.points[-1]
         width=5 if e.kind=='traffic' else 3
         style=f'edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor={e.color};strokeWidth={width};dashed={1 if e.kind=="control" else 0};dashPattern=8 5;exitX={(sx-source.x)/source.w};exitY={(sy-source.y)/source.h};exitPerimeter=0;entryX={(tx-target.x)/target.w};entryY={(ty-target.y)/target.h};entryPerimeter=0;'
-        cell=ET.SubElement(cells,'mxCell',id=e.id,style=style,edge='1',parent='1',source=e.source,target=e.target)
+        cell=ET.SubElement(cells,'mxCell',id=cell_id(e.id),style=style,edge='1',parent='1',source=cell_id(e.source),target=cell_id(e.target))
         geom=ET.SubElement(cell,'mxGeometry',relative='1',attrib={'as':'geometry'})
         if len(e.points)>2:
             arr=ET.SubElement(geom,'Array',attrib={'as':'points'})
@@ -248,8 +288,10 @@ def drawio(scene, path):
 
 
 def pdf(scene, path):
+    W, H = scene.width, scene.height
     c=canvas.Canvas(str(path),pagesize=(W,H),pageCompression=1)
-    c.setTitle('Windows 正式部署｜端到端目標架構與單機換版')
+    title = next(n.text for n in scene.nodes if n.id in ('title', 'lifetitle'))
+    c.setTitle(title)
     c.setAuthor('Architecture planning')
     # Zones first, then edges, then content: text stays legible over routes.
     def shape(n):
@@ -291,16 +333,22 @@ def main():
     fonts=Path('C:/Windows/Fonts')
     pdfmetrics.registerFont(TTFont(FONT,str(fonts/'msjh.ttc'),subfontIndex=0))
     pdfmetrics.registerFont(TTFont(FONT+'Bold',str(fonts/'msjhbd.ttc'),subfontIndex=0))
-    scene=make_scene();validate(scene)
+    scene=make_scene()
+    architecture, lifecycle = split_scenes(scene)
     OUT.mkdir(parents=True,exist_ok=True)
-    base=OUT/'windows-deployment-map'
-    drawio(scene,base.with_suffix('.drawio'))
-    pdf(scene,base.with_suffix('.pdf'))
-    with fitz.open(base.with_suffix('.pdf')) as doc:
-        assert len(doc)==1
-        assert not doc[0].get_images(), 'PDF must remain vector'
-        doc[0].get_pixmap(matrix=fitz.Matrix(1,1),alpha=False).save(base.with_suffix('.png'))
-    print(f'Validated {len(scene.nodes)} nodes, {len(scene.edges)} edges; {W}x{H}; vector PDF; {base}')
+    for name, view in [('windows-deployment-map', scene),
+                       ('windows-deployment-architecture', architecture),
+                       ('windows-target-release-flow', lifecycle)]:
+        validate(view)
+        base=OUT/name
+        drawio(view,base.with_suffix('.drawio'))
+        pdf(view,base.with_suffix('.pdf'))
+        with fitz.open(base.with_suffix('.pdf')) as doc:
+            assert len(doc)==1
+            assert not doc[0].get_images(), 'PDF must remain vector'
+            doc[0].get_pixmap(matrix=fitz.Matrix(1,1),alpha=False).save(base.with_suffix('.png'))
+        print(f'Validated {len(view.nodes)} nodes, {len(view.edges)} edges; '
+              f'{view.width}x{view.height}; vector PDF; {base}')
 
 
 if __name__=='__main__':
