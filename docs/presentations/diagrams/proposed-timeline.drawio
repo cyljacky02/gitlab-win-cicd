@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="proposed-timeline" id="proposed-timeline">
+    <mxGraphModel grid="1" page="1" pageWidth="880" pageHeight="280">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="A" value="01｜POC&lt;br/&gt;驗證通知與權限" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="0.0" y="15.0" width="260.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="B" value="02｜協調架構部門&lt;br/&gt;安裝／配置 ADO" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="310.0" y="15.0" width="260.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="C" value="03｜整合 GitLab&lt;br/&gt;串接通知與產物" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="620.0" y="15.0" width="260.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="D" value="04｜SIT&lt;br/&gt;整合與例外測試" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="620.0" y="175.0" width="260.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="E" value="05｜UAT&lt;br/&gt;驗收與復原演練" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="310.0" y="175.0" width="260.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="F" value="06｜Production&lt;br/&gt;目標 12/31" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#087F8C;fontColor=#FFFFFF;strokeColor=#087F8C;">
+          <mxGeometry x="0.0" y="175.0" width="260.0" height="90.0" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-0" value="" edge="1" parent="1" source="A" target="B" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" value="" edge="1" parent="1" source="B" target="C" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-2" value="" edge="1" parent="1" source="C" target="D" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-3" value="" edge="1" parent="1" source="D" target="E" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4" value="" edge="1" parent="1" source="E" target="F" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

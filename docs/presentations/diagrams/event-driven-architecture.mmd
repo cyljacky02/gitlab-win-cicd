@@ -1,0 +1,56 @@
+flowchart LR
+%% @name event-driven-architecture
+%% @lane dev 0 0 240 280
+%% @lane ops 270 0 390 280
+%% @lane prod 690 0 190 280
+subgraph dev["開發區：不持正式權限"]
+ P["① 開發人員<br/>推送程式碼"]
+ G["GitLab CE<br/>派工／保存產物"]
+ R["GitLab Runner<br/>建置／測試"]
+end
+subgraph ops["授權部門管理區（非正式主機）"]
+ W["② 事件接收器<br/>驗證成功通知"]
+ S["ADO Server<br/>排程／存版本<br/>管理 Release"]
+ I["③ 管理 Agent<br/>下載／驗證匯入"]
+ D["④ 部署人員<br/>選版與放行"]
+end
+subgraph prod["正式區：授權存取"]
+ T["⑤ 部署 Agent<br/>取得授權工作<br/>下載指定版本"]
+ A["Windows 應用<br/>切換／檢查"]
+end
+%% @node P 20 40 200 65
+%% @node G 20 120 200 65
+%% @node R 20 210 200 65
+%% @node W 285 40 175 65
+%% @node S 480 40 165 95
+%% @node I 285 200 175 75
+%% @node D 480 200 165 75
+%% @node T 705 40 160 95
+%% @node A 705 200 160 75
+%% @ports G W right left
+%% @route G W 255 152 255 72
+%% @ports G I right left
+%% @route G I 245 152 245 237
+%% @ports S I bottom right
+%% @route S I 562 165 470 165 470 237
+%% @ports I S top left
+%% @route I S 372 150 465 150 465 87
+%% @ports R G right right
+%% @route R G 230 242 230 152
+%% @label S I 390 164 90
+%% @label I S 280 110 175
+P --> G
+G --> R
+R --> G
+G --> W
+W --> S
+G --> I
+S -->|"派工"| I
+I -->|"回存固定版本"| S
+D --> S
+S --> T
+T --> A
+class P,D control
+class T,A target
+classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C

@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="event-driven-architecture" id="event-driven-architecture">
+    <mxGraphModel grid="1" page="1" pageWidth="880" pageHeight="280">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dev" value="開發區：不持正式權限" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+          <mxGeometry x="0.0" y="0.0" width="240.0" height="280.0" as="geometry" />
+        </mxCell>
+        <mxCell id="ops" value="授權部門管理區（非正式主機）" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+          <mxGeometry x="270.0" y="0.0" width="390.0" height="280.0" as="geometry" />
+        </mxCell>
+        <mxCell id="prod" value="正式區：授權存取" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+          <mxGeometry x="690.0" y="0.0" width="190.0" height="280.0" as="geometry" />
+        </mxCell>
+        <mxCell id="P" value="① 開發人員&lt;br/&gt;推送程式碼" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FFF1DA;fontColor=#754519;strokeColor=#C57227;">
+          <mxGeometry x="20.0" y="40.0" width="200.0" height="65.0" as="geometry" />
+        </mxCell>
+        <mxCell id="G" value="GitLab CE&lt;br/&gt;派工／保存產物" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="20.0" y="120.0" width="200.0" height="65.0" as="geometry" />
+        </mxCell>
+        <mxCell id="R" value="GitLab Runner&lt;br/&gt;建置／測試" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="20.0" y="210.0" width="200.0" height="65.0" as="geometry" />
+        </mxCell>
+        <mxCell id="W" value="② 事件接收器&lt;br/&gt;驗證成功通知" vertex="1" parent="ops" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="15.0" y="40.0" width="175.0" height="65.0" as="geometry" />
+        </mxCell>
+        <mxCell id="S" value="ADO Server&lt;br/&gt;排程／存版本&lt;br/&gt;管理 Release" vertex="1" parent="ops" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="210.0" y="40.0" width="165.0" height="95.0" as="geometry" />
+        </mxCell>
+        <mxCell id="I" value="③ 管理 Agent&lt;br/&gt;下載／驗證匯入" vertex="1" parent="ops" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="15.0" y="200.0" width="175.0" height="75.0" as="geometry" />
+        </mxCell>
+        <mxCell id="D" value="④ 部署人員&lt;br/&gt;選版與放行" vertex="1" parent="ops" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FFF1DA;fontColor=#754519;strokeColor=#C57227;">
+          <mxGeometry x="210.0" y="200.0" width="165.0" height="75.0" as="geometry" />
+        </mxCell>
+        <mxCell id="T" value="⑤ 部署 Agent&lt;br/&gt;取得授權工作&lt;br/&gt;下載指定版本" vertex="1" parent="prod" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#087F8C;fontColor=#FFFFFF;strokeColor=#087F8C;">
+          <mxGeometry x="15.0" y="40.0" width="160.0" height="95.0" as="geometry" />
+        </mxCell>
+        <mxCell id="A" value="Windows 應用&lt;br/&gt;切換／檢查" vertex="1" parent="prod" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#087F8C;fontColor=#FFFFFF;strokeColor=#087F8C;">
+          <mxGeometry x="15.0" y="200.0" width="160.0" height="75.0" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-0" value="" edge="1" parent="1" source="P" target="G" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" value="" edge="1" parent="1" source="G" target="R" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-2" value="" edge="1" parent="1" source="R" target="G" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;exitX=1;exitY=0.5;entryX=1;entryY=0.5;exitPerimeter=1;entryPerimeter=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230.0" y="242.0" />
+              <mxPoint x="230.0" y="152.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-3" value="" edge="1" parent="1" source="G" target="W" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitPerimeter=1;entryPerimeter=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="255.0" y="152.0" />
+              <mxPoint x="255.0" y="72.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-4" value="" edge="1" parent="1" source="W" target="S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-5" value="" edge="1" parent="1" source="G" target="I" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitPerimeter=1;entryPerimeter=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="245.0" y="152.0" />
+              <mxPoint x="245.0" y="237.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-6" value="派工" edge="1" parent="1" source="S" target="I" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;exitX=0.5;exitY=1;entryX=1;entryY=0.5;exitPerimeter=1;entryPerimeter=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="562.0" y="165.0" />
+              <mxPoint x="470.0" y="165.0" />
+              <mxPoint x="470.0" y="237.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-7" value="回存固定版本" edge="1" parent="1" source="I" target="S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;exitX=0.5;exitY=0;entryX=0;entryY=0.5;exitPerimeter=1;entryPerimeter=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="372.0" y="150.0" />
+              <mxPoint x="465.0" y="150.0" />
+              <mxPoint x="465.0" y="87.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-8" value="" edge="1" parent="1" source="D" target="S" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-9" value="" edge="1" parent="1" source="S" target="T" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-10" value="" edge="1" parent="1" source="T" target="A" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

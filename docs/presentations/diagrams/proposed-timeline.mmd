@@ -1,0 +1,21 @@
+flowchart LR
+%% @name proposed-timeline
+ A["01｜POC<br/>驗證通知與權限"]
+ B["02｜協調架構部門<br/>安裝／配置 ADO"]
+ C["03｜整合 GitLab<br/>串接通知與產物"]
+ D["04｜SIT<br/>整合與例外測試"]
+ E["05｜UAT<br/>驗收與復原演練"]
+ F["06｜Production<br/>目標 12/31"]
+%% @node A 0 15 260 90
+%% @node B 310 15 260 90
+%% @node C 620 15 260 90
+%% @node D 620 175 260 90
+%% @node E 310 175 260 90
+%% @node F 0 175 260 90
+A --> B
+B --> C
+C --> D
+D --> E
+E --> F
+class F target
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C

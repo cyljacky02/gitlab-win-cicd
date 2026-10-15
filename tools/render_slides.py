@@ -315,7 +315,7 @@ def make_scene(slide, index, count):
                     text(scene, '•', x+15, body_y, 12, size, TEAL, True)
                     body_y += text(scene, bullet, x+30, body_y, cw-46, size) + 16
     shape(scene, 40, 505, 880, 1, '#365164' if cover else LINE)
-    text(scene, 'v0.5  |  初步計劃 · 正式上線另需批准', 40, 514, 760, 10,
+    text(scene, 'v0.6  |  初步計劃 · 正式上線另需批准', 40, 514, 760, 10,
          '#A8CCD6' if cover else MUTED)
     text(scene, f'{index+1:02d} / {count:02d}', 859, 514, 61, 10,
          '#A8CCD6' if cover else MUTED)

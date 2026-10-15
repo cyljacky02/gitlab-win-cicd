@@ -1,5 +1,7 @@
 # GitLab CE artifact handoff to on-premises CD
 
+> Historical polling proposal. The v0.6 presentation instead adopts the event-driven recommendation in [GitLab → ADO event-trigger research](gitlab-ado-event-trigger.md). The recommendation below is retained for comparison, not the current deck architecture.
+
 ## Slide-ready recommendation
 
 **Authorized management-side Collector polls GitLab → queues an importer only for a new Release Candidate → ADO Server Build Artifacts → Classic Release → dedicated target Deployment Group.** `master` → automatic SIT; `pre-production` → automatic UAT; `production` → manual authorized Production. GitLab CI holds **no CD/Production credentials**. Polling, validation, deduplication, ZIP handling and deployment scripts are **custom glue**, not a native GitLab release-artifact source.[1–8,19]

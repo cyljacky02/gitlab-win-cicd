@@ -1,9 +1,9 @@
 flowchart LR
 %% @name environment-approval
  A["GitLab CI<br/>建置固定版本"]
- B{"來源分支<br/>對應環境"}
- C["master → SIT<br/>自動換版"]
- D["pre-production → UAT<br/>自動換版"]
+ B{"來源分支<br/>驗證與分流"}
+ C["master → SIT<br/>匯入後自動換版"]
+ D["pre-production → UAT<br/>匯入後自動換版"]
  E["production<br/>部署人員選版放行"]
  F["正式主機<br/>執行換版"]
 %% @node A 0 90 195 85

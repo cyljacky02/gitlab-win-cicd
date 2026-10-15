@@ -1,141 +1,167 @@
 # Windows 正式部署治理計劃
-> 讓開發自動化，讓正式換版有授權、有紀錄、可復原
+> 保留 GitLab 建置，讓正式換版由授權部門掌握
 
-## 跨部門可行性與合規討論
-- 初步提案｜正式上線仍需依組織程序批准
-- Azure DevOps Server（ADO）為主方案；Rundeck 為備案
+## Azure DevOps Server 導入提案
+- Express 作為 POC 起點｜正式版本另行確認
+- 跨部門討論稿｜目標 12/31，時程待共同確認
 
 <!-- notes
-本簡報以跨部門溝通為目的，聚焦背景、責任邊界、兩種部署機制與實際換版流程。共 10 頁，無附錄，聚焦本案背景與目標設計，避免測試環境細節。ADO 為主要規劃方向，Rundeck 為備案；這不等於正式上線已獲批准。簡報設計依據另見 docs/research/presentation-design-guidance.md。
+共 7 頁：封面、議程、5 頁內容（包含最後的建議時程），無附錄。僅討論 Azure DevOps Server；Express 是 POC 起點，不代表最終採購決策。保留 GitLab CE 作版本控制與 CI。其他部門已有 ADO 運行先例，是使用者提供的背景，不是本案整合或合規已通過的證據。12/31 年份未指定，不自行補年份。產品能力依官方文件查證，尚未完成本架構的實機驗證。
 -->
 
 ---
 
-# 我們要解決的，是正式主機的存取邊界
-> 能建置程式，不代表有權把檔案送進正式環境
+# 今天看五件事：原因、架構、環境、換版與時程
+> 先對齊責任邊界，再確認如何導入
+
+## 為什麼改
+- 01｜正式主機存取限制
+- 02｜建置到部署的完整架構
+
+## 如何運作
+- 03｜三分支、三環境
+- 04｜授權換版與失敗復原
+
+## 如何落地
+- 05｜POC 到正式上線
+- 以 12/31 為目標倒排里程碑
+
+<!-- notes
+先交代開發端直接送檔的方案為何不可行，再用同一張完整架構圖依編號說明。為守住總共 7 頁，不增加重複圖頁或動畫頁；講者沿架構圖的 ①～⑤ 說明順序。圖的組織區域、人員與工具分開呈現，技術與權限細節留在講者備註及研究文件。
+-->
+
+---
+
+# 只送檔、不換版，仍然越過正式主機存取邊界
+> 原方案已否決：建置端不能直接碰正式主機
 
 ```mermaid
 flowchart LR
 %% @name production-boundary
 %% @lane dev 0 0 420 260
 %% @lane prod 465 0 415 260
-subgraph dev["開發部門"]
+subgraph dev["開發部門：建置候選版本"]
  A["開發人員<br/>提交程式碼"]
- B["GitLab CI<br/>產出換版檔案"]
+ B["GitLab Runner<br/>建置／測試"]
 end
-subgraph prod["僅指定部門可存取"]
- C["Production<br/>正式主機"]
+subgraph prod["正式環境：僅指定部門可存取"]
+ C["Production 主機<br/>送檔也算存取"]
 end
-%% @node A 25 95 160 80
-%% @node B 225 95 165 80
-%% @node C 615 95 200 80
+%% @node A 20 95 170 80
+%% @node B 225 95 175 80
+%% @node C 555 95 295 80
+%% @label B C 403 55 155
 A --> B
 B -.->|"禁止直接送檔"| C
-class C target
-classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
-```
-
-## 本案必要原則
-- 就算只是複製檔案，也屬正式主機存取；不能視為例外。
-
-<!-- notes
-Production 僅限特定部門存取，是已確認的組織限制。現行 GitLab CE 是 Git Server；開發人員可執行建置，但正式部署需要另設授權邊界。不是宣稱 GitLab CE 完全沒有權限控制。圖中虛線是禁止的路徑。換版檔案即 Artifact；CI 是自動建置與測試。具體存取政策依組織正式規範。
--->
-
----
-
-# 先前「只送檔案、不換版」的方案已被否決
-> 原因不是技術做不到，而是違反部門存取限制
-
-```mermaid
-flowchart LR
-%% @name rejected-delivery
-%% @lane dev 0 0 470 260
-%% @lane prod 515 0 365 260
-subgraph dev["原提案：開發側直接交付"]
- A["GitLab Runner<br/>自動建置工具"]
- B["送出換版檔案<br/>尚未執行換版"]
-end
-subgraph prod["正式環境：仍需存取權"]
- C["寫入正式主機<br/>已構成存取"]
-end
-%% @node A 25 95 180 80
-%% @node B 255 95 190 80
-%% @node C 555 95 285 80
-A --> B
-B -.->|"方案否決"| C
+class A control
 class C blocked
+classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
 classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
 ```
 
-## 因此改變方向
-- 建置端不碰正式主機，正式交付與換版改由授權部門管理。
+## 改變方向
+- 保留建置自動化；檔案送入正式主機與換版，都改由授權流程執行。
 
 <!-- notes
-此為方案演進背景，不是仍在評估的候選。Runner 是執行 GitLab 建置工作的服務。即使只 Deliver，正式檔案寫入仍需存取權；不得以共用帳號、掛載目錄或中繼腳本繞過部門邊界。換成部署平台不自動合規，帳號、網路與管理權仍須由授權部門掌握。
+本頁合併舊版第 2、3 頁。只送檔、不執行換版的提案已被否決，原因是正式主機僅允許指定部門存取，複製檔案也屬存取；不是技術做不到，也不是宣稱 GitLab CE 沒有權限控制。虛線代表禁止路徑。現有 Container 鏈 GitLab → Harbor → Argo CD → OCP／Docker 可作責任分工類比，本案補上 Windows 的受控部署流程，不要求使用相同工具。建置端不能透過共用目錄、帳號或中繼腳本繞過 Production 邊界。
 -->
 
 ---
 
-# 容器已有部署路線，Windows 要補上同樣的分工
-> 沿用「建置與正式換版分離」的原則，不強迫使用相同工具
+# 建置完成主動通知，ADO 接手匯入與授權部署
+> 分區＝責任邊界；橘色＝人員；箭頭＝工作／產物交接
 
 ```mermaid
 flowchart LR
-%% @name existing-and-proposed
-%% @lane container 0 0 880 120
-%% @lane windows 0 140 880 120
-subgraph container["容器（Container）：現有路線"]
- A["GitLab<br/>建置映像"]
- B["Harbor<br/>保存映像"]
- C["Argo CD<br/>部署人員操作"]
- D["OCP / Docker<br/>執行應用程式"]
+%% @name event-driven-architecture
+%% @lane dev 0 0 240 280
+%% @lane ops 270 0 390 280
+%% @lane prod 690 0 190 280
+subgraph dev["開發區：不持正式權限"]
+ P["① 開發人員<br/>推送程式碼"]
+ G["GitLab CE<br/>派工／保存產物"]
+ R["GitLab Runner<br/>建置／測試"]
 end
-subgraph windows["Windows：本次提案"]
- E["GitLab<br/>建置程式"]
- F["換版檔案<br/>固定版本"]
- G["ADO 為主<br/>Rundeck 備案"]
- H["Windows<br/>執行應用程式"]
+subgraph ops["授權部門管理區（非正式主機）"]
+ W["② 事件接收器<br/>驗證成功通知"]
+ S["ADO Server<br/>排程／存版本<br/>管理 Release"]
+ I["③ 管理 Agent<br/>下載／驗證匯入"]
+ D["④ 部署人員<br/>選版與放行"]
 end
-%% @node A 20 48 180 64
-%% @node B 235 48 180 64
-%% @node C 450 48 180 64
-%% @node D 665 48 195 64
-%% @node E 20 188 180 64
-%% @node F 235 188 180 64
-%% @node G 450 188 180 64
-%% @node H 665 188 195 64
-A --> B
-B --> C
-C --> D
-E --> F
-F --> G
-G --> H
-class C,G control
-class D,H target
+subgraph prod["正式區：授權存取"]
+ T["⑤ 部署 Agent<br/>取得授權工作<br/>下載指定版本"]
+ A["Windows 應用<br/>切換／檢查"]
+end
+%% @node P 20 40 200 65
+%% @node G 20 120 200 65
+%% @node R 20 210 200 65
+%% @node W 285 40 175 65
+%% @node S 480 40 165 95
+%% @node I 285 200 175 75
+%% @node D 480 200 165 75
+%% @node T 705 40 160 95
+%% @node A 705 200 160 75
+%% @ports G W right left
+%% @route G W 255 152 255 72
+%% @ports G I right left
+%% @route G I 245 152 245 237
+%% @ports S I bottom right
+%% @route S I 562 165 470 165 470 237
+%% @ports I S top left
+%% @route I S 372 150 465 150 465 87
+%% @ports R G right right
+%% @route R G 230 242 230 152
+%% @label S I 390 164 90
+%% @label I S 280 110 175
+P --> G
+G --> R
+R --> G
+G --> W
+W --> S
+G --> I
+S -->|"派工"| I
+I -->|"回存固定版本"| S
+D --> S
+S --> T
+T --> A
+class P,D control
+class T,A target
 classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
 classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
 ```
 
-## 類比重點
-- 兩條路線都需要「誰可以換版」；不是只有「怎麼把檔案送過去」。
+## 架構要點
+- 接收器與匯入邏輯需實作；管理 Agent 不碰正式主機，每台目標另有部署 Agent。
 
 <!-- notes
-Container 是現有 GitLab CE、Harbor、Argo CD、OCP／Docker VM 流程，部署人員在 Argo CD 進行換版操作。此為責任分工類比，不宣稱 Windows 等同 GitOps，也不宣稱原生工具自動滿足所有審批要求。Windows Artifact 可從 GitLab 或受控中繼儲存取得；儲存及保留設計另行確認。ADO 與 Rundeck 是替代路線，不要求兩套串接或同時操作正式主機。
+沿 ①～⑤ 說明同一張完整架構圖，不增加重複頁。ADO 全名 Azure DevOps Server，POC 使用 Express；基線 Server 2022／REST 7.0，實際版本與修補層級待安裝確認。本圖是文件支持的目標架構，不是已實機測通的現況。
+① 開發人員 push 到 GitLab CE；GitLab 編排 CI，GitLab Runner 執行建置／測試並將 artifact 上傳回 GitLab。Runner 沒有 Production 存取權或 ADO 部署憑證。
+② GitLab pipeline 狀態成功後以 Pipeline webhook 主動通知管理側的受保護接收器；不是 GitLab Runner 直接觸發正式部署。接收器驗證認證、限制來源、耐久入列，再以 GitLab API 複核專案、成功狀態、來源分支、SHA 與必要品質 job，最後透過 Queue Build REST API 排入固定 importer。接收器是需實作的服務，不是另一個 GitLab Runner，也不是 ADO 原生 GitLab artifact connector；可評估與管理 Agent 共用非正式主機，但服務身分、憑證與目錄必須隔離。
+③ ADO 需要管理區的 self-hosted Build Agent 執行 importer。圖中 GitLab→管理 Agent 是 API 下載的資料流，實際連線由管理 Agent 發起；ADO→管理 Agent 是派工語意，Agent 主動連 Server 取工作。Importer 重驗固定來源政策，按 project/pipeline/job ID 下載確切 artifact，檢查 ZIP 與內容、計算 hash、保存來源 manifest，再以 PublishBuildArtifacts@1 發布 Server Build Artifacts。不能用 Services-only Pipeline Artifacts，不能在部署時抓 latest。GitLab 唯讀憑證只留管理區。Management Agent 與 Production Deployment Group Agent 不共用主機、帳號或 pool；管理 Agent 不可寫入 Production。圖中 ADO 是控制面與受控版本儲存的概念集合，不代表所有元件必須同機。
+④ 以三組固定 importer／Classic Release 綁定來源環境，下一頁展開。SIT／UAT 可在匯入成功後自動建立 release／部署。Production 關閉 artifact 自動 release trigger，由授權人員選確切 importer build 建立 Release；stage 設 Manual only 與具名 pre-deployment approvers。允許同一授權人員發起與放行，不強制雙人審批。放行綁定應用、目標與確切內容，改版或改目標須重新放行。
+⑤ 圖中 ADO→部署 Agent 是已授權工作的交接，不是 Server 主動登入 Windows。每台 Windows Target 安裝專用 Deployment Group Agent，主動連 ADO 取工作，放行後才下載指定 build 產物並以受保護的部署腳本切換本機應用。此處畫 Production，SIT／UAT 使用各自隔離的 target Agents。沒有另藏一個需要登入正式主機的管理 Runner；本方案使用目標 Agent 本機執行。必須測試未放行時正式主機連 Agent 工作目錄都沒有候選檔案寫入。
+安全邊界：接收器的 PAT／帳號只允許排入固定 importer，不具有 Release／Production 權限；PAT scope 不等於 definition ACL，須測試群組繼承、來源分支／參數覆寫、build service 身分與 OS 帳號的有效權限。部署定義、來源映射與特權腳本由授權部門管理，不能執行 artifact 附帶的特權腳本。記錄人員、版本、目標與結果。
+可靠性：接收器耐久 inbox、去重、重送與 importer 候選唯一鍵，處理 Queue 回應遺失、重複事件及晚到舊版本；不讓重複匯入再觸發部署。必要品質 jobs 必須成功，不能只信任 allow_failure 後仍 success 的 pipeline。正常路徑為事件驅動；漏事件由受控補送走同一驗證流程，並監控 webhook 停用與產物保留期限。
+研究取捨：CI 最後一個 job 直呼 Queue API 有官方功能基礎，但持有匯入排程權限且整條 pipeline 此時可能仍 running，需要事件後有限狀態重查；所以首選成功 webhook。Server 2020.1 起有 incoming webhook 功能，不能說是 Services-only，但其 HMAC 與 GitLab 的驗證格式不可假設相容。採接收器＋Queue API，不依賴未驗證的原生互通性。
+完整查證與 POC 負向測試：docs/research/gitlab-ado-event-trigger.md。
+https://docs.gitlab.com/user/project/integrations/webhook_events/#pipeline-events
+https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-7.0
+https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/publish-build-artifacts-v1?view=azure-pipelines
+https://learn.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops-2022
 -->
 
 ---
 
-# 三個分支對應三個環境，正式部署多一道人工放行
-> master＝SIT；pre-production＝UAT；production＝正式環境
+# 三分支各自建置；正式環境多一道人工放行
+> master → SIT；pre-production → UAT；production → Production
 
 ```mermaid
 flowchart LR
 %% @name environment-approval
  A["GitLab CI<br/>建置固定版本"]
- B{"來源分支<br/>對應環境"}
- C["master → SIT<br/>自動換版"]
- D["pre-production → UAT<br/>自動換版"]
+ B{"來源分支<br/>驗證與分流"}
+ C["master → SIT<br/>匯入後自動換版"]
+ D["pre-production → UAT<br/>匯入後自動換版"]
  E["production<br/>部署人員選版放行"]
  F["正式主機<br/>執行換版"]
 %% @node A 0 90 195 85
@@ -157,180 +183,26 @@ classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
 classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
 ```
 
-## 正式部署的必要條件
-- 三個分支各自建置；正式版本先放行，才執行後續換版。
+## 分流原則
+- 成功通知不是正式放行；正式放行綁定確切版本與目標。
 
 <!-- notes
-分支維持 master＝SIT、pre-production＝UAT、production＝Production；各分支各自建置，不主張 UAT 與 Production 使用同一份內容。同一 Artifact 跨環境晉升可後續評估。GitLab 通知、CD 輪詢或人工選取都可，通知本身不是正式放行。放行綁定應用程式、版本內容與目標，變更須重新放行。單一授權部署人員可放行並執行，暫不強制雙人審批。
+保留舊版第 5 頁的三分支映射。三個分支各自建置，不主張同一份內容由 UAT 晉升 Production。接收器與 importer 用 GitLab API 複核固定專案、精確 ref、pipeline source=push、非 tag、SHA、成功狀態與必要 jobs，再路由到三組固定 importer＋單環境 Classic Release。Webhook 與 queue 參數只是提示，不是可信任的環境判斷。
+ADO importer 儲存串接程式的 repository branch（例如 main）不等於 GitLab 來源分支；不得以 ADO Build.SourceBranch 或原生 build branch filter 推論來源環境。SIT/UAT 自動觸發，Production 關閉 artifact 自動 release trigger，授權人員選固定 importer build 建立 release、手動 stage 並通過 pre-deployment approval。開發者不能編輯部署定義、批准者或 Agent 資源繞過控制；只限制手動 Deploy 按鈕並不足夠。單人放行並執行符合目前需求。
+https://learn.microsoft.com/en-us/azure/devops/pipelines/release/triggers?view=azure-devops-2022
+https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/approvals?view=azure-devops-2022
 -->
 
 ---
 
-# 建置產物交接：輪詢發現版本，API 下載檔案
-> 採部署側輪詢＋GitLab API；Webhook 可作通知，但不搬運檔案
-
-```mermaid
-flowchart LR
-%% @name artifact-handoff
-%% @lane gitlab 0 0 290 260
-%% @lane cd 340 0 540 260
-subgraph gitlab["GitLab：建置及保存版本"]
- A["三個來源分支<br/>產出換版檔案"]
-end
-subgraph cd["ADO 主方案／Rundeck 備案"]
- B["定時輪詢<br/>GitLab API 查詢"]
- C["API 下載指定產物<br/>核對版本與內容"]
- D["ADO 轉存產物<br/>Rundeck 保存候選"]
-end
-%% @node A 20 90 250 90
-%% @node B 370 45 220 80
-%% @node C 370 165 220 80
-%% @node D 645 165 210 80
-%% @ports B A left top
-%% @route B A 315 85 315 80 145 80
-%% @ports A C bottom left
-%% @route A C 145 205
-%% @label B A 185 45 160
-%% @label A C 195 215 145
-%% @label C D 550 135 140
-B -->|"API 查詢成功建置"| A
-B --> C
-A -->|"API 下載檔案"| C
-C -->|"固定版本交接"| D
-class B control
-class D target
-classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
-classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
-```
-
-## 串接方式
-- 輪詢發現版本、API 下載檔案；需部署側串接程式，非原生直連。
-
-<!-- notes
-本頁以官方文件查證功能可行性，不宣稱完成現場整合測試。Polling 是定時發現新版本的方法，GitLab REST API 才是查詢與下載介面；Webhook 只通知建置事件，不搬運 ZIP，也不代表正式放行。圖中 B→A 表示部署側發起查詢；A→C 表示經 API 取回檔案，下載仍由部署側主動發起。
-在 ADO 管理端排程受保護的 Collector Build（它本身不作 Release 產物來源），定時查詢 GitLab，只有發現新候選才排入對應 Import Build（透過 Server Build Queue REST API）；Import Build 在管理端 Agent 重新核對 GitLab metadata、下載檔案並用 PublishBuildArtifacts@1 轉存 Server Build Artifacts。避免每次無更新的輪詢都建立可觸發 Release 的成功空 Build。Collector 與 Importer 是需自行實作的串接程式；不是 ADO Server 原生的 GitLab Artifact source。兩者不在 Production 執行、不持有 Production 部署／核准權；GitLab 唯讀 Token 只放管理端。排入 Build 的 API 權限僅限固定 Import definitions，不能執行 Production Release。
-建立三組受保護的 Import Build＋Classic Release：master／SIT、pre-production／UAT、production／Production。各 Importer 固定查對應的 GitLab ref，Release 綁定該 Import Build 的確切版本。ADO 自己存放串接程式的 repository branch（例如 main）不是 GitLab 來源分支，不能拿 Build.SourceBranch 直接當原 GitLab 環境分流。SIT／UAT 啟用 importer Artifact 的 CD trigger 與 After release 自動 stage；Production 關閉 Artifact 自動 release trigger，指定 Deployer 選 Import Build 建立 release，stage 設 Manual only、指定 pre-deployment approvers，限制定義／觸發／核准者與 Agent 資源的修改。放行前不先將正式檔案送入 Production。
-Rundeck 備案：由受控排程 Collector 使用相同 GitLab API 與驗證規則保存候選，固定 master／pre-production 對應 SIT／UAT Jobs 自動執行，Production Job 不排程，僅 Deployer 能選定候選並 RUN。OSS 不被描述為自動具備 ADO 等同的審批產品能力。
-GitLab API（省略 host，前綴 /api/v4）：GET /projects/P/pipelines?ref=master&source=push&status=success&order_by=id&sort=desc；GET /projects/P/pipelines/L；GET /projects/P/pipelines/L/jobs?scope[]=success&include_retried=false；GET /projects/P/jobs/J；GET /projects/P/jobs/J/artifacts。重驗固定專案、確切來源 ref、pipeline success、source=push、job.tag=false、commit SHA、允許的產物 Job 名稱與 job/pipeline 關聯。不信任 webhook、使用者輸入或 ZIP manifest 自行宣稱的 branch／environment。排除 MR、tag、child 等未允許來源。以 project/pipeline/job ID 鎖定內容，不使用正式部署時會變動的 latest 下載。
-需設計去重、順序、鎖、失敗重試與保留：保存 job→candidate/import build 的對應，不因重複輪詢重複部署；較舊 pipeline 晚完成不覆蓋較新版本；GitLab 產物到期前先轉存，保留來源、hash 與回滾所需內容。Job ID 固定不等於檔案永不刪除。處理外層 Artifact ZIP 與內層應用程式 ZIP，驗證路徑／大小／內容，不能直接執行開發者提供的特權部署腳本。
-Webhook 可改為 GitLab → 受控接收端 → 驗證 secret 與事件 → API 重查及下載，仍需自製接收程式與重放／去重防護。初步採輪詢以減少新進站服務與 GitLab 持有 CD 執行權限的需求；不推薦把可部署 Production 的 ADO／Rundeck Token 放在開發者可控的 CI Job。
-完整查證及版本邊界見 docs/research/gitlab-cd-artifact-handoff.md。參考 API 版本以 ADO Server 2022／REST 7.0 為基準；實際版本、任務、排程及有效 ACL 仍需現場測試。
-官方來源：
-https://docs.gitlab.com/api/pipelines/
-https://docs.gitlab.com/api/jobs/
-https://docs.gitlab.com/api/job_artifacts/
-https://docs.gitlab.com/user/project/integrations/webhooks/
-https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/queue?view=azure-devops-rest-7.0
-https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/publish-build-artifacts-v1?view=azure-pipelines-server
-https://learn.microsoft.com/en-us/azure/devops/pipelines/release/artifacts?view=azure-devops-server
-https://learn.microsoft.com/en-us/azure/devops/pipelines/release/triggers?view=azure-devops-server
-https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/approvals?view=azure-devops-server
-https://docs.rundeck.com/docs/manual/document-format-reference/job-yaml-v12.html
-https://docs.rundeck.com/docs/api/#running-a-job
--->
-
----
-
-# 正式環境共通流程：授權選版放行，再執行換版
-> ADO 為主方案（已有內部運行先例），Rundeck 為備案
-
-```mermaid
-flowchart LR
-%% @name common-deployment
-%% @lane candidate 0 0 220 260
-%% @lane ops 245 0 360 260
-%% @lane prod 630 0 250 260
-subgraph candidate["已交接的候選版本"]
- A["版本已驗證<br/>固定來源與內容"]
-end
-subgraph ops["授權部署部門"]
- P["部署人員<br/>選版並放行"]
- B["部署系統<br/>ADO 主／Rundeck 備"]
-end
-subgraph prod["正式環境"]
- C["Windows<br/>執行授權換版"]
-end
-%% @node A 20 145 180 80
-%% @node P 285 42 280 70
-%% @node B 285 145 280 80
-%% @node C 655 145 200 80
-%% @label A B 185 114 115
-%% @label B C 548 114 132
-A -->|"固定版本"| B
-P --> B
-B -->|"授權工作"| C
-class P control
-class C target
-classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
-classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
-```
-
-## 共通原則
-- 放行綁定確切版本與目標；兩套方案擇一，執行方式見下一頁。
-
-<!-- notes
-合併原第 7／8 頁，只說明正式部署的共通操作與責任，不重複描述兩套執行機制。第 6 頁先交接並保存已驗證候選；本頁由授權部署人員選定版本、目標並放行，部署系統再安排 Windows 換版。SIT／UAT 自動流程仍依第 5 頁環境政策；本頁人工放行圖專指 Production。ADO 是主方案，有其他部門已在運行的先例；Rundeck 是替代備案，不要求兩套串接或同時操作同一正式主機。先例不等於本專案正式上線驗收。
-圖中箭頭是版本／工作交接方向，不是完整網路拓撲。實際差別統一放在第 8 頁：ADO 的專用 Agent 主動連 Server 取工作，在本機執行；Rundeck 管理端透過 HTTPS WinRM／PSRP 呼叫 JEA 受限入口，Windows 執行允許的部署功能。此為本案路線，不宣稱 Rundeck 只能遠端操作。
-帳號、工作定義、Agent／遠端入口、憑證及必要特權均由授權部門控管；不開放一般管理 shell，不把 Target 放一般 CI pool，也不因方便授予 Administrator／SYSTEM。Agent 不是安全沙箱，JEA 亦不取代完整 OS 權限與部署定義保護。GitLab 唯讀 Token 留管理端，不放正式目標。
-官方架構：https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/agents?view=azure-devops-server
-Deployment Group：https://learn.microsoft.com/en-us/azure/devops/pipelines/release/deployment-groups/?view=azure-devops-server
--->
-
----
-
-# 核心差異：主機主動取工作，或管理端遠端下指令
-> 兩者最後都在 Windows 執行；差別是工作如何交付與受控
-
-```mermaid
-flowchart LR
-%% @name execution-models
-%% @lane ado 0 0 880 130
-%% @lane rundeck 0 145 880 130
-subgraph ado["主方案 ADO：Agent 主動取得工作"]
- A["ADO Server<br/>保存授權工作"]
- B["主機內的 Agent<br/>執行部署腳本"]
- C["應用程式<br/>完成換版"]
-end
-subgraph rundeck["備案 Rundeck：管理端發起遠端操作"]
- D["Rundeck<br/>執行授權工作"]
- E["主機的受限入口<br/>接收部署指令"]
- F["應用程式<br/>完成換版"]
-end
-%% @node A 20 50 250 72
-%% @node B 445 50 210 72
-%% @node C 730 50 130 72
-%% @node D 20 195 250 72
-%% @node E 445 195 210 72
-%% @node F 730 195 130 72
-%% @label B A 290 54 135
-%% @label D E 290 199 135
-B -->|"主動取工作"| A
-B --> C
-D -->|"遠端下指令"| E
-E --> F
-class B,E control
-class C,F target
-classDef control fill:#FFF1DA,color:#80501F,stroke:#C57227
-classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
-```
-
-## 操作與維運差異
-- ADO 要管理 Agent；Rundeck 要管理遠端入口、連線與憑證。
-
-<!-- notes
-本圖上半部 B→A 表示 Agent 主動連線取得授權工作，並不表示把部署任務送回 Server；取回工作後 B→C 在同一正式主機本機執行。下半部 D→E 表示 Rundeck 發起遠端部署請求，E→F 仍在正式主機本機執行。兩條路線都是由授權部門管理，不允許開發側直接存取 Production。ADO 不因使用 Agent 就自動更安全；Rundeck 也不因遠端操作就等於提供一般管理權。前者需維護 Agent 安裝更新、服務身份與專用部署資源；後者需維護遠端端點、憑證、限定命令及連線可用性。結果、日誌及部署責任皆需回報控制面。多台 Target 的 ADO Agent 各自執行；Rundeck 依 Target 逐台遠端執行，兩者均可採逐台健康驗證與失敗停止策略。
--->
-
----
-
-# 工作到達主機後，換版步驟其實相同
-> 準備指定版本、執行切換、檢查結果；失敗時回復
+# 放行後才送入正式主機，換版失敗須能復原
+> 固定版本 → 準備檔案 → 切換 → 健康檢查 → 留存結果
 
 ```mermaid
 flowchart LR
 %% @name release-lifecycle
  A["部署人員<br/>選版並放行"]
- B["準備檔案<br/>驗證版本內容"]
+ B["Agent 取檔<br/>驗證版本內容"]
  C["執行換版<br/>切換程式版本"]
  D{"健康檢查<br/>是否正常？"}
  E["換版完成<br/>留存執行紀錄"]
@@ -358,38 +230,52 @@ classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
 classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
 ```
 
-## 不同的是執行入口
-- ADO 由 Agent 本機執行；Rundeck 遠端呼叫受限功能；皆需設計復原。
+## 執行原則
+- 每台主機由部署 Agent 執行受控腳本；記錄人員、版本、目標與結果。
 
 <!-- notes
-此為目標換版流程，不代表兩產品原生自動具備完整回滾或原子交易。放行後，準備指定版本、核對來源／hash，保存目前版本與復原所需資料，依應用程式需求停止或切換服務、套用版本與環境設定、重新啟動並健康驗證。成功記錄版本、人員、目標與結果。若換版或驗證失敗，依既定程序回復可用版本；若復原仍失敗，停止並通知負責人，不顯示成功。停止／啟動服務只是可能方式，不承諾零停機；不同 IIS／Windows Service 應用須各自設計。Agent 執行能力與遠端命令執行能力都不自動提供回滾，需事先設計並驗證腳本及保留資料。
+保留並調整舊版第 9 頁。放行前產物只在管理區保存，不能預拷到 Production（包含 Agent 工作目錄）；放行後部署 Agent 取固定 importer build 的 artifact，重新核對內容 hash，保存目前版本與復原資料，再依 IIS／Windows Service 的需求停止或切換、套用環境設定、啟動及健康驗證。不承諾零停機或跨主機原子交易。
+換版或健康檢查失敗時，依事先驗證的腳本回復前一可用版本並檢查；復原失敗則停止並通知負責人，不能記為成功。資料庫／資料格式變更須另設相容與資料復原方案，不能把回復程式檔案等同資料回滾。多台逐台執行、失敗停止後續換版，是否回復已成功目標由授權人員依既定程序決定。部署鎖避免同一目標衝突，晚到舊版本不可自動降版；顯式授權的回復另留紀錄。Agent 與 ADO 不會自動提供應用程式專用的復原，腳本、資料保留及演練必須實作。
 -->
 
 ---
 
-# 不論主方案或備案，正式換版都要安全且可復原
-> ADO 為主要路線，Rundeck 備用；不能省略同一套部署要求
+# 建議以 12/31 為目標，逐關驗證後再正式上線
+> 暫定里程碑順序；各階段日期與資源由相關部門共同確認
 
-## 權限要擋得住
-- 未授權人員不能送檔或觸發正式換版。
-- 開發者可控內容不能替換特權部署指令。
-- 能辨識真正的放行人員。
+```mermaid
+flowchart LR
+%% @name proposed-timeline
+ A["01｜POC<br/>驗證通知與權限"]
+ B["02｜協調架構部門<br/>安裝／配置 ADO"]
+ C["03｜整合 GitLab<br/>串接通知與產物"]
+ D["04｜SIT<br/>整合與例外測試"]
+ E["05｜UAT<br/>驗收與復原演練"]
+ F["06｜Production<br/>目標 12/31"]
+%% @node A 0 15 260 90
+%% @node B 310 15 260 90
+%% @node C 620 15 260 90
+%% @node D 620 175 260 90
+%% @node E 310 175 260 90
+%% @node F 0 175 260 90
+A --> B
+B --> C
+C --> D
+D --> E
+E --> F
+class F target
+classDef target fill:#087F8C,color:#ffffff,stroke:#087F8C
+```
 
-## 版本要對得上
-- 放行後出現新版本，仍部署原先選定的版本。
-- 檔案遭替換或內容不符時，拒絕部署。
-- 同一主機不會同時進行衝突換版。
-
-## 失敗要救得回
-- 換版後確認應用程式正常。
-- 多台逐台執行；失敗停止後續換版。
-- 能回滾或受控復原，不把未知狀態當成功。
+## 上線門檻
+- POC 先證明「未放行不能送檔」；驗收與復原演練通過後，才申請正式上線。
 
 <!-- notes
-本頁作為簡報收束，保留共同治理要求，不另設合規角色矩陣、階段選型路線或會議決議頁。正式服務帳號、網路、稽核保留與職責分離依組織政策；本簡報不宣稱已合規。開發者修改 repo／Artifact 的腳本不能變成未受審查的特權部署命令。版本名稱固定不等於內容固定，執行前須核對被放行內容。多主機失敗時先恢復失敗目標，再由部署人員決定是否回滾已成功目標，不承諾跨主機原子交易或全群自動回滾。
-ADO Classic Release 自動部署不檢查 release creator 的 Manage deployments 權限；正式流程不能只禁止手動 Deploy，要保護自動觸發、工作定義、批准者及 Agent 資源權限。此為治理實作注意事項，不是 Express 版本限制。不得直接套用 Azure DevOps Services 的 YAML Approvals and Checks 作為 Server 的能力承諾。
-官方來源：https://learn.microsoft.com/en-us/azure/devops/organizations/security/permissions?view=azure-devops-server
-https://learn.microsoft.com/en-us/azure/devops/pipelines/policies/permissions?view=azure-devops-server
-https://learn.microsoft.com/en-us/azure/devops/pipelines/release/approvals/approvals?view=azure-devops-server
-https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals?view=azure-devops-server
+依使用者授權提出暫定階段，不是跨部門承諾。截止目標是 12/31，年份未指定，階段起迄日、工期、資源與正式核准均待共同確認。若必要驗收未通過，應調整範圍／資源或重新協調時程，不能因日期目標繞過上線門檻。
+01 POC：使用隔離的 Express 評估環境，驗證 success webhook、受控 importer、最小 ACL、Production 零預拷、三分支分流與失敗復原。此處先使用評估環境，02 才與主機／Server 團隊（架構部門）協調受管理的 ADO 安裝，不暗示尚未安裝就可跑 POC。
+02 協調：確認架構、主機、網路／TLS、服務帳號、管理責任、備份與監控；Express 僅為 POC 起點，正式版本另行確認。
+03 整合：完成受保護接收器、管理 Agent、固定 importer／Release、目標 Agents、產物保留與稽核串接。
+04 SIT：三環境路由、偽造事件拒絕、重送／亂序／中斷復原、版本一致性與權限負向測試。
+05 UAT：由授權部署人員驗收選版放行、操作紀錄與實際應用的回復演練。
+06 Production：依組織程序取得上線批准，先試辦再觀察；目標 12/31，不代表目前已批准。所有詳細 go/no-go 條件見 docs/research/gitlab-ado-event-trigger.md。
 -->

@@ -8,11 +8,25 @@
 - [Mermaid／draw.io 圖源](diagrams/README.md)
 - [簡報設計研究與官方參考資料](../research/presentation-design-guidance.md)
 
-**v0.5：共 10 頁，包含首頁封面，無附錄；8 頁使用流程圖／責任泳道。** 面向非開發讀者，以「誰建置、誰放行、如何在正式主機完成換版」為主線。ADO 為主方案，Rundeck 為備案。第 5 頁展示 `master → SIT`、`pre-production → UAT`、`production → Production`；第 6 頁說明部署側輪詢、GitLab API 下載與受控產物匯入。第 7 頁合併 ADO／Rundeck 的正式部署共通流程，第 8 頁集中比較 Agent 主動取工作與受限遠端操作。
+**v0.6：共 7 頁＝封面＋議程＋5 頁內容（含時程），無附錄。** 面向非開發讀者，只討論 Azure DevOps Server，Express 作為 POC 起點，不預定正式採購版本。
 
-[串接可行性查證](../research/gitlab-cd-artifact-handoff.md) 依 GitLab、Microsoft 與 Rundeck 官方文件，區分支援的產品功能和必須自行實作的 Collector／Importer。推薦受保護的排程 Collector，只在新候選出現時排入固定 ADO Import Build，轉存 Server Build Artifacts 後接 Classic Release；SIT／UAT 自動，Production 由指定人員建立 Release 並放行。不把 ADO repository 的 `main` 當成 GitLab 來源分支。查證不是現場整合測試。
+| 頁 | 主旨 |
+|---|---|
+| 1 | 封面：保留 GitLab 建置，正式換版由授權部門掌握 |
+| 2 | 議程：原因、架構、環境、換版與時程 |
+| 3 | 合併舊版第 2–3 頁：只送檔也算正式主機存取 |
+| 4 | 一張完整架構：成功通知、受控接收器、ADO、管理 Agent、部署人員、目標 Agent |
+| 5 | 三分支各自建置；SIT／UAT 自動，Production 人工選版放行 |
+| 6 | 放行後取檔、換版、健康檢查與復原 |
+| 7 | 建議時程：POC → 協調架構部門安裝 ADO → GitLab 整合 → SIT → UAT → Production |
 
-原第 9／11／12 頁已移除，不以個人提前測試的環境狀態或測試版限制作為對外敘事。其他部門 ADO 的運行先例是主要規劃方向的背景，不等於本提案已獲正式上線批准。
+使用單張架構圖的 ①～⑤ 帶領說明，不增加重複頁或動畫頁。時程以 **12/31** 為目標，年份未指定；各階段日期、資源與上線批准待共同確認。
+
+[事件驅動串接查證](../research/gitlab-ado-event-trigger.md) 是本版架構依據：**GitLab 成功 webhook → 受保護接收器 → 固定 importer → Server Build Artifacts → Classic Release**。管理 Agent 執行匯入，每台 Windows 的專用 Deployment Group Agent 執行部署；正式放行前不得預拷。接收器／匯入驗證／可靠交接是需實作的邏輯，不宣稱原生 GitLab artifact 整合。Server 有 incoming webhook 支援，但 GitLab 驗證互通仍需另測；本版不依賴該互通性。
+
+CI job 直呼 Queue API 有文件化能力基礎，但存在 pipeline 尚未成功的競態及憑證暴露面，故不作首選。[前版輪詢研究](../research/gitlab-cd-artifact-handoff.md) 保留為歷史比較，不再是本版推薦。查證不是現場整合測試；有效 ACL、Express 安裝版行為與零預拷均列入 POC。
+
+不以個人測試環境狀態為對外敘事。其他部門已有 ADO 運行先例是規劃背景，不等於本案通過驗收。
 
 用途是跨部門討論可行性與合規要求，不是正式選型、合規認證或上線批准。技術細節、資料來源與證據範圍留在 Markdown／PPTX 講者備註，不另加附錄投影片。PDF 不含講者備註。
 
@@ -52,8 +66,8 @@ PPTX／PDF 使用同一份版面資料各自渲染，PDF 不是 PowerPoint 另�
 
 ## 品質檢查
 
-- PPTX／PDF 均為 10 頁，無附錄，逐頁具獨立標題與講者備註。
-- 8 份 Mermaid 圖源已通過 Mermaid 官方套件語法解析。
+- PPTX／PDF 均為 7 頁，無附錄，逐頁具獨立標題與講者備註。
+- 5 份 Mermaid 圖源已通過 Mermaid 官方套件語法解析。
 - PDF 中文可選取、字型已嵌入；正文／圖中文字至少 18 pt，頁眉頁腳除外。
 - 已檢視 PDF 全頁縮圖與重點流程圖；PPTX 使用原生圖形／箭頭，無整頁圖片。
 - 未使用桌面 PowerPoint 播放，也未在 diagrams.net UI 中逐圖匯入檢查；會前請在簡報電腦確認字型與版面。

@@ -8,7 +8,7 @@
         <mxCell id="A" value="部署人員&lt;br/&gt;選版並放行" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FFF1DA;fontColor=#754519;strokeColor=#C57227;">
           <mxGeometry x="0.0" y="40.0" width="180.0" height="90.0" as="geometry" />
         </mxCell>
-        <mxCell id="B" value="準備檔案&lt;br/&gt;驗證版本內容" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+        <mxCell id="B" value="Agent 取檔&lt;br/&gt;驗證版本內容" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
           <mxGeometry x="220.0" y="40.0" width="180.0" height="90.0" as="geometry" />
         </mxCell>
         <mxCell id="C" value="執行換版&lt;br/&gt;切換程式版本" vertex="1" parent="1" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">

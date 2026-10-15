@@ -5,20 +5,20 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="dev" value="開發部門" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+        <mxCell id="dev" value="開發部門：建置候選版本" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
           <mxGeometry x="0.0" y="0.0" width="420.0" height="260.0" as="geometry" />
         </mxCell>
-        <mxCell id="prod" value="僅指定部門可存取" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
+        <mxCell id="prod" value="正式環境：僅指定部門可存取" vertex="1" parent="1" style="swimlane;horizontal=1;startSize=34;fillColor=#E4EBF3;swimlaneFillColor=#FFFFFF;fontSize=18;fontStyle=1;strokeColor=#DCE5EE;">
           <mxGeometry x="465.0" y="0.0" width="415.0" height="260.0" as="geometry" />
         </mxCell>
-        <mxCell id="A" value="開發人員&lt;br/&gt;提交程式碼" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
-          <mxGeometry x="25.0" y="95.0" width="160.0" height="80.0" as="geometry" />
+        <mxCell id="A" value="開發人員&lt;br/&gt;提交程式碼" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FFF1DA;fontColor=#754519;strokeColor=#C57227;">
+          <mxGeometry x="20.0" y="95.0" width="170.0" height="80.0" as="geometry" />
         </mxCell>
-        <mxCell id="B" value="GitLab CI&lt;br/&gt;產出換版檔案" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
-          <mxGeometry x="225.0" y="95.0" width="165.0" height="80.0" as="geometry" />
+        <mxCell id="B" value="GitLab Runner&lt;br/&gt;建置／測試" vertex="1" parent="dev" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#142C42;fontColor=#FFFFFF;strokeColor=#142C42;">
+          <mxGeometry x="225.0" y="95.0" width="175.0" height="80.0" as="geometry" />
         </mxCell>
-        <mxCell id="C" value="Production&lt;br/&gt;正式主機" vertex="1" parent="prod" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#087F8C;fontColor=#FFFFFF;strokeColor=#087F8C;">
-          <mxGeometry x="150.0" y="95.0" width="200.0" height="80.0" as="geometry" />
+        <mxCell id="C" value="Production 主機&lt;br/&gt;送檔也算存取" vertex="1" parent="prod" style="rounded=1;arcSize=8;html=1;whiteSpace=wrap;fontSize=20;fontStyle=1;fillColor=#FCE8E6;fontColor=#922A2A;strokeColor=#A63030;">
+          <mxGeometry x="90.0" y="95.0" width="295.0" height="80.0" as="geometry" />
         </mxCell>
         <mxCell id="edge-0" value="" edge="1" parent="1" source="A" target="B" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=18;strokeColor=#087F8C;">
           <mxGeometry relative="1" as="geometry" />
