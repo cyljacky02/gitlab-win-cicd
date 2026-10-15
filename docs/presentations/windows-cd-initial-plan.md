@@ -83,11 +83,13 @@ ADO 全名 Azure DevOps Server；Express 為 POC 起點，Server 2022／REST 7.0
 Production 關閉 artifact 自動 release trigger，授權人員選確切 importer build、應用與目標建立 Classic Release，stage 設 Manual only 與具名 pre-deployment approval；允許同一人發起與放行。任何版本／目標變更須重新放行。SIT/UAT 的三分支分流留下一頁說明。
 放行後，各 Windows Target 上的專用 Deployment Group Agent 才取指定工作與產物，在本機執行受保護的部署腳本。Agent 主動連 ADO 取工作；派工箭頭不代表 Server 主動登入 Windows。放行前不得預拷，包含 Production Agent 工作目錄。管理 Agent 與目標 Agent 必須隔離帳號、pool／Deployment Group、主機與憑證，不能執行開發者提供的特權部署腳本。
 Production 圖示 01、02、…、N，可涵蓋數十台主機；不代表所有主機同時換版，也不是 Agent 互相傳檔。暫建議逐台或受控分批，健康後繼續，任一失敗停止後續目標；批次大小、最低容量、先前成功目標是否回復仍待確認。不承諾零停機或跨主機原子交易。
+下半部更新為白話版並統一使用 ①～⑧ 圈號：① 取得已放行版本 → ② 下 F5 → ③ 停止服務 → ④ 備份舊版本 → ⑤ 安裝新版本 → ⑥ 重啟服務 → ⑦ 服務正常？ → ⑧ 上 F5。失敗路徑是還原舊版本、重啟與再檢查；成功恢復後仍記本次換版失敗。原本的鎖、前置閘門、有效備份、流量狀態核對與例外要求仍需實作，僅不放進主流程的長標籤。Agent／主機失聯不是同一個 Agent 能保證自動復原的情況，須另有監控及受控人工／獨立復原手段。
 下半部對每個核准目標重複：放行後下載／驗證、部署鎖與前置檢查 → 下 F5 並確認流量隔離條件 → 停止服務 → 備份目前版本 → 執行換版 → 重啟服務 → 檢查狀態。正常才上 F5，確認恢復成功後記錄新版本完成。
 換版、啟動或健康檢查失敗時，保持隔離，依受控腳本停止失敗版本、回復有效備份、重啟，再做復原健康檢查；正常才上 F5 並記錄「換版失敗、復原成功」，不能記為新版本部署成功。復原不健康或無可用備份時，保持隔離、停止後續換版、告警並交人員處理。
 下 F5／隔離確認失敗時不能繼續停止服務；停止或備份失敗時不能覆寫版本，由受控復原／人工程序決定後續。上 F5 操作或確認失敗不能算完成。檔案備份不等於資料庫回復，資料相容與復原另行設計。服務停止／重啟需依 IIS／Windows Service 細化。備份與復原腳本必須演練，ADO／Agent 不自動提供完整應用復原。
 安全與可靠性驗收：測試 PAT／definition ACL／群組繼承、queue 參數與來源覆寫、build service／OS 身分、特權腳本保護；測試事件偽造、重送、晚到舊版本、Queue 回應遺失、產物到期、零預拷、拒絕或復原失敗時不恢復流量。版本、人員、目標、hash 與結果可追溯。
 完整串接依據：docs/research/gitlab-ado-event-trigger.md。
+換版／復原可行性查核：docs/research/windows-release-recovery-feasibility.md。官方支援核准、指定 Build Artifact、Deployment Group 與 PowerShell／失敗條件，但不內建本案完整 rollback。POC 建議受保護 PowerShell 控制腳本換版失敗時嘗試復原，復原成功也保留原部署 failed；不要在 finally 無條件上 F5。Agent／主機失聯時需獨立監控及復原手段。限制同時部署比例不等於保證失敗停止所有後續主機；初期採單台 canary，下一台另設成功相依／人工放行，正式 fail-stop 需驗證或受控編排。匯入完成後，部署與退版不必再回 GitLab 取 latest。上述為文件查證，未完成實機 POC。
 https://c4model.com/diagrams/notation
 https://learn.microsoft.com/en-us/azure/well-architected/architect-role/design-diagrams
 https://docs.gitlab.com/user/project/integrations/webhook_events/#pipeline-events

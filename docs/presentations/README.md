@@ -8,6 +8,7 @@
 - [Mermaid／draw.io 圖源](diagrams/README.md)
 - [架構圖 draw.io 原檔](diagrams/windows-deployment-map.drawio) · [高清 PNG](diagrams/windows-deployment-map.png) · [可放大向量 PDF](diagrams/windows-deployment-map.pdf)
 - 拆分原檔：[上半部部署架構](diagrams/windows-deployment-architecture.drawio) · [下半部換版／復原](diagrams/windows-target-release-flow.drawio)（[PNG／PDF 索引](diagrams/README.md)）
+- [換版與復原可行性查核](../research/windows-release-recovery-feasibility.md)：工具鏈可支援，但備份／健康檢查／F5／退版與跨主機失敗停止需受控腳本及編排；尚未實機驗證。
 - [端到端架構圖設計研究](../research/end-to-end-architecture-diagram-design.md)
 - [簡報設計研究與官方參考資料](../research/presentation-design-guidance.md)
 
@@ -23,7 +24,7 @@
 | 6 | 放行後取檔、換版、健康檢查與復原 |
 | 7 | 建議時程：POC → 協調架構部門安裝 ADO → GitLab 整合 → SIT → UAT → Production |
 
-第 4 頁中間管理區以「收到成功通知 → 取得並保存版本 → 選版、選目標、確認放行」三段流程呈現；接收器、API、Importer、hash 等實作細節移到講者備註，不代表移除這些必要角色。左右兩區與單台換版／復原流程保持不變。
+第 4 頁中間管理區以「收到成功通知 → 取得並保存版本 → 選版、選目標、確認放行」三段流程呈現；接收器、API、Importer、hash 等實作細節移到講者備註，不代表移除這些必要角色。左右兩區保持不變；單台換版／復原圖另改為白話動作與 ①～⑧ 圈號，實作限制留在備註。
 
 第 4 頁以 ①～⑧ 說明上半部架構，下半部展開每台 Target 的換版／復原；不增加頁數。使用者已確認「下／上 F5」為退出／恢復負載平衡流量。具體模式、連線等待、控制身分與位置仍待確認。多機畫成 01、02、…、N，建議逐台且失敗停止後續，批次與最低容量待定。復原成功不等於新版本部署成功；復原失敗保持隔離、告警，不回池。
 
