@@ -32,7 +32,7 @@ v0.7 共 5 張圖：第 4 頁為獨立 draw.io 主圖，其餘四張仍由簡報
 
 ## 圖意與限制
 
-- 上半部：開發／CI → 受控接收器 → ADO importer 與固定版本 → 人員放行 → 各 Windows Target。下半部：對每個核准目標重複的單台換版／退版流程。
+- 上半部管理區簡化為「收到成功通知 → 取得並保存版本 → 部署人員選版／選目標、確認放行」，保留開發／CI 與 Production 兩區。圖中「ADO 管理側」涵蓋實際接收器與管理 Agent 的角色，不是宣稱 Server 本機包辦或 GitLab 原生直連；API、Importer、驗證與權限細節保留在第 4 頁講者備註及串接研究。下半部仍為每個核准目標的單台換版／退版流程，未變更。
 - 01、02、…、N 可表示數十台；不是所有主機同時部署或主機間互傳檔案。建議逐台，失敗停止後續；批次與最低容量待定。
 - 虛線為控制／授權、實線為程式碼／產物、粗線為 F5 應用流量，另有文字圖例；責任區不等於已驗證的網段或 ACL。
 - 工作箭頭**不是完整網路拓樸**。管理 Agent 主動下載 GitLab artifact，所有 ADO Agents 主動連 Server 取工作；正式放行前不預拷。
@@ -42,7 +42,7 @@ v0.7 共 5 張圖：第 4 頁為獨立 draw.io 主圖，其餘四張仍由簡報
 
 ## 載入相容性檢查
 
-已修正 `setId is not a function`：mxGraph codec 使用陣列作 ID cache，裸 ID `push` 與陣列方法撞名。主圖的自訂 cell ID 及全部引用已統一使用 `wdm-` 前綴；內容、座標及圖面未改。已用 mxGraph 4.2.2 真正解碼、檢查 122 個 cell 的 parent/source/target，再重新編碼／解碼驗證；這不是僅驗 XML 格式，也不等於已用目前 diagrams.net GUI 完整驗證。
+已修正 `setId is not a function`：mxGraph codec 使用陣列作 ID cache，裸 ID `push` 與陣列方法撞名。主圖的自訂 cell ID 及全部引用已統一使用 `wdm-` 前綴；內容、座標及圖面未改。已用 mxGraph 4.2.2 真正解碼、檢查所有 cell 的 parent/source/target，再重新編碼／解碼驗證；這不是僅驗 XML 格式，也不等於已用目前 diagrams.net GUI 完整驗證。
 
 回歸測試（repo 根目錄，需 Node.js）：
 

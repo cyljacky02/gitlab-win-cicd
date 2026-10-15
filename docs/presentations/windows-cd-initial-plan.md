@@ -71,9 +71,10 @@ classDef blocked fill:#FCE8E6,color:#A63030,stroke:#A63030
 # Windows 正式部署：從提交程式碼到多機換版與復原
 > 放行指定版本後才部署；健康才恢復 F5 流量，復原失敗保持隔離
 
-![Windows 正式部署端到端架構：開發人員提交 GitLab，Runner 建置測試，成功事件通知受控接收器，ADO 管理 Agent 匯入固定產物，授權部署人員放行，由多台 Windows Target 的 Agent 換版；下方展開退出 F5、停服務、備份、換版、重啟、健康檢查與退版分支。](diagrams/windows-deployment-map.png)
+![Windows 正式部署端到端架構：開發人員提交 GitLab，Runner 建置測試；成功後透過串接通知 ADO，管理側下載並保存可選版本，部署人員選版、選目標並放行，由多台 Windows Target 的 Agent 執行；下方展開 F5 換版與復原流程。](diagrams/windows-deployment-map.png)
 
 <!-- notes
+本頁管理區改以三段關係說明：「成功通知 → 取得並保存版本 → 人員選版／選目標、確認放行」。這是簡化的業務流程視圖，不是取消中間串接元件；ADO 管理側包含受保護接收器及管理 Build Agent，不能將平台標題誤讀成全部由 ADO Server 本機執行或已有原生 GitLab 直連。技術細節保留於以下備註及研究文件，不要求所有聽眾理解 API、Importer 或 hash。
 本頁 v0.7 改為完整架構圖圖片，PPTX 中是高解析圖片，可編輯節點、容器與連線的原檔為 docs/presentations/diagrams/windows-deployment-map.drawio；獨立 PDF 可放大閱讀。圖內主架構與單台換版流程是兩個明確分隔的視圖，不是假裝一張純網路拓樸。圖面研究見 docs/research/end-to-end-architecture-diagram-design.md。
 使用者確認：替換第 4 頁；「下 F5／上 F5」分別表示將目標服務退出／恢復負載平衡流量。具體 pool/member、Disabled 或 Forced Offline、連線等待／逾時、F5 操作位置與身分仍待網路及主機團隊確認。不能從圖推論每台 Agent 持有 F5 管理權；實作時需接上受保護、可稽核的維護操作。F5 流量線指向應用，不是 Agent；一台主機可能有多個 pool members，須確認完整範圍。
 上半部是交付架構：開發人員 push GitLab CE；GitLab 編排 CI，GitLab Runner 建置／測試並上傳 artifact。GitLab pipeline 成功事件通知受保護接收器，接收器驗證、耐久入列、API 複核後，以 Queue Build REST API 排入固定 importer。接收器與驗證／去重邏輯需實作，不是原生 GitLab artifact connector，也不需要新增 GitLab Runner。

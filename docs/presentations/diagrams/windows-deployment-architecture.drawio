@@ -50,47 +50,32 @@
         <mxCell id="wdm-uploadlabel" value="上傳產物" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="345" y="615" width="200" height="36" />
         </mxCell>
-        <mxCell id="wdm-receiver" value="受保護自訂接收器&#10;認證／去重／耐久入列&#10;GitLab API 複核" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
-          <mxGeometry as="geometry" x="50" y="210" width="360" height="105" />
+        <mxCell id="wdm-adoplatform" value="Azure DevOps Server｜部署管理平台" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=36;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
+          <mxGeometry as="geometry" x="50" y="90" width="760" height="60" />
         </mxCell>
-        <mxCell id="wdm-queue" value="ADO Server&#10;Queue Build API&#10;固定 importer" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
-          <mxGeometry as="geometry" x="480" y="210" width="350" height="105" />
+        <mxCell id="wdm-receiver" value="③ 收到成功通知&#10;開始準備版本&#10;不會直接部署" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=30;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
+          <mxGeometry as="geometry" x="50" y="195" width="330" height="180" />
         </mxCell>
-        <mxCell id="wdm-deployer" value="授權 Deployer｜選版＋目標" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#FFF3DC;strokeColor=#D5AF6B;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
-          <mxGeometry as="geometry" x="800" y="80" width="420" height="75" />
+        <mxCell id="wdm-store" value="④ 取得並保存版本&#10;管理側下載／確認&#10;⑤ 提供可選版本" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=30;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
+          <mxGeometry as="geometry" x="460" y="195" width="340" height="180" />
         </mxCell>
-        <mxCell id="wdm-release" value="Classic Release&#10;Manual only＋事前核准&#10;關閉產物自動觸發" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
-          <mxGeometry as="geometry" x="900" y="210" width="320" height="140" />
+        <mxCell id="wdm-deployer" value="⑥ 部署人員｜選版＋目標" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=29;fontColor=#17324D;fontStyle=1;fillColor=#FFF3DC;strokeColor=#D5AF6B;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
+          <mxGeometry as="geometry" x="830" y="80" width="390" height="75" />
         </mxCell>
-        <mxCell id="wdm-importer" value="管理 Build Agent｜Importer&#10;下載確切 job artifact&#10;驗 ZIP／hash／來源 manifest" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
-          <mxGeometry as="geometry" x="50" y="510" width="430" height="110" />
+        <mxCell id="wdm-release" value="⑦ 放行後執行部署&#10;使用選定版本&#10;只部署核准目標" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=30;fontColor=#17324D;fontStyle=1;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
+          <mxGeometry as="geometry" x="880" y="195" width="340" height="180" />
         </mxCell>
-        <mxCell id="wdm-store" value="ADO Server Build Artifacts&#10;固定 build 版本 • 不取 latest&#10;來源 SHA／job／hash 可追溯" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CBD7E3;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
-          <mxGeometry as="geometry" x="580" y="510" width="640" height="110" />
+        <mxCell id="wdm-webhooklabel" value="建置成功 → 串接通知 ADO" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="680" y="310" width="370" height="36" />
         </mxCell>
-        <mxCell id="wdm-webhooklabel" value="③ Pipeline success webhook&#10;成功通知 ≠ Production 放行" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="570" y="275" width="820" height="65" />
+        <mxCell id="wdm-approvelabel" value="確認放行" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1530" y="311" width="160" height="36" />
         </mxCell>
-        <mxCell id="wdm-queuelabel" value="④ 排入 importer" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1040" y="478" width="255" height="38" />
+        <mxCell id="wdm-artifactlabel" value="ADO 管理側下載 GitLab 產物" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=30;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="700" y="642" width="550" height="45" />
         </mxCell>
-        <mxCell id="wdm-assignlabel" value="派工（Agent 主動取工作）" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1040" y="557" width="430" height="40" />
-        </mxCell>
-        <mxCell id="wdm-requestlabel" value="⑤ API 請求確切 job" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="100" y="775" width="470" height="35" />
-        </mxCell>
-        <mxCell id="wdm-artifactlabel" value="⑤ 確切 artifact 內容返回" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="700" y="780" width="430" height="36" />
-        </mxCell>
-        <mxCell id="wdm-publishlabel" value="⑥ 發布固定 build 產物" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1120" y="620" width="750" height="36" />
-        </mxCell>
-        <mxCell id="wdm-approvelabel" value="⑦ 手動放行" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1450" y="315" width="240" height="40" />
-        </mxCell>
-        <mxCell id="wdm-selectlabel" value="綁定不可變版本&#10;與核准目標" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1480" y="550" width="260" height="70" />
+        <mxCell id="wdm-handoffnote" value="通知與產物交接需串接實作；建置成功 ≠ 正式部署放行" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=29;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-ops">
+          <mxGeometry as="geometry" x="50" y="605" width="1160" height="45" />
         </mxCell>
         <mxCell id="wdm-f5" value="F5 LB｜應用流量" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="wdm-prod">
           <mxGeometry as="geometry" x="360" y="90" width="390" height="85" />
@@ -143,10 +128,13 @@
         <mxCell id="wdm-worklabel" value="⑧ 已核准工作&#10;各 Agent 本機換版" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1880" y="225" width="400" height="70" />
         </mxCell>
+        <mxCell id="wdm-versionlabel" value="放行後取指定版本" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=29;fontColor=#2465A6;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1495" y="630" width="390" height="45" />
+        </mxCell>
         <mxCell id="wdm-downloadlabel" value="N 可為數十台；群組線不表示同時部署或主機間派送" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1970" y="795" width="755" height="33" />
         </mxCell>
-        <mxCell id="wdm-architectureguard" value="存取界線｜CI、接收器、管理 Agent 無 Production 存取；放行前不得預拷（含工作目錄）。Agent 主動連 ADO；箭頭為工作／資料語意，非入站連線。" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+        <mxCell id="wdm-architectureguard" value="存取界線｜建置與版本匯入不碰正式主機；放行前不得預拷。各 Target Agent 主動連 ADO 取工作，執行已授權的部署。" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="50" y="842" width="2700" height="38" />
         </mxCell>
         <mxCell id="wdm-legendheading" value="圖例" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
@@ -191,40 +179,24 @@
         <mxCell id="wdm-upload" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-runner" target="wdm-gitartifact">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
-        <mxCell id="wdm-webhook" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.3125;exitPerimeter=0;entryX=0.0;entryY=0.23809523809523808;entryPerimeter=0;" edge="1" parent="1" source="wdm-gitlab" target="wdm-receiver">
+        <mxCell id="wdm-webhook" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.3125;exitPerimeter=0;entryX=0.0;entryY=0.2222222222222222;entryPerimeter=0;" edge="1" parent="1" source="wdm-gitlab" target="wdm-receiver">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
-        <mxCell id="wdm-enqueue" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5238095238095238;exitPerimeter=0;entryX=0.0;entryY=0.5238095238095238;entryPerimeter=0;" edge="1" parent="1" source="wdm-receiver" target="wdm-queue">
+        <mxCell id="wdm-prepare" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-receiver" target="wdm-store">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
-        <mxCell id="wdm-assign" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-queue" target="wdm-importer">
+        <mxCell id="wdm-selectversion" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-store" target="wdm-release">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="wdm-approve" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5641025641025641;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-deployer" target="wdm-release">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="wdm-artifact" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.5;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-gitartifact" target="wdm-store">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1305" y="550" />
-              <mxPoint x="915" y="550" />
+              <mxPoint x="1280" y="710" />
             </Array>
           </mxGeometry>
-        </mxCell>
-        <mxCell id="wdm-request" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.046511627906976744;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-importer" target="wdm-gitartifact">
-          <mxGeometry as="geometry" relative="1">
-            <Array as="points">
-              <mxPoint x="720" y="820" />
-              <mxPoint x="85" y="820" />
-              <mxPoint x="85" y="710" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="wdm-artifact" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.7777777777777778;exitPerimeter=0;entryX=0.0;entryY=0.6363636363636364;entryPerimeter=0;" edge="1" parent="1" source="wdm-gitartifact" target="wdm-importer">
-          <mxGeometry as="geometry" relative="1" />
-        </mxCell>
-        <mxCell id="wdm-publish" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-importer" target="wdm-store">
-          <mxGeometry as="geometry" relative="1" />
-        </mxCell>
-        <mxCell id="wdm-approve" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.6190476190476191;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-deployer" target="wdm-release">
-          <mxGeometry as="geometry" relative="1" />
-        </mxCell>
-        <mxCell id="wdm-selectversion" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#A36716;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.828125;exitY=0.0;exitPerimeter=0;entryX=0.65625;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-store" target="wdm-release">
-          <mxGeometry as="geometry" relative="1" />
         </mxCell>
         <mxCell id="wdm-job01" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.007692307692307693;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-ingress" target="wdm-agent01">
           <mxGeometry as="geometry" relative="1">
@@ -283,13 +255,15 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="wdm-releasework" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.35714285714285715;exitPerimeter=0;entryX=0.0;entryY=0.15384615384615385;entryPerimeter=0;" edge="1" parent="1" source="wdm-release" target="wdm-ingress">
+        <mxCell id="wdm-releasework" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.3611111111111111;exitPerimeter=0;entryX=0.0;entryY=0.15384615384615385;entryPerimeter=0;" edge="1" parent="1" source="wdm-release" target="wdm-ingress">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
-        <mxCell id="wdm-download" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.7692307692307693;entryPerimeter=0;" edge="1" parent="1" source="wdm-store" target="wdm-ingress">
+        <mxCell id="wdm-download" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#2465A6;strokeWidth=3;dashed=0;dashPattern=8 5;exitX=1.0;exitY=0.7777777777777778;exitPerimeter=0;entryX=0.0;entryY=0.7692307692307693;entryPerimeter=0;" edge="1" parent="1" source="wdm-store" target="wdm-ingress">
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
-              <mxPoint x="1945" y="720" />
+              <mxPoint x="1480" y="490" />
+              <mxPoint x="1480" y="600" />
+              <mxPoint x="1945" y="600" />
               <mxPoint x="1945" y="455" />
             </Array>
           </mxGeometry>
