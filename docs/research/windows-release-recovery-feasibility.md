@@ -1,5 +1,7 @@
 # Windows Classic Release：換版與復原可行性查核
 
+> 後續需求更新：新版與退版路徑在恢復 F5 流量前，都新增部署人員的功能驗證／確認關卡。下文原先「健康才回池」應讀為「自動啟動檢查通過＋人工功能驗證通過才回池」。單一 PowerShell controller 不可直接沿用為自動回池實作，必須增加可強制等待、拒絕／逾時不回池及綁定 target/version 的續行機制；Server Classic 的具體等待／分階段核准配置仍待驗證。部署前核准不是這個中途功能驗證關卡。
+
 ## 結論與範圍
 
 **可以實作，但不是設定 Deployment Group 後就內建完整 rollback。** Azure DevOps Server Express 2022 提供核准、固定版本 artifact、目標 Agent 執行 PowerShell 與任務失敗條件；備份、健康判定、F5 控制、復原狀態機與跨目標停止政策仍須自行實作。Express 官方聲明功能與 Server 相同，限制五位 active users；不代表現場安裝、帳號或腳本已驗證。[1–7]

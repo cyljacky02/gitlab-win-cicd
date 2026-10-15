@@ -152,44 +152,53 @@
         <mxCell id="wdm-backup" value="③ 停止服務&#10;↓&#10;④ 備份舊版本" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="820" y="1000" width="300" height="110" />
         </mxCell>
-        <mxCell id="wdm-deploy" value="⑤ 安裝新版本&#10;↓&#10;⑥ 重啟服務" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+        <mxCell id="wdm-deploy" value="⑤ 安裝新版本&#10;↓&#10;⑥ 啟動服務／排程" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1190" y="1000" width="300" height="110" />
         </mxCell>
-        <mxCell id="wdm-health" value="⑦ 服務&#10;正常？" style="shape=rhombus;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+        <mxCell id="wdm-health" value="⑦ 啟動&#10;正常？" style="shape=rhombus;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1560" y="1000" width="220" height="110" />
         </mxCell>
-        <mxCell id="wdm-restore" value="⑧ 上 F5&#10;恢復流量並確認" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1900" y="1000" width="330" height="110" />
+        <mxCell id="wdm-human" value="部署人員｜人工關卡&#10;驗證功能正常&#10;確認後才可上 F5" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#FFF3DC;strokeColor=#D5AF6B;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="1000" width="300" height="110" />
         </mxCell>
-        <mxCell id="wdm-complete" value="換版完成&#10;記錄版本與執行結果" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="2350" y="1000" width="380" height="110" />
+        <mxCell id="wdm-restore" value="⑧ 上 F5&#10;恢復流量並確認" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2180" y="1000" width="240" height="110" />
         </mxCell>
-        <mxCell id="wdm-healthy" value="健康" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1782" y="1010" width="115" height="36" />
+        <mxCell id="wdm-complete" value="換版完成&#10;記錄版本與結果" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2470" y="1000" width="280" height="110" />
         </mxCell>
-        <mxCell id="wdm-verified" value="已驗證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="2230" y="1010" width="120" height="36" />
+        <mxCell id="wdm-healthy" value="自動檢查通過" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1735" y="954" width="180" height="36" />
+        </mxCell>
+        <mxCell id="wdm-verified" value="人工確認通過" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2070" y="954" width="170" height="36" />
         </mxCell>
         <mxCell id="wdm-rollback" value="停止失敗的服務&#10;還原舊版本 → 重啟" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1190" y="1220" width="330" height="110" />
         </mxCell>
-        <mxCell id="wdm-recoveryhealth" value="舊版本&#10;正常？" style="shape=rhombus;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+        <mxCell id="wdm-recoveryhealth" value="舊版啟動&#10;正常？" style="shape=rhombus;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1580" y="1220" width="220" height="110" />
         </mxCell>
-        <mxCell id="wdm-recoverrestore" value="上 F5&#10;恢復流量並確認" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=27;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1900" y="1220" width="330" height="110" />
+        <mxCell id="wdm-recoveryhuman" value="部署人員｜人工關卡&#10;驗證舊版功能正常&#10;確認後才可上 F5" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#FFF3DC;strokeColor=#D5AF6B;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1830" y="1220" width="300" height="110" />
         </mxCell>
-        <mxCell id="wdm-recovered" value="已退回舊版本&#10;本次換版失敗，服務恢復" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=28;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="2350" y="1220" width="380" height="110" />
+        <mxCell id="wdm-recoverrestore" value="上 F5&#10;恢復流量並確認" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2180" y="1220" width="240" height="110" />
+        </mxCell>
+        <mxCell id="wdm-recovered" value="換版失敗&#10;舊版服務已恢復" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=1;fillColor=#D9EEEA;strokeColor=#087F83;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2470" y="1220" width="280" height="110" />
         </mxCell>
         <mxCell id="wdm-failurelabel" value="換版／啟動／檢查失敗" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1280" y="1120" width="490" height="36" />
         </mxCell>
-        <mxCell id="wdm-rhealthy" value="健康" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="1805" y="1222" width="95" height="36" />
+        <mxCell id="wdm-humanfaillabel" value="新版功能不通過 → 退版，再次人工驗證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1985" y="1135" width="750" height="36" />
         </mxCell>
-        <mxCell id="wdm-rverified" value="已驗證" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
-          <mxGeometry as="geometry" x="2230" y="1222" width="120" height="36" />
+        <mxCell id="wdm-rhealthy" value="自動檢查通過" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#087F83;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1735" y="1175" width="180" height="36" />
+        </mxCell>
+        <mxCell id="wdm-rverified" value="人工確認通過" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#A36716;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2070" y="1175" width="170" height="36" />
         </mxCell>
         <mxCell id="wdm-abort" value="換版前先確認&#10;版本可用、流量已退出、舊版本已備份&#10;任一步驟失敗就暫停，不繼續覆寫程式" style="shape=rectangle;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#17324D;fontStyle=0;fillColor=#E5F2F0;strokeColor=#087F83;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=12;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="50" y="1170" width="1070" height="135" />
@@ -200,7 +209,7 @@
         <mxCell id="wdm-unhealthylabel" value="不健康 → 停止後續目標" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1420" y="1378" width="440" height="35" />
         </mxCell>
-        <mxCell id="wdm-restoreguard" value="無法確認流量已恢復，就不算完成&#10;暫停後續主機，通知人員確認狀態" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
+        <mxCell id="wdm-restoreguard" value="未人工確認／逾時：不上 F5，通知處理&#10;舊版功能不通過：保持隔離；流量未恢復不結案" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#B34444;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=center;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
           <mxGeometry as="geometry" x="1890" y="1352" width="850" height="65" />
         </mxCell>
         <mxCell id="wdm-f5guard" value="實作前確認｜F5 操作方式、服務正常的判定、備份與還原方式；主機失聯需另行處理，程式退版不等於資料庫還原。" style="shape=text;rounded=1;arcSize=12;whiteSpace=wrap;html=0;fontFamily=Microsoft JhengHei;fontSize=26;fontColor=#53677C;fontStyle=0;fillColor=none;strokeColor=none;strokeWidth=2;align=left;verticalAlign=middle;spacing=0;spacingLeft=0;" vertex="1" parent="1">
@@ -349,7 +358,10 @@
         <mxCell id="wdm-lifedeploy" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-deploy" target="wdm-health">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
-        <mxCell id="wdm-lifehealth" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-health" target="wdm-restore">
+        <mxCell id="wdm-lifehealth" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-health" target="wdm-human">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="wdm-lifehuman" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-human" target="wdm-restore">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
         <mxCell id="wdm-liferestore" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-restore" target="wdm-complete">
@@ -371,10 +383,21 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="wdm-humanfail" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B34444;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.8484848484848485;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-human" target="wdm-rollback">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1980" y="1145" />
+              <mxPoint x="1470" y="1145" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="wdm-rcheck" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-rollback" target="wdm-recoveryhealth">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
-        <mxCell id="wdm-rok" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-recoveryhealth" target="wdm-recoverrestore">
+        <mxCell id="wdm-rok" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-recoveryhealth" target="wdm-recoveryhuman">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="wdm-rapprove" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-recoveryhuman" target="wdm-recoverrestore">
           <mxGeometry as="geometry" relative="1" />
         </mxCell>
         <mxCell id="wdm-rdone" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#087F83;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=1.0;exitY=0.5;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="wdm-recoverrestore" target="wdm-recovered">
@@ -391,6 +414,14 @@
           <mxGeometry as="geometry" relative="1">
             <Array as="points">
               <mxPoint x="1690" y="1372" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wdm-recoveryhumanfail" style="edgeStyle=none;rounded=0;html=0;endArrow=block;endFill=1;strokeColor=#B34444;strokeWidth=3;dashed=1;dashPattern=8 5;exitX=0.13333333333333333;exitY=1.0;exitPerimeter=0;entryX=0.9626168224299065;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="wdm-recoveryhuman" target="wdm-halt">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1870" y="1420" />
+              <mxPoint x="1080" y="1420" />
             </Array>
           </mxGeometry>
         </mxCell>

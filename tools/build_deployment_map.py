@@ -131,34 +131,39 @@ def make_scene():
     s.node('fetch',50,1000,300,110,'① 取得已放行版本\n確認檔案可用',size=27)
     s.node('isolate',420,1000,330,110,'② 下 F5\n退出流量\n確認可安全停機',size=27,fill='#FFF5E3',stroke=AMBER)
     s.node('backup',820,1000,300,110,'③ 停止服務\n↓\n④ 備份舊版本',size=27)
-    s.node('deploy',1190,1000,300,110,'⑤ 安裝新版本\n↓\n⑥ 重啟服務',size=27)
-    s.node('health',1560,1000,220,110,'⑦ 服務\n正常？',size=28,kind='diamond',fill='#EBF3FD',stroke=BLUE)
-    s.node('restore',1900,1000,330,110,'⑧ 上 F5\n恢復流量並確認',size=27,fill='#E5F2F0',stroke=TEAL)
-    s.node('complete',2350,1000,380,110,'換版完成\n記錄版本與執行結果',size=26,fill='#D9EEEA',stroke=TEAL,bold=True)
-    order=['fetch','isolate','backup','deploy','health','restore','complete']
+    s.node('deploy',1190,1000,300,110,'⑤ 安裝新版本\n↓\n⑥ 啟動服務／排程',size=27)
+    s.node('health',1560,1000,220,110,'⑦ 啟動\n正常？',size=26,kind='diamond',fill='#EBF3FD',stroke=BLUE)
+    s.node('human',1830,1000,300,110,'部署人員｜人工關卡\n驗證功能正常\n確認後才可上 F5',size=26,fill='#FFF3DC',stroke='#D5AF6B',bold=True)
+    s.node('restore',2180,1000,240,110,'⑧ 上 F5\n恢復流量並確認',size=26,fill='#E5F2F0',stroke=TEAL)
+    s.node('complete',2470,1000,280,110,'換版完成\n記錄版本與結果',size=26,fill='#D9EEEA',stroke=TEAL,bold=True)
+    order=['fetch','isolate','backup','deploy','health','human','restore','complete']
     index={n.id:n for n in s.nodes}
     for a,b in zip(order,order[1:]):
         na,nb=index[a],index[b]
         s.edge('life'+a,a,b,[(na.x+na.w,1055),(nb.x,1055)],color=TEAL)
-    s.text('healthy',1782,1010,115,36,'健康',size=26,color=TEAL)
-    s.text('verified',2230,1010,120,36,'已驗證',size=26,color=TEAL)
+    s.text('healthy',1735,954,180,36,'自動檢查通過',size=26,color=TEAL)
+    s.text('verified',2070,954,170,36,'人工確認通過',size=26,color=AMBER)
     s.node('rollback',1190,1220,330,110,'停止失敗的服務\n還原舊版本 → 重啟',size=26,fill='#FFF1EC',stroke=RED)
-    s.node('recoveryhealth',1580,1220,220,110,'舊版本\n正常？',size=27,kind='diamond',fill='#FFF1EC',stroke=RED)
-    s.node('recoverrestore',1900,1220,330,110,'上 F5\n恢復流量並確認',size=27,fill='#FFF5E3',stroke=AMBER)
-    s.node('recovered',2350,1220,380,110,'已退回舊版本\n本次換版失敗，服務恢復',size=28,fill='#FFF5E3',stroke=AMBER,bold=True)
+    s.node('recoveryhealth',1580,1220,220,110,'舊版啟動\n正常？',size=26,kind='diamond',fill='#FFF1EC',stroke=RED)
+    s.node('recoveryhuman',1830,1220,300,110,'部署人員｜人工關卡\n驗證舊版功能正常\n確認後才可上 F5',size=26,fill='#FFF3DC',stroke='#D5AF6B',bold=True)
+    s.node('recoverrestore',2180,1220,240,110,'上 F5\n恢復流量並確認',size=26,fill='#FFF5E3',stroke=AMBER)
+    s.node('recovered',2470,1220,280,110,'換版失敗\n舊版服務已恢復',size=26,fill='#FFF5E3',stroke=AMBER,bold=True)
     s.edge('deployfail','deploy','rollback',[(1240,1110),(1240,1185),(1280,1185),(1280,1220)],color=RED)
     s.edge('healthfail','health','rollback',[(1670,1110),(1670,1165),(1400,1165),(1400,1220)],color=RED)
     s.text('failurelabel',1280,1120,490,36,'換版／啟動／檢查失敗',size=26,color=RED)
-    for id,a,b,p in [('rcheck','rollback','recoveryhealth',[(1520,1275),(1580,1275)]),('rok','recoveryhealth','recoverrestore',[(1800,1275),(1900,1275)]),('rdone','recoverrestore','recovered',[(2230,1275),(2350,1275)])]:
-        s.edge(id,a,b,p,color=AMBER)
-    s.text('rhealthy',1805,1222,95,36,'健康',size=26,color=AMBER)
-    s.text('rverified',2230,1222,120,36,'已驗證',size=26,color=AMBER)
+    s.edge('humanfail','human','rollback',[(1980,1110),(1980,1145),(1470,1145),(1470,1220)],color=RED)
+    s.text('humanfaillabel',1985,1135,750,36,'新版功能不通過 → 退版，再次人工驗證',size=26,color=RED)
+    for id,a,b,p in [('rcheck','rollback','recoveryhealth',[(1520,1275),(1580,1275)]),('rok','recoveryhealth','recoveryhuman',[(1800,1275),(1830,1275)]),('rapprove','recoveryhuman','recoverrestore',[(2130,1275),(2180,1275)]),('rdone','recoverrestore','recovered',[(2420,1275),(2470,1275)])]:
+        s.edge(id,a,b,p,color=TEAL)
+    s.text('rhealthy',1735,1175,180,36,'自動檢查通過',size=26,color=TEAL)
+    s.text('rverified',2070,1175,170,36,'人工確認通過',size=26,color=AMBER)
     s.node('abort',50,1170,1070,135,'換版前先確認\n版本可用、流量已退出、舊版本已備份\n任一步驟失敗就暫停，不繼續覆寫程式',size=26,fill='#FFF5E3',stroke=AMBER,align='left')
     s.node('halt',50,1340,1070,65,'仍無法恢復 → 不上 F5，通知人員處理',size=26,fill='#FCEDEC',stroke=RED)
     s.edge('rbfail','rollback','halt',[(1355,1330),(1355,1372),(1120,1372)],color=RED)
     s.edge('unhealthy','recoveryhealth','halt',[(1690,1330),(1690,1372),(1120,1372)],color=RED)
     s.text('unhealthylabel',1420,1378,440,35,'不健康 → 停止後續目標',size=26,color=RED)
-    s.text('restoreguard',1890,1352,850,65,'無法確認流量已恢復，就不算完成\n暫停後續主機，通知人員確認狀態',size=26,color=RED)
+    s.edge('recoveryhumanfail','recoveryhuman','halt',[(1870,1330),(1870,1420),(1080,1420),(1080,1405)],color=RED)
+    s.text('restoreguard',1890,1352,850,65,'未人工確認／逾時：不上 F5，通知處理\n舊版功能不通過：保持隔離；流量未恢復不結案',size=26,color=RED)
     s.text('f5guard',50,1440,2700,36,'實作前確認｜F5 操作方式、服務正常的判定、備份與還原方式；主機失聯需另行處理，程式退版不等於資料庫還原。',size=26,color=MUTED,align='left')
     s.text('legendheading',50,1500,120,38,'圖例',size=28,bold=True,align='left')
     # Legend sample arrows also use real editable source/target cells.
@@ -171,11 +176,11 @@ def make_scene():
     # The lower view expands Production VM operations: match its green palette.
     for n in s.nodes:
         if 900 <= n.y < 1440 and n.kind in ('box', 'diamond'):
-            if n.id in ('halt',):
+            if n.id in ('halt', 'human', 'recoveryhuman'):
                 continue  # Keep the terminal failure alert distinct.
             n.fill = '#D9EEEA' if n.id in ('complete', 'recovered') else '#E5F2F0'
             n.stroke = TEAL
-        if n.id in ('rhealthy', 'rverified'):
+        if n.id == 'rhealthy':
             n.color = TEAL
     for e in s.edges:
         if e.id in ('rcheck', 'rok', 'rdone'):
