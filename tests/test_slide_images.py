@@ -53,13 +53,25 @@ class ImageSlideTests(unittest.TestCase):
             canvas.save()
             self.assertTrue(stream.getvalue().startswith(b'%PDF'))
 
+    def test_value_and_evidence_status_are_visible(self):
+        source = Path(__file__).resolve().parents[1] / 'docs/presentations/windows-cd-initial-plan.md'
+        pages = slides.parse(source.read_text(encoding='utf-8'))
+        self.assertIn('預期效益', pages[2]['title'])
+        self.assertEqual([c['title'] for c in pages[2]['cards']],
+                         ['維運更一致', '降低操作風險', '複用到其他專案'])
+        self.assertEqual([c['title'] for c in pages[4]['cards']],
+                         ['已確認的需求', '規劃中的做法', 'POC 待驗證'])
+        for index in (6, 7):
+            self.assertIn('規劃', pages[index]['title'])
+            self.assertIn('POC', pages[index]['takeaway'])
+
     def test_current_deck_has_one_image(self):
         source = Path(__file__).resolve().parents[1] / 'docs/presentations/windows-cd-initial-plan.md'
         pages = slides.parse(source.read_text(encoding='utf-8'))
-        self.assertEqual(len(pages), 7)
-        self.assertEqual([i for i, p in enumerate(pages) if p['image']], [3])
+        self.assertEqual(len(pages), 9)
+        self.assertEqual([i for i, p in enumerate(pages) if p['image']], [5])
         self.assertEqual(sum(bool(p['diagram']) for p in pages), 4)
-        self.assertTrue((source.parent / pages[3]['image']['path']).is_file())
+        self.assertTrue((source.parent / pages[5]['image']['path']).is_file())
 
 
 if __name__ == '__main__':

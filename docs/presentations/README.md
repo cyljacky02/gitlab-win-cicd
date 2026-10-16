@@ -3,7 +3,7 @@
 ## 交付
 
 - [Markdown 內容與流程圖來源](windows-cd-initial-plan.md)
-- [PPTX（第 4 頁為圖像，其餘為原生物件）](windows-cd-initial-plan.pptx)
+- [PPTX（第 6 頁為圖像，其餘為原生物件）](windows-cd-initial-plan.pptx)
 - [固定版面 PDF](windows-cd-initial-plan.pdf)
 - [Mermaid／draw.io 圖源](diagrams/README.md)
 - [架構圖 draw.io 原檔](diagrams/windows-deployment-map.drawio) · [高清 PNG](diagrams/windows-deployment-map.png) · [可放大向量 PDF](diagrams/windows-deployment-map.pdf)
@@ -12,21 +12,25 @@
 - [端到端架構圖設計研究](../research/end-to-end-architecture-diagram-design.md)
 - [簡報設計研究與官方參考資料](../research/presentation-design-guidance.md)
 
-**v0.7：共 7 頁＝封面＋議程＋5 頁內容（含時程），無附錄。** 面向非開發讀者，只討論 Azure DevOps Server，Express 作為 POC 起點，不預定正式採購版本。
+**v0.8：共 9 頁＝封面＋議程＋7 頁內容（含預期效益、需求與驗證狀態、時程），無附錄。** 面向非開發讀者，只討論 Azure DevOps Server，Express 作為 POC 起點，不預定正式採購版本。
+
+新增「預期效益」頁，以維運一致、降低風險與跨 Windows 專案複用說明導入價值；均為通過驗收後的預期改善，尚無量測成果。新增「本次提案狀態」頁，明確區分已確認需求、規劃做法與 POC 待驗證。官方文件的工具能力不等於本案已完成整合；ADO、Agent、備份與復原均不得解讀為已實作驗證。
 
 | 頁 | 主旨 |
 |---|---|
-| 1 | 封面：保留 GitLab 建置，正式換版由授權部門掌握 |
-| 2 | 議程：原因、架構、環境、換版與時程 |
-| 3 | 合併舊版第 2–3 頁：只送檔也算正式主機存取 |
-| 4 | 完整交付架構＋多台 Target＋下／上 F5 的單台換版、退版與失敗隔離流程 |
-| 5 | 分支在左：master、pre-production 與多個 production 分支可各有 CI/CD pipeline／換版策略；正式仍須放行 |
-| 6 | 放行後取檔、換版、健康檢查與復原 |
-| 7 | 建議時程：POC → 協調架構部門安裝 ADO → GitLab 整合 → SIT → UAT → Production |
+| 1 | 封面：保留 GitLab 建置，正式換版由授權部門掌握；尚未實作／POC 驗證 |
+| 2 | 議程：效益、邊界、架構、環境、換版與時程 |
+| 3 | 預期效益：維運更一致、風險可控、經驗可複用 |
+| 4 | 已確認邊界：只送檔也算正式主機存取 |
+| 5 | 狀態：已確認需求／規劃中的做法／POC 待驗證 |
+| 6 | 規劃架構：完整交付架構＋多台 Target＋F5 換版、退版與失敗隔離流程 |
+| 7 | 規劃分支策略：各分支可有不同 pipeline／換版策略；正式仍須放行 |
+| 8 | 規劃換版流程：Agent、備份及復原腳本須實作與演練 |
+| 9 | 建議時程：POC → 協調架構部門安裝 ADO → GitLab 整合 → SIT → UAT → Production |
 
-第 4 頁中間管理區以「收到成功通知 → 取得並保存版本 → 選版、選目標、確認放行」三段流程呈現；接收器、API、Importer、hash 等實作細節移到講者備註，不代表移除這些必要角色。左右兩區保持不變；單台換版／復原圖另改為白話動作與 ①～⑧ 圈號，實作限制留在備註。
+第 6 頁中間管理區以「收到成功通知 → 取得並保存版本 → 選版、選目標、確認放行」三段流程呈現；接收器、API、Importer、hash 等實作細節移到講者備註，不代表移除這些必要角色。左右兩區保持不變；單台換版／復原圖另改為白話動作與 ①～⑧ 圈號，實作限制留在備註。
 
-第 4 頁以 ①～⑧ 說明上半部架構，下半部展開每台 Target 的換版／復原；不增加頁數。使用者已確認「下／上 F5」為退出／恢復負載平衡流量。具體模式、連線等待、控制身分與位置仍待確認。多機畫成 01、02、…、N，建議逐台且失敗停止後續，批次與最低容量待定。復原成功不等於新版本部署成功；復原失敗保持隔離、告警，不回池。
+第 6 頁以 ①～⑧ 說明上半部架構，下半部展開每台 Target 的換版／復原；不增加重複圖頁。使用者已確認「下／上 F5」為退出／恢復負載平衡流量。具體模式、連線等待、控制身分與位置仍待確認。多機畫成 01、02、…、N，建議逐台且失敗停止後續，批次與最低容量待定。復原成功不等於新版本部署成功；復原失敗保持隔離、告警，不回池。
 
 時程以 **12/31** 為目標，年份未指定；各階段日期、資源與上線批准待共同確認。
 
@@ -36,13 +40,13 @@ CI job 直呼 Queue API 有文件化能力基礎，但存在 pipeline 尚未成�
 
 不以個人測試環境狀態為對外敘事。其他部門已有 ADO 運行先例是規劃背景，不等於本案通過驗收。
 
-單台換版圖沿用 Production 的綠色系，失敗路徑與告警保留紅色；綠色表示執行區域，不表示每個步驟已成功。第 5 頁以「分支 → pipeline → 部署策略」三欄呈現，正式分支例包含 production-bq1、production-bq2、production-nh。實際映射與機制待確認，不將任何 production 前綴自動授權。
+單台換版圖沿用 Production 的綠色系，失敗路徑與告警保留紅色；綠色表示執行區域，不表示每個步驟已成功。第 7 頁以「分支 → pipeline → 部署策略」三欄呈現，正式分支例包含 production-bq1、production-bq2、production-nh。實際映射與機制待確認，不將任何 production 前綴自動授權。
 
 用途是跨部門討論可行性與合規要求，不是正式選型、合規認證或上線批准。技術細節、資料來源與證據範圍留在 Markdown／PPTX 講者備註，不另加附錄投影片。PDF 不含講者備註。
 
 ## 可編輯性
 
-**第 4 頁是 2800×1575 高清圖片**，其餘頁保留 PPTX 原生文字、流程方塊、菱形與箭頭。架構圖可編輯主檔是 `diagrams/windows-deployment-map.drawio`，內含真正的節點、容器與連接線，不是包著一張圖片。獨立 PDF 為向量圖、可選取文字；簡報 PDF 第 4 頁為圖像。
+**第 6 頁是 2800×1575 高清圖片**，其餘頁保留 PPTX 原生文字、流程方塊、菱形與箭頭。架構圖可編輯主檔是 `diagrams/windows-deployment-map.drawio`，內含真正的節點、容器與連接線，不是包著一張圖片。獨立 PDF 為向量圖、可選取文字；簡報 PDF 第 6 頁為圖像。
 
 架構圖箭頭區分控制、資料及應用流量，表示工作／資料語意，不是完整網路連線方向；ADO Agents 主動連 Server 取工作。完整圖資訊較密，簡報供總覽，逐步講解時建議開啟獨立 PDF 或 draw.io 放大。
 
@@ -60,15 +64,15 @@ python -m venv .venv-slides
 
 不需啟用虛擬環境。若希望啟用，PowerShell 使用 `.\.venv-slides\Scripts\Activate.ps1`；CMD 使用 `.venv-slides\Scripts\activate.bat`。
 
-需要 Windows 的 `msjh.ttc`／`msjhbd.ttc`；可用 `--font-dir` 指定合法取得的字型檔目錄。原生文字頁 PDF 嵌入字型子集；PPTX 使用 Microsoft JhengHei，未嵌入字型，其他電腦可能出現替代字型及版面差異。第 4 頁圖像不依賴簡報電腦字型。
+需要 Windows 的 `msjh.ttc`／`msjhbd.ttc`；可用 `--font-dir` 指定合法取得的字型檔目錄。原生文字頁 PDF 嵌入字型子集；PPTX 使用 Microsoft JhengHei，未嵌入字型，其他電腦可能出現替代字型及版面差異。第 6 頁圖像不依賴簡報電腦字型。
 
 重建會覆寫同名 PPTX、PDF、四份 Mermaid 與其 draw.io 檔；這些頁的修改請回寫 Markdown。**不會重建或覆寫 `windows-deployment-map.drawio`／PNG／獨立 PDF。**
 
-### 手動調整第 4 頁
+### 手動調整第 6 頁
 
 1. 在 diagrams.net 開啟 `diagrams/windows-deployment-map.drawio`，編輯節點、連線及文字後儲存。
 2. 匯出 PNG 為同目錄 `windows-deployment-map.png`，使用白底、維持整頁 16:9、至少 2800 像素寬；同時更新獨立 PDF。不要只匯出選取範圍或裁掉留白造成比例改變。
-3. 再執行上面的 `render_slides.py`，將最新 PNG 放入第 4 頁。手改 draw.io 不會自動更新 PNG。
+3. 再執行上面的 `render_slides.py`，將最新 PNG 放入第 6 頁。手改 draw.io 不會自動更新 PNG。
 
 `tools/build_deployment_map.py` 是本次初始產圖種子，使用同一場景資料產出 draw.io、向量 PDF、PNG；**手改後不要再執行，否則會覆寫完整圖與兩份拆分圖的 draw.io、PNG、PDF，共九個檔案**。僅需重新生成初始圖時，安裝 `tools/requirements-map.txt` 後顯式執行該工具；它不是簡報重建的一部分。
 
@@ -87,11 +91,11 @@ PPTX／PDF 使用同一份版面資料各自渲染，PDF 不是 PowerPoint 另�
 
 ## 品質檢查
 
-- PPTX／PDF 均為 7 頁，無附錄，逐頁具獨立標題與講者備註。
+- PPTX／PDF 均為 9 頁，無附錄，逐頁具獨立標題與講者備註。
 - 四份 Mermaid 圖源通過 Mermaid 官方套件語法解析；架構圖驗證 XML 引用、容器／文字邊界及連線不穿越無關方塊。
-- 原生頁正文／圖中文字至少 18 pt；此數值**不適用於第 4 頁完整架構圖縮放後的文字**。詳細閱讀請用獨立向量 PDF／draw.io 放大。
-- PDF 原生頁中文可選取、字型已嵌入；第 4 頁是圖像，獨立架構 PDF 則為可選取的向量文字。
-- 已檢視架構 PNG 與簡報 PDF 第 4 頁；PPTX 僅第 4 頁為整頁圖片，另有替代文字與講者備註。
+- 原生頁正文／圖中文字至少 18 pt；此數值**不適用於第 6 頁完整架構圖縮放後的文字**。詳細閱讀請用獨立向量 PDF／draw.io 放大。
+- PDF 原生頁中文可選取、字型已嵌入；第 6 頁是圖像，獨立架構 PDF 則為可選取的向量文字。
+- 前版已檢視架構 PNG；本版重新產出 9 頁簡報。PPTX 僅第 6 頁為整頁圖片，另有替代文字與講者備註。
 - 未使用桌面 PowerPoint 播放，也未在 diagrams.net UI 中逐圖匯入檢查；會前請在簡報電腦確認字型與版面。
 
 原有四份 `cdpoc-architecture-*.md` 未覆寫。統一架構文件與正式選型結論仍是後續交付。
