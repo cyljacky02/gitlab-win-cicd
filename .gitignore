@@ -11,6 +11,9 @@ __pycache__/
 /cdpoc-architecture-win.md
 /cdpoc-architecture-ado.md
 
+# Local POC handoff archives (may contain sensitive environment data)
+/CDPOC*.zip
+
 # Editor / Office temporary files
 ~$*
 *.tmp

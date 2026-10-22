@@ -1,0 +1,174 @@
+{
+  "title": "GitLab CE × Azure DevOps Server｜POC 落地與跨部門審查",
+  "baseline": "2026-10-22",
+  "source_archive": "CDPOC-CD-20261022.zip",
+  "archive_sha256": "b273ba0f8d37430c6a9953cdccee51a6638763cc407278bc7d39e268c597bbf1",
+  "slides": [
+    {
+      "kind": "outcome",
+      "chapter": "成果與本次目的",
+      "title": "POC 已打通；下一步是受控試辦",
+      "subtitle": "GitLab CE 建置，ADO Server 管理放行，Windows VM 執行部署。",
+      "eyebrow": "從導入方向，走到可審查的實作基線",
+      "route": ["產出候選版本", "驗證與人工放行", "低權限執行部署"],
+      "cards": [
+        {"title": "流程已通", "body": "通知 → 反查 → 存版 → 核准 → 部署\n另有獨立退版 Pipeline 實測。", "icon": "pipeline"},
+        {"title": "責任已分", "body": "觸發、維護、核准、唯讀分權。\nAgent 降權，高權限集中在 broker。", "icon": "shield"},
+        {"title": "正式上線仍有門檻", "body": "授權、內網、維運與異常驗收，\n由相關部門共同決定。", "icon": "flag"}
+      ],
+      "ribbon": "POC 完成 ≠ 正式環境已驗收；本次目的是決定「怎麼安全落地」。",
+      "source": "基線：整合包 README、C-3～C-5 證據與實作；本次未重跑遠端 POC。",
+      "notes": "資料基準為整合包 2026-10-22，不是沿用舊導入提案的預期時程。本次審讀檔案、比對來源與證據，不操作現場。POC 是獨立 IIS 靜態測試站，不代表正式業務系統、F5、多節點、業務資料回復或 DR 已驗收。端到端、角色、降權及退版的完成度以後期 C-3～C-5 為準。下一階段 408 個本機案例另列，不與遠端實測相加成一個通過率。參見 review-notes.md §1、§5。"
+    },
+    {
+      "kind": "architecture",
+      "chapter": "大型端到端架構",
+      "title": "通知不是部署授權；放行後才抵達目標",
+      "subtitle": "已實作的 POC 架構｜單一 IIS 測試站；不含 F5 與下一階段導流交易。",
+      "zones": ["GitLab CE／CI", "Azure DevOps Server Express", "Windows VM／IIS"],
+      "nodes": [
+        {"title": "01  Runner 建置", "body": "具名開發者提交 main\n產出 site.zip＋manifest"},
+        {"title": "候選版本留在 GitLab", "body": "commit／job／SHA-256"},
+        {"title": "02  接收版本通知", "body": "POST …/runs（7.0）\nPAT 通知；參數不可信"},
+        {"title": "03  Fetch agent 驗證", "body": "反查 project／成功 build\n下載檔案、重算 SHA-256"},
+        {"title": "04  ADO 存版", "body": "Server Build Artifact"},
+        {"title": "05  人工部署放行", "body": "Environment check｜12h\n觸發者不可自核"},
+        {"title": "06  低權限 Agent", "body": "主動出站向 ADO 拉取工作\n放行後下載，並再驗 SHA-256"},
+        {"title": "07  SYSTEM broker", "body": "解壓／切 IIS／健康檢查／journal"}
+      ],
+      "fetch_label": "Fetch → GitLab：唯讀 API 反查",
+      "download_label": "GitLab → Fetch：ZIP＋manifest 回應",
+      "store_label": "驗證通過才入庫",
+      "repo_label": "CD repo：PR 審核控制 YAML／部署腳本",
+      "target_label": "本機請求 → broker → IIS 測試站",
+      "boundaries": ["內容與 CI 憑證邊界", "部署程式、資源權限與放行邊界", "低權限 Agent／高權限 broker"],
+      "network": "HTTPS 發起：Runner → ADO｜Fetch → GitLab｜Windows Agent → ADO；ADO 不需連入目標管理埠。",
+      "legend": "虛線：通知／請求　粗線：檔案／工作回應（非 ADO 連入主機）",
+      "source": "來源：兩端 YAML、Get-GitLabRelease、Deploy-Release、broker；詳配套 §2。",
+      "notes": "這是後期 C-4/C-5 的 POC 現況，不是整合包初版架構中 SYSTEM agent 的舊狀態。泳道是責任／信任邊界，並不表示每個元件都已分機：Fetch agent 在 POC 與 ADO 應用層同機，以 NETWORK SERVICE 執行。GitLab 通知走內網 HTTPS；POC Fetch 讀 GitLab 經公網 Cloudflare，正式環境建議內網／內部 PKI，不要宣稱 POC 全程內網。虛線顯示呼叫，粗線顯示資料或 job 的回應；目標 Agent 主動 long-poll ADO，再收取核准後的工作，並非 ADO 遠端登入 Windows。核准前只在管理側存候選版本，不預拷目標。Agent 只可寫 staging/inbox、讀 outbox，SYSTEM broker 才可寫 releases、改 IIS、寫 journal。broker 不獨立向 ADO 查核批准，也不向 GitLab 驗簽，仍信任受控 pipeline/agent 的內容；部署程式 PR、資源 ACL 與 broker 審查不能省略。獨立 rollback 使用同一 Environment 關卡，但不向 GitLab 取檔，見第 6 頁與配套 §2、§5。"
+    },
+    {
+      "kind": "evidence",
+      "chapter": "結果與證據界線",
+      "title": "驗證到哪裡，就說到哪裡",
+      "subtitle": "依匯出的 POC 證據核對；「文件有寫」與「已在現場測過」分開看。",
+      "headers": ["已留存的 POC 驗證", "可支持的結論", "代表證據"],
+      "rows": [
+        ["來源驗證與人工放行", "來源反查；拒絕／逾時不部署，run 顯示失敗。", "#13；#10／#12／#14\nB、C-1／C-2"],
+        ["角色與部署程式審核", "直推 main 被拒；維護者不能自審或核准部署。", "#15；R1～R10\nC-3"],
+        ["目標 Agent 降權", "Agent 不能改 IIS／releases；由受控 broker 執行。", "#17；P-01～P-09\nC-4"],
+        ["獨立指定版本退版", "先驗資格，再核准；broker 以本機 journal 再驗。", "#18～#21；RB 測試\nC-5"]
+      ],
+      "limits": [
+        {"title": "408 案：僅本機", "body": "下一階段沙箱測試；\n未接入現行 CI／Pipeline／broker。"},
+        {"title": "尚無整合驗收", "body": "F5、失聯、多節點、業務資料\n與 ADO／SQL 災難還原仍待驗。"},
+        {"title": "成效以證據為準", "body": "已建立一致與可追溯的路徑；\n未量測人力節省、RTO 或零停機。"}
+      ],
+      "source": "來源：05 測試報告、C-3／C-4／C-5 JSON、16 本機報告；詳配套 §1。",
+      "notes": "build #18～#21 包含符合預期的拒絕與失敗路徑，不是四次成功退版。#18 從未部署的目標被 Plan 拒絕；#19 已在線版本被 Plan 拒絕，兩者均零核准請求；#20 核准後成功退版；#21 是退版後再次往前部署成功。rollback 本身的核准拒絕／逾時、健康失敗回復及 deploy+rollback 並行仍未在真目標驗證。測試數量不是覆蓋率。來源 ZIP 的 91 份檔案 hash 全部與包內 manifest 一致，只表示包內一致性，不是來源簽章。舊文件的 ZIP 惡意樣本、agent SYSTEM、無 branch policy 等描述須按後期測試與實作校正，不能照抄成未解或已解的全面結論。詳配套 §1、§6。"
+    },
+    {
+      "kind": "credentials",
+      "chapter": "API 與憑證分工",
+      "title": "兩把跨平台長效憑證，各守一個方向",
+      "subtitle": "每次正常部署的自訂串接：1 支 ADO POST ＋ 4 支 GitLab GET；不是系統全部 API。",
+      "cards": [
+        {"title": "01  ADO PAT", "direction": "GitLab Runner → ADO", "api": "POST …/_apis/pipelines/{id}/runs\napi-version=7.0", "scope": "Scope：Build Read & execute", "acl": "身分：非管理者、Readers\n資源：只允許指定 Pipeline QueueBuilds", "storage": "持有：GitLab CI masked＋protected 變數\n用途：通知有候選版本，不代替人工放行"},
+        {"title": "02  GitLab project access token", "direction": "ADO Fetch agent → GitLab", "api": "GET /api/v4/projects/:id\nGET …/jobs/:job_id\nGET …/artifacts/out/{site.zip,manifest.json}", "scope": "Scope：read_api；角色：Reporter", "acl": "資源：單一 private project\n不需 api 寫入或 read_repository clone", "storage": "持有：ADO secret variable group\n只在 Fetch job 掛載；目標機不持有"}
+      ],
+      "other_title": "不是「整套只有兩個 API key」",
+      "other_body": "另有 runner token、2 組 Agent 註冊後憑證、每 job 暫時 token、人員登入與 TLS 私鑰；類型不能混算。",
+      "rollback": "Rollback Plan 以 System.AccessToken／Bearer 讀 builds、timeline；不是第三把長效 PAT。",
+      "source": "實作：.gitlab-ci.yml、Get-GitLabRelease、Plan-Rollback；完整端點／ACL／輪替見配套 §3–4。",
+      "notes": "兩把是本 POC 單一 GitLab project、單一正常 CD pipeline 的跨平台長效整合秘密：ADO 觸發 PAT 與 GitLab project access token。API scope 只是上限，ADO 有效權限仍由 PAT 擁有者的資源 ACL 決定；管理者的低 scope PAT 不能視為低權限身分。正常 Fetch 有四個 GET，圖中將兩個 artifacts raw endpoint 用大括號壓縮，完整路徑見配套 §3。read_api 是此實作可用的唯讀 API 權限，不是只讀 artifact 的細粒度 scope；其洩漏仍可暴露該 project 可讀資料，且 token 建立者與 Internal visibility 可能擴大可讀範圍，正式環境要另驗。正式範圍增加 project／agent／環境時，credential 數量應重新盤點，不套固定兩把。兩組 agent credentials 對應管理側與目標側 agent；Agent runtime 另用 listener/job token，不依賴安裝時的一日 Full PAT。舊管理者觸發 PAT、註冊 PAT、建置期 GitLab admin PAT 及曾暴露 runner token 必須清理或輪替並留證，不能因文件寫待撤銷就認定已撤銷。masked/protected 不阻止惡意 CI 腳本使用／外傳 token；protected branch 與 CI 修改權仍是重要信任邊界。"
+    },
+    {
+      "kind": "licensing",
+      "chapter": "Express 五人方案",
+      "title": "五角色分權設計；五人授權邊界另行確認",
+      "subtitle": "模式有技術理由，但「5 active users」不是任意多人只要同時在線不超過五人。",
+      "gitlab_title": "GitLab CE：多人具名開發",
+      "gitlab_body": "應用開發／MR／建置仍留在 GitLab；\nADO 聚焦少數部署治理操作。",
+      "roles": [
+        ["管理者", "平台／權限管理"],
+        ["觸發服務", "僅 Queue 指定 CD"],
+        ["CD 維護者", "PR 修改部署程式"],
+        ["部署放行人", "核准部署／審 PR"],
+        ["唯讀觀察者", "可選；也可留餘裕"]
+      ],
+      "why_title": "為什麼拆開？",
+      "why": "縮小正式環境操作面，讓觸發、維護、放行分責；不預設角色帳號可供多人免授權共用。",
+      "gate_title": "授權與歸責，是採用前的決策門檻",
+      "gates": [
+        "Express EULA 有整合連線例外；不能據此認定所有 CI／代理操作都免 CAL。",
+        "服務帳號、代理存取與實際人員如何計數，需採購／Microsoft 書面確認。",
+        "本案不預設共用帳號可節省授權；放行人優先具名，PAM 不能取代授權。"
+      ],
+      "fallback": "若實際存取需求超限：評估 full-use Server／CAL；不以共用帳號降低實際人數。",
+      "source": "POC：12、C-3 角色測試；官方授權查核另見 research 筆記與配套 §7。",
+      "notes": "整合包 12 以角色=帳號建立五個 ADO 身分，C-3 驗證的是權限模型，不是授權合規。官方 Express EULA 明列最多五個在需要 CAL 情境下的 users or devices，並明列另一整合 application/service 的 pooled connection 免 CAL 例外。這個例外與一般 multiplexing 規則都要呈現，不能斷言全部 GitLab 開發者都計入，亦不能斷言全部不計。個案 CI、人工按鈕／重跑、回填資料與自建服務身分的邊界待 Microsoft 書面確認。不要把 Microsoft Learn 的五 active users、Server Basic 存取層級的免費五人、User/Device CAL 或同時在線人數混為同一規則。即使 GitLab 使用者不直接開 ADO 網頁，也不能單憑 CI 以一個服務身分代呼叫就斷言不需授權，須檢視實際直接／間接存取及適用條款。群組是權限管理容器，不會把多人變成一位使用者；PAM 只改善共用操作歸責，不創造授權豁免。五個帳號配置是 POC 事實；每個角色誰可使用、是否具名、服務身分如何計、觀察者是否需要存取，均由正式盤點決定。GitLab CE 不具強制 required MR approvals／CODEOWNERS 付費功能，不能聲稱 GitLab 已完成雙人審核防線。ADO Environment 強制核准與 CD repo PR 審核是在 POC 已驗證的關卡。"
+    },
+    {
+      "kind": "recovery",
+      "chapter": "回復、退版與下一階段",
+      "title": "退版已實測；交易還原與導流仍待整合",
+      "subtitle": "區分三條路徑，避免把靜態站切換成功，誤當成正式業務復原保證。",
+      "lanes": [
+        {"badge": "POC 已測", "title": "部署失敗，自動回復", "steps": ["切換新版", "健康失敗", "切回前版＋再驗"], "detail": "新版部署仍記失敗；是靜態站目錄／IIS 切回，不是資料庫還原。"},
+        {"badge": "POC 已測", "title": "人員指定版本退版", "steps": ["Plan 驗資格", "Environment 核准", "broker 再驗＋切換"], "detail": "只選此目標曾成功部署的既有版本；GitLab 觸發身分無退版權限。"},
+        {"badge": "僅本機", "title": "下一階段交易與導流", "steps": ["備份／完整快照", "交易還原＋就緒", "人工導流核准"], "detail": "408 案沙箱；未接入現行 Pipeline。DRAIN 不代表已排空，還原不代表可納流。"}
+      ],
+      "ribbon": "下一階段：部署前放行與換版／還原後的導流核准分開；後者須完成整合驗收才可納入試辦。",
+      "source": "來源：現行 broker、rollback YAML／Plan；15、16、包內 ADR；詳配套 §5。",
+      "notes": "POC 自動回復與獨立 rollback 均不包含 F5 admission gate。現行 rollback 的資格來自 ADO Deploy stage 成功歷史與 broker 的本機成功 deploy journal；Plan 最多查近 200 個 completed builds，可能拒絕較舊版本，並非無限歷史庫。broker 序列化當次執行的 mutex 不是跨 ADO、Rundeck 與長時間人工等待的持久部署鎖，也不防止較舊但已核准的 run 後來才部署。下一階段包內 ADR 描述 main 自動、production 部署前 12h 核准、換版或自動還原後 30 分鐘導流核准，拒絕／逾時保持 DRAIN。這些是已接受的下一階段設計與本機測試，不是現行流程。Root GLOSSARY 的部署放行不要求雙人審批是原治理最低條件；此 POC 採更嚴格的觸發者不可核准，不倒寫成整個專案必須雙人審批。Deployment Snapshot、Restore、Readiness、Go-live 使用包內下一階段詞彙時，明確標該階段，不默默取代 root glossary。"
+    },
+    {
+      "kind": "security",
+      "chapter": "正式試辦前的防線",
+      "title": "保留已驗證控制，補上正式環境的缺口",
+      "subtitle": "不是全部重做；把 POC 控制移植後重驗，再處理授權、信任邊界與營運風險。",
+      "headers": ["共同負責", "POC 已有", "試辦前要完成／決定"],
+      "rows": [
+        ["IAM／採購", "五帳號權限模型", "授權書面確認、具名歸責；撤銷舊 PAT、重設外露 runner token。"],
+        ["架構／網路", "HTTPS＋Agent pull", "Fetch 專用 VM、內部 PKI、最小流向；實測不允許來源遭拒。"],
+        ["資安／DevOps", "PR＋核准＋降權", "審查 SYSTEM broker；補 build validation、部署鎖與防繞過控制。"],
+        ["開發／供應鏈", "API 反查＋SHA-256", "決定簽章；內部 image 釘選；審核 CI 修改權與 CE 功能限制。"],
+        ["維運／DBA", "自動回復＋退版", "告警、稽核留存、token／憑證輪替；ADO／SQL 還原演練。"]
+      ],
+      "ribbon": "特別注意：hash 不是簽章；broker 仍是高權限信任核心；1 個 parallel job 不是部署鎖。",
+      "source": "來源：06 資安缺口，按 C-3～C-5 更新現況；官方能力與待驗項見配套 §6。",
+      "notes": "不要沿用初版未加 branch policy、SYSTEM agent 的舊缺口。後期已完成 PR 必要審核及目標 Agent 降權，但仍未有 build validation、正式 broker 程式碼簽章／審查、跨工具持久部署鎖。POC 的一個可用 self-hosted parallel job 是該現場 resourceusage 的觀測，不可泛稱 Express 永遠只允許一個，亦不防排隊順序造成舊版覆蓋新版。SYSTEM broker 沒有消失，agent 降權不是整套部署沒有高權限。read_api token、觸發 PAT、管理 agent 的可讀資料都需納入事件處理。Masked 不是機密防外傳機制。稽核／MFA／check 支援須按實際 Server/CE 版本核實，不把 Services 或付費版功能當作已配置。正式應用的 service stop、備份、F5 drain、業務功能測試、多節點、斷線與 SQL/ADO 還原需各自驗收，不以靜態站 HTTP probe 代替。"
+    },
+    {
+      "kind": "roadmap",
+      "chapter": "可執行的落地路線",
+      "title": "不先承諾日期，先約定每一關的出場條件",
+      "subtitle": "現在已有 POC 基線；後續日期、人力與試辦範圍，待各部門共同排定。",
+      "stages": [
+        {"title": "審查定案", "owner": "專案／架構／資安／採購", "body": "版本授權、責任、風險\n形成可追溯決議。", "icon": "people"},
+        {"title": "正式基礎建置", "owner": "IAM／網路／平台／DBA", "body": "帳號、PKI、主機與備份\n完成硬化及連線驗收。", "icon": "server"},
+        {"title": "移植與重驗", "owner": "DevOps／Windows 團隊", "body": "Pipeline／broker 移植\n核准、權限與越權重驗。", "icon": "pipeline"},
+        {"title": "SIT／UAT 驗收", "owner": "應用／測試／資安／維運", "body": "回復、退版、並行、失聯\n與還原演練留下證據。", "icon": "check"},
+        {"title": "限範圍試辦", "owner": "應用 Owner／維運", "body": "低風險變更、監看與停損\n簽核後才逐案擴展。", "icon": "flag"}
+      ],
+      "ribbon": "每關先留驗收證據；未達門檻不進下一關。若納入 F5／交易設計，須另完成整合驗收。",
+      "source": "依包內 07 建置框架重新整理；不是已核准工期，也不沿用舊提案日期。",
+      "notes": "此路線是建議落地順序，無虛構已核准日期或資源。P0 應有採購／Microsoft 對實際人員、服務身分、間接存取與 parallel jobs 的確認；P1 建置需選實際支援的 Server/SQL/OS/Agent 版本，不能把包內 installer product build 自動對應某 marketing 年份。P2 沿用後期低權限 agent+broker、PR policy 與獨立 rollback，不回退到初版捷徑。P3 至少含拒絕／逾時不動目標、非核准者、自核、未授權 pipeline、token scope+resource ACL、非法 ZIP／reparse、同版本重跑、並行／排隊舊版、agent 斷線／重啟、憑證／token輪替、稽核對帳、ADO/SQL還原。若首發應用有 F5 或非靜態站服務，必須補其實際 drain、業務驗測與恢復契約，不能沿用僅靜態站 probe 的通過結論。正式試辦要有 go/no-go、停止條件、聯絡窗口與回復演練。"
+    },
+    {
+      "kind": "decisions",
+      "chapter": "審查會議的產出",
+      "title": "這場審查，需要形成四個決定",
+      "subtitle": "確認範圍、責任與驗收門檻，將討論轉成可執行的落地決議。",
+      "cards": [
+        {"title": "01  架構與授權", "owner": "架構／平台／採購", "body": "Express 是否符合實際存取需求？\n主機、Fetch 隔離與並行容量怎麼配？", "icon": "server"},
+        {"title": "02  身分與安全底線", "owner": "資安／IAM／DevOps", "body": "誰可維護、誰可放行，如何歸責？\nPAT、broker、簽章與部署鎖接受標準？", "icon": "shield"},
+        {"title": "03  試辦應用與驗收", "owner": "應用 Owner／測試／維運", "body": "先試哪個系統、目標與變更類型？\n退版、失聯、導流與停損如何證明？", "icon": "check"},
+        {"title": "04  營運交接與資源", "owner": "維運／DBA／專案", "body": "備份還原、告警、輪替與稽核誰負責？\n何時可投入人力，何時開下一次關卡？", "icon": "people"}
+      ],
+      "ribbon": "會後留下：決策／Owner／日期／依據／接受的風險／未決項；未決項不得默認為同意。",
+      "source": "會議工作單：review-notes.md §8；主簡報與配套文件均不構成授權或正式上線批准。",
+      "notes": "會議輸出建議使用配套 §8 工作單。先把此 POC 已證明的可行性作為共同基礎，不要求審查者重做所有技術探索；但不能用 POC 成功替代正式環境權限、授權及營運批准。高風險未決項設為進入試辦前的阻擋條件，並記錄可接受的風險、範圍與期限。若 Express 不適用，保留 GitLab→ADO→Windows 的治理分工，重新選授權版本，不以共用帳號或服務身分代理當成已合規替代。所有未知現場事實與驗收標準由對應 Owner 確認，不預寫簽核完成。"
+    }
+  ]
+}
