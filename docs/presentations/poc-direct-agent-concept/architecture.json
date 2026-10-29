@@ -1,0 +1,35 @@
+{
+  "title": "Windows CD｜Direct-agent 簡化版架構概念",
+  "baseline": "2026-10-27",
+  "status": "concept-not-implemented",
+  "reference_slide": "../poc-implementation-review/preview-02.png",
+  "slides": [
+    {
+      "kind": "architecture",
+      "chapter": "簡化版架構概念",
+      "title": "保留分權與部署放行；Agent 直接執行換版",
+      "subtitle": "平行新版概念｜原 broker 架構與腳本完整保留；新方案尚未實作／驗收。",
+      "zones": ["GitLab CE／CI", "Azure DevOps Server", "Windows VM／IIS"],
+      "nodes": [
+        {"title": "01  Runner 建置", "body": "受控 main 觸發建置\n產出 site.zip＋manifest"},
+        {"title": "候選版本留在 GitLab", "body": "commit／job／SHA-256"},
+        {"title": "02  接收版本通知", "body": "POST …/runs（7.0）\nPAT 通知；參數不可信"},
+        {"title": "03  Fetch agent 驗證", "body": "反查 project／成功 build\n下載檔案、重算 SHA-256"},
+        {"title": "04  ADO 存版", "body": "Server Build Artifact"},
+        {"title": "05  人工部署放行", "body": "Environment check\n維護者不可自行放行"},
+        {"title": "06  專用部署 Agent", "body": "主動出站向 ADO 拉取工作\n放行後下載，並再驗 SHA-256"},
+        {"title": "07  換版／退版腳本", "body": "解壓／切 IIS／健康檢查／紀錄"}
+      ],
+      "fetch_label": "Fetch → GitLab：唯讀 API 反查",
+      "download_label": "GitLab → Fetch：ZIP＋manifest 回應",
+      "store_label": "驗證通過才入庫",
+      "repo_label": "CD repo：PR 審核 → 已審 YAML／腳本",
+      "target_label": "版本目錄切換；失敗切回並再驗",
+      "boundaries": ["內容與 CI 憑證控管", "五角色分權／PR 審核／部署放行", "專用執行帳號具必要主機權限"],
+      "network": "HTTPS 發起：Runner → ADO｜Fetch → GitLab｜Windows Agent → ADO；ADO 不需連入目標管理埠。",
+      "legend": "本版：Agent 直接執行，無 broker／JEA 中介　｜　虛線：請求　粗線：檔案／工作回應",
+      "source": "依據：既有 POC 與本輪簡化版決策；僅概念預覽，未修改原 broker 版或現機。",
+      "notes": "這是第 2 頁的獨立替代概念，不是原九頁簡報或現場架構的更新。保留原 broker 架構、全部 Script、安裝器、測試與證據；另建 direct-agent 平行版本。GitLab→ADO 的通知、來源反查、SHA 驗證、Server Build Artifacts 與 environment 放行不變；目標端改為專用 agent 直接執行換版／退版腳本，沒有檔案式 broker IPC、SYSTEM scheduled task 或 JEA 中介。執行帳號具必要 Windows／IIS 權限，實際身分與 ACL 尚待決定；不預設使用 LocalSystem。保留每版獨立目錄、失敗切回並再驗、journal 與部署／退版互斥。五角色涵蓋管理、觸發、CD 維護、部署放行與唯讀；CD PR 審核與每次部署放行是兩個不同關卡。信任受控且已審的 CD 程式，接受其能使用 agent 的主機權限；沒有宣稱與 broker 的權限隔離效果等價。正式實作仍需驗證未審分支、替代 YAML、其他 job 或 pipeline 無法避開治理使用正式 agent；圖中的已審腳本是設計要求，不是所有路徑已測完的證明。Fetch 可在此次部署放行前執行；放行後才在目標機取得檔案並執行換版。獨立指定版本退版仍應經 Plan 與部署放行，本圖只概覽目標執行方式，不表示退版從 GitLab 重新取檔。原 broker 版不刪除、不停用、不原地改寫。未重跑遠端 POC，也不包含 F5、多節點、業務資料 rollback、DR 或零停機保證。"
+    }
+  ]
+}
