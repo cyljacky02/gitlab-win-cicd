@@ -1,0 +1,592 @@
+{
+  "title": "期中工作報告｜Windows 換版自動化部署 × WinCD",
+  "period": "9/29 – 11/13",
+  "eyebrow": "期中工作報告  /  9/29 – 12/28 三個月目標",
+  "slides": [
+    {
+      "kind": "cover",
+      "chapter": "期中報告",
+      "title": "期中工作報告",
+      "subtitle": "Windows 換版自動化部署 × WinCD 換版工具",
+      "period": "報告期間 9/29 – 11/13｜三個月目標至 12/28",
+      "presenter": "〔姓名〕｜〔部門〕｜〔報告日期〕",
+      "ribbon": "1.5 個月：從了解流程、方案轉向、POC，到開始實際導入。",
+      "source": "",
+      "notes": "開場：今天報告入職 9/29 以來約一個半月的工作，包括做了什麼、目前進度、學到什麼，以及到 12/28 的後續規劃。主要有兩條線：換版自動化部署（主要）與 WinCD 換版工具（輔助），兩者最後會接在一起。封面的姓名、部門與日期請直接在 PowerPoint 修改。"
+    },
+    {
+      "kind": "goals",
+      "chapter": "三個月目標",
+      "title": "三個月兩個目標：以自動化部署建置為主",
+      "subtitle": "目標期限 12/28；ADO 與 WinCD 都屬於自動化部署建置。",
+      "goals": [
+        {
+          "title": "完成自動化部署建置",
+          "weight": "50%",
+          "body": "GitLab CE → Azure DevOps Server → Windows 主機（WinCD 換版）\n完成雷影、精誠兩套系統的實際自動化部署",
+          "status": "POC 完成 → 測試環境設定中",
+          "icon": "pipeline"
+        },
+        {
+          "title": "自動化測試第二階段",
+          "weight": "25%",
+          "body": "AI 相關導入",
+          "status": "進度 0%｜尚未開始",
+          "icon": "check"
+        }
+      ],
+      "axis": [
+        {
+          "date": "9/29",
+          "label": "入職",
+          "done": true
+        },
+        {
+          "date": "10/27 週",
+          "label": "POC 完成",
+          "done": true
+        },
+        {
+          "date": "11/6",
+          "label": "確認推行",
+          "done": true
+        },
+        {
+          "date": "11/13",
+          "label": "期中報告",
+          "done": true
+        },
+        {
+          "date": "12/28",
+          "label": "三個月目標",
+          "done": false
+        }
+      ],
+      "ribbon": "自動化部署＝ADO 管放行＋WinCD 管換版：放行後由 Agent 在主機上呼叫 WinCD。",
+      "source": "",
+      "notes": "三個月的目標有兩個。第一是完成自動化部署建置，佔約 50%：12/28 前完成雷影與精誠兩套系統的實際自動化部署，其中包含 Azure DevOps Server 的架設設定，以及 WinCD 換版工具——ADO 負責版本存放、核准與放行，放行後由目標主機上的 Agent 呼叫 WinCD 執行實際換版與退版。第二是自動化測試第二階段，佔約 25%，屬於 AI 相關的導入，目前尚未開始，進度 0%。下方是三個月的整體位置，詳細行事曆在下一頁。"
+    },
+    {
+      "kind": "calendar",
+      "chapter": "行事曆",
+      "title": "1.5 個月行事曆：從方案轉向到正式導入",
+      "subtitle": "",
+      "start": "2026-09-28",
+      "weeks": 8,
+      "planned_from": "2026-11-16",
+      "flags": [
+        {
+          "date": "2026-09-29",
+          "label": "入職"
+        },
+        {
+          "date": "2026-10-08",
+          "label": "否決"
+        },
+        {
+          "date": "2026-10-16",
+          "label": "新計畫"
+        },
+        {
+          "date": "2026-11-06",
+          "label": "可推行"
+        }
+      ],
+      "events": [
+        {
+          "id": 1,
+          "lane": 0,
+          "start": "2026-09-29",
+          "end": "2026-10-06",
+          "color": "#5B6F7A",
+          "anchor": 0,
+          "labels": [
+            "① 入職：新人訓練、教育訓練、系統維護學習",
+            "①"
+          ],
+          "title": "入職與訓練",
+          "dates": "9/29 – 10/6",
+          "body": "新人訓練、教育訓練、系統維護學習\n10/6 起負責 OPWEB 權限新增（持續）"
+        },
+        {
+          "id": 2,
+          "lane": 0,
+          "start": "2026-10-07",
+          "end": "2026-10-09",
+          "color": "#2A72B2",
+          "anchor": 1,
+          "labels": [
+            "② 了解換版流程 → 方案轉向"
+          ],
+          "title": "方案轉向",
+          "dates": "10/7 – 10/9",
+          "body": "了解雷影、精誠換版流程；Runner 直接部版\n被他部門否決 → 了解 ADO Server"
+        },
+        {
+          "id": 3,
+          "lane": 0,
+          "start": "2026-10-12",
+          "end": "2026-10-16",
+          "color": "#126DB5",
+          "anchor": 2,
+          "labels": [
+            "③ 可行性討論、開始 POC、提出新計畫"
+          ],
+          "title": "可行性與新計畫",
+          "dates": "10/12 – 10/16",
+          "body": "跨部門討論可行性與做法，開始 POC\n10/16 提出新計畫與簡報"
+        },
+        {
+          "id": 4,
+          "lane": 0,
+          "start": "2026-10-19",
+          "end": "2026-10-30",
+          "color": "#0E558F",
+          "anchor": 4,
+          "labels": [
+            "④ POC：多方案驗證",
+            "④ POC 完成"
+          ],
+          "title": "POC 多方案驗證",
+          "dates": "10/19 – 10/30",
+          "body": "GitLab Runner、Rundeck、Azure DevOps 比較\n真實 GitLab → ADO → IIS 跑通，完成 POC"
+        },
+        {
+          "id": 5,
+          "lane": 1,
+          "start": "2026-10-29",
+          "end": "2026-11-20",
+          "color": "#00786F",
+          "anchor": 5,
+          "labels": [
+            "⑤ WinCD",
+            "⑤ WinCD 換版工具開發",
+            "⑤ WinCD 測試環境驗收",
+            "⑤ WinCD 持續優化"
+          ],
+          "title": "WinCD 換版工具",
+          "dates": "10/29 起",
+          "body": "PowerShell 換版引擎＋TUI＋指令\n人工與 Runner／Agent 共用，持續優化"
+        },
+        {
+          "id": 6,
+          "lane": 0,
+          "start": "2026-11-02",
+          "end": "2026-11-20",
+          "color": "#0A3D6B",
+          "anchor": 7,
+          "labels": [
+            "⑥ 跨部門確認 → 11/6 可推行",
+            "⑥ 安裝 ADO＋SQL Express，開始設定",
+            "⑥ 設定、測試完成（預計）"
+          ],
+          "title": "正式導入",
+          "dates": "11/2 – 11/20",
+          "body": "測試機已裝 ADO Server Express＋SQL\nExpress，設定調試中，預計 11/20 完成"
+        }
+      ],
+      "maintenance": {
+        "start": "2026-10-06",
+        "end": "2026-11-20",
+        "color": "#9AA9B0"
+      },
+      "legend": [
+        {
+          "swatch": "#126DB5",
+          "label": "自動化部署"
+        },
+        {
+          "swatch": "#00786F",
+          "label": "WinCD"
+        },
+        {
+          "swatch": "#9AA9B0",
+          "label": "訓練／日常維運（OPWEB 權限）"
+        },
+        {
+          "swatch": "dashed",
+          "label": "虛線＝預計"
+        }
+      ],
+      "source": "",
+      "notes": "這頁是 9/29 入職到 11/20 的行事曆，上軌是自動化部署（藍色系，越深越後期），中軌是 WinCD（青綠），最下方灰色細線是日常維運（10/6 起負責 OPWEB 權限新增）。重點：10/7 了解雷影、精誠的換版流程；10/8 提出 GitLab Runner 直接部版，被其他部門否決，同日開始了解另一個部門的 Azure DevOps Server；10/12–16 討論可行性並開始 POC，10/16 提出新計畫；10/27 那週完成 POC；11/6 與其他部門確認可以推行；11/9 那週開始在測試機安裝 ADO Server Express 與 SQL Server Express，目前在設定調試，預計兩週內（約 11/20）設定、測試完成。最後一週以虛線表示預計。WinCD 從 10/29 開始開發，與導入工作並行。"
+    },
+    {
+      "kind": "scope",
+      "chapter": "任務範圍",
+      "title": "任務範圍：從寫 Pipeline，到負責整套部署平台",
+      "subtitle": "規範要求正式換版須經授權平台，自動化部署的工作內容隨之擴大。",
+      "before_title": "原本預期",
+      "before": [
+        "撰寫 GitLab CI YAML",
+        "撰寫部署 Pipeline",
+        "撰寫 PowerShell 換版腳本"
+      ],
+      "change": "規範：Runner 不可直接部版\n→ 須接 Azure DevOps Server",
+      "after_title": "實際負責",
+      "after": [
+        "方案研究與 POC",
+        "跨部門溝通與提案",
+        "ADO Server／SQL 架設",
+        "帳號、權限與 Agent 設定",
+        "Pipeline 串接與放行流程",
+        "換版工具（WinCD）開發",
+        "測試與驗收",
+        "上線後維運"
+      ],
+      "ribbon": "負責範圍從「寫腳本」擴大到「整套平台從 POC 到上線」；目標仍是 12/28 完成雷影、精誠。",
+      "source": "",
+      "notes": "（此頁可選用，不需要時可在 PowerPoint 設為隱藏投影片。）原本預期的工作是寫 GitLab CI YAML、pipeline 與 PowerShell 換版腳本。因為規範不允許開發端的 GitLab Runner 直接部署到正式主機，正式換版必須經過授權平台，所以後面要接 Azure DevOps Server。也因此，除了寫 pipeline，還要負責方案研究與 POC、跨部門溝通、ADO Server 與 SQL 的架設、帳號權限與 Agent 設定、放行流程、換版工具開發、測試驗收，以及上線後的維運。"
+    },
+    {
+      "kind": "options",
+      "chapter": "方案探索",
+      "title": "自動化部署：比較三種做法，選定 Azure DevOps",
+      "subtitle": "在規範限制下，比較誰觸發、誰放行、誰在目標主機上執行。",
+      "options": [
+        {
+          "badge": "否決",
+          "tone": "red",
+          "title": "GitLab Runner\n直接部版",
+          "flow": [
+            "GitLab",
+            "Runner",
+            "Windows 主機"
+          ],
+          "body": "最簡單，但開發端可直接碰正式主機，\n不符規範（10/8）"
+        },
+        {
+          "badge": "試做",
+          "tone": "muted",
+          "title": "Rundeck\n拉取版本部署",
+          "flow": [
+            "GitLab",
+            "Rundeck",
+            "Windows 主機"
+          ],
+          "body": "POC 可行；評估後認為\nAzure DevOps 較適合"
+        },
+        {
+          "badge": "採用",
+          "tone": "teal",
+          "title": "Azure DevOps\nServer",
+          "flow": [
+            "GitLab",
+            "ADO 放行",
+            "Agent → WinCD"
+          ],
+          "body": "Agent 裝在目標機，主動向 Server\n取工作；對 Windows 原生支援較好"
+        }
+      ],
+      "ribbon": "他部門已在使用 Azure DevOps，也是未來規劃導入的方案之一；放行後由 Agent 執行換版。",
+      "source": "",
+      "notes": "比較過三種做法。一、GitLab Runner 直接部版：最簡單，但等於開發端可直接操作正式主機，10/8 被其他部門否決。二、Rundeck 拉取已建置的版本再部署：POC 可行。三、Azure DevOps Server：從數開得知他們已在使用 Azure DevOps，它也是未來專開部規劃導入的方案之一；Agent 裝在目標機上主動向 Server 取工作，對 Windows 環境的原生支援也比較好，因此評估後認為 ADO 比 Rundeck 更適合。正式導入時，ADO 放行後由 Agent 呼叫 WinCD 換版。"
+    },
+    {
+      "kind": "poc",
+      "chapter": "POC 成果",
+      "title": "POC：GitLab → ADO → Windows 全流程已跑通",
+      "subtitle": "本地與遠端兩階段，以真實 GitLab push 觸發；正式環境項目另列待驗。",
+      "zones": [
+        {
+          "title": "GitLab CE",
+          "steps": [
+            "push → 建置",
+            "產出版本＋SHA-256"
+          ]
+        },
+        {
+          "title": "Azure DevOps Server",
+          "steps": [
+            "收到通知、反查來源",
+            "人工放行（不可自核）"
+          ]
+        },
+        {
+          "title": "Windows 主機",
+          "steps": [
+            "Agent 主動取工作",
+            "換版＋健康檢查"
+          ]
+        }
+      ],
+      "verified_title": "已驗證",
+      "verified": [
+        "真實 push 觸發；main 全自動、production 兩道核准",
+        "來源反查與 SHA-256 檢查，版本可追溯",
+        "角色分權：觸發者不可自行核准",
+        "健康檢查失敗，自動回復舊版",
+        "指定版本退版（需核准）"
+      ],
+      "pending_title": "正式環境另需驗證",
+      "pending": [
+        "F5 實際導流",
+        "多台主機",
+        "中斷／重開機復原",
+        "正式憑證與帳號"
+      ],
+      "source": "",
+      "notes": "POC 以隔離的 GitLab 專案真 push 觸發，不是手動排 ADO。本地與遠端兩階段各跑 main 與 production 路線：main 全自動；production 有部署前與導流前兩道核准，觸發者不可自核。另外驗證健康檢查失敗自動還原舊版、指定版本退版、來源與 SHA-256 檢查。POC 的核准是代理執行的自動化核准；只驗完整 IIS 站台與模擬導流意圖，沒有 F5／真實網路排空、多台主機、reboot／kill 實測，這些列在正式環境驗證。"
+    },
+    {
+      "kind": "progress",
+      "chapter": "導入進度",
+      "title": "正式導入：測試環境已安裝，設定調試中",
+      "subtitle": "11/6 跨部門確認可推行；11/9 那週開始架設，預計兩週內完成設定與測試。",
+      "steps": [
+        {
+          "status": "done",
+          "title": "跨部門確認可推行",
+          "note": "11/6"
+        },
+        {
+          "status": "done",
+          "title": "安裝 SQL Server Express",
+          "note": "測試機"
+        },
+        {
+          "status": "done",
+          "title": "安裝 Azure DevOps Server Express",
+          "note": "測試機"
+        },
+        {
+          "status": "doing",
+          "title": "設定與調試：權限、Agent、Pipeline",
+          "note": "進行中"
+        },
+        {
+          "status": "todo",
+          "title": "測試環境驗證",
+          "note": "預計 11/20"
+        },
+        {
+          "status": "todo",
+          "title": "雷影首發：SIT／UAT → 上線",
+          "note": "待辦"
+        },
+        {
+          "status": "todo",
+          "title": "精誠導入",
+          "note": "待辦"
+        }
+      ],
+      "placeholders": [
+        "截圖：ADO Server 管理畫面（測試機）",
+        "截圖：安裝完成／Agent 上線畫面"
+      ],
+      "source": "",
+      "notes": "11/6 與其他部門確認可以推行後，11/9 那週開始實際導入。目前在測試機已安裝 Azure DevOps Server Express 與 SQL Server Express，正在設定與調試，包括帳號權限、Agent 與 pipeline。預計兩週內（約 11/20）完成測試環境的設定與測試，之後串接雷影的 pipeline，經 SIT／UAT 後上線，再導入精誠。右側為測試環境截圖位置（待補）。"
+    },
+    {
+      "kind": "wincd",
+      "chapter": "WinCD",
+      "title": "WinCD：人工與 Runner／Agent 共用的換版工具",
+      "subtitle": "審核與排程交給 GitLab／ADO；WinCD 只負責在主機上安全地換版與退版。",
+      "entries": [
+        "人工：TUI 介面",
+        "GitLab Runner",
+        "ADO Agent"
+      ],
+      "engine": "WinCD 換版引擎",
+      "engine_body": "同一份 release\n同一套流程",
+      "host": "Windows 主機",
+      "host_body": "IIS／Windows Service／Process",
+      "flow": [
+        "Down F5",
+        "停止服務",
+        "備份",
+        "寫入有變的檔案",
+        "啟動服務",
+        "檢查",
+        "Up F5"
+      ],
+      "failure": "任何一步失敗 → 自動還原檔案與服務狀態",
+      "placeholder": "截圖：WinCD TUI 畫面",
+      "source": "",
+      "notes": "WinCD 是 Windows 換版工具。部署人員在主機上用繁體中文 TUI；GitLab Runner 或 Azure DevOps Agent 用 wincd 指令，例如 wincd deploy。三種入口呼叫同一個換版引擎、使用同一份 release。審核與多台主機的先後順序在呼叫工具之前由 GitLab／ADO 完成，WinCD 只負責在單台主機上執行。每次換版固定走：Down F5 → 停止服務 → 備份 → 寫入 → 啟動服務 → 檢查 → Up F5（可設定自動或核准後才導流）；中途失敗會還原檔案與服務的原始狀態。"
+    },
+    {
+      "kind": "features",
+      "chapter": "WinCD",
+      "title": "WinCD 功能重點：一份設定，換版、退版、復原都有紀錄",
+      "subtitle": "只需 Windows PowerShell 5.1；離線安裝，主機不需連網。",
+      "features": [
+        {
+          "icon": "code",
+          "title": "YAML 部署設定",
+          "body": "三個檔案描述部署什麼、怎麼啟停；\n跟著分支版控，每台主機一份"
+        },
+        {
+          "icon": "pipeline",
+          "title": "只寫有變的檔案",
+          "body": "比對 SHA-256 只動有變的檔；\n支援疊加與完整同步"
+        },
+        {
+          "icon": "shield",
+          "title": "F5 導流控制",
+          "body": "換版前 Down、就緒後 Up；\n可自動或核准後才導流"
+        },
+        {
+          "icon": "restore",
+          "title": "退版",
+          "body": "保留最近版本，一行指令\n退回上一版或指定版本"
+        },
+        {
+          "icon": "check",
+          "title": "中斷復原",
+          "body": "Ctrl+C、斷線、當機後可偵測，\n執行復原作業"
+        },
+        {
+          "icon": "server",
+          "title": "紀錄與結果碼",
+          "body": "每次換版留紀錄；JSON 與\nexit code 方便 pipeline 判斷"
+        }
+      ],
+      "status_title": "目前狀態",
+      "status": [
+        {
+          "state": "done",
+          "label": "測試環境驗收完成"
+        },
+        {
+          "state": "doing",
+          "label": "真機驗收"
+        },
+        {
+          "state": "doing",
+          "label": "目錄對應 Update／Delete"
+        },
+        {
+          "state": "todo",
+          "label": "TUI 介面優化"
+        },
+        {
+          "state": "todo",
+          "label": "歷史退版設計"
+        }
+      ],
+      "source": "",
+      "notes": "功能重點：一、部署設定是三個 YAML（wincd.yaml、mappings.yaml、operations.yaml），跟著每台主機的分支版控。二、目錄與檔案對應先比對 SHA-256，只寫有變的檔案，備份只含會被覆蓋或刪除的檔案；目錄可選疊加或完整同步。三、F5 導流：換版前 Down，就緒後 Up，可設定自動或等 pipeline 核准後再 Up。四、保留最近幾個版本，可一行指令退版。五、換版被中斷（Ctrl+C、斷線、當機）可偵測並執行復原。六、每次換版留紀錄，-Json 與 exit code 方便 pipeline 判斷。目前測試環境驗收已完成；正在進行真機驗收、目錄對應的 Update／Delete；後續有 TUI 介面優化與歷史退版設計。"
+    },
+    {
+      "kind": "learning",
+      "chapter": "學習與收穫",
+      "title": "這 1.5 個月學到的",
+      "subtitle": "從公司系統維護到部署平台架設，以及跨部門推動的方法。",
+      "columns": [
+        {
+          "icon": "people",
+          "title": "入職與維運",
+          "items": [
+            "新人訓練、教育訓練",
+            "公司系統維護作業",
+            "OPWEB 權限新增",
+            "雷影、精誠換版流程"
+          ]
+        },
+        {
+          "icon": "server",
+          "title": "部署平台",
+          "items": [
+            "Azure DevOps Server",
+            "Express 授權與帳號",
+            "GitLab CE CI／Runner",
+            "SQL Server Express"
+          ]
+        },
+        {
+          "icon": "pipeline",
+          "title": "Windows 換版",
+          "items": [
+            "IIS／Windows Service",
+            "F5 監測與導流",
+            "PowerShell 5.1",
+            "權限與服務帳號"
+          ]
+        },
+        {
+          "icon": "check",
+          "title": "工作方法",
+          "items": [
+            "跨部門提案與溝通",
+            "先 POC 驗證再推行",
+            "ISMS 上版流程",
+            "部署權責與放行規範"
+          ]
+        }
+      ],
+      "ribbon": "最大收穫：在規範限制下找出可行路線，並把它落地成可複用的工具與流程。",
+      "source": "",
+      "notes": "學習分四類。入職與維運：新人與教育訓練、公司系統維護作業、OPWEB 權限新增，以及雷影、精誠現行換版流程。部署平台：Azure DevOps Server 與 Express 的授權與帳號模式、GitLab CE CI／Runner、SQL Server Express。Windows 換版：IIS 與 Windows Service、F5 監測與導流、PowerShell 5.1 相容、權限與服務帳號。工作方法：跨部門提案與溝通、先 POC 驗證再推行、ISMS 上版流程，以及部署權責與放行的規範。"
+    },
+    {
+      "kind": "plan",
+      "chapter": "後續規劃",
+      "title": "後續規劃：12/28 前完成雷影、精誠的自動化部署",
+      "subtitle": "依序推進；尚未開始的項目時程，依測試結果與各部門排程另行確定。",
+      "deadline": "12/28",
+      "groups": [
+        {
+          "title": "自動化部署建置",
+          "caption": "ADO",
+          "color": "#126DB5",
+          "steps": [
+            {
+              "label": "測試環境\n設定與測試",
+              "state": "doing"
+            },
+            {
+              "label": "雷影\nPipeline 串接",
+              "state": "todo"
+            },
+            {
+              "label": "雷影\nSIT／UAT",
+              "state": "todo"
+            },
+            {
+              "label": "雷影上線",
+              "state": "todo"
+            },
+            {
+              "label": "精誠導入",
+              "state": "todo"
+            }
+          ]
+        },
+        {
+          "title": "自動化部署建置",
+          "caption": "WinCD",
+          "color": "#00786F",
+          "steps": [
+            {
+              "label": "真機驗收",
+              "state": "doing"
+            },
+            {
+              "label": "接上 ADO Agent",
+              "state": "todo"
+            },
+            {
+              "label": "依實際換版案例\n與環境持續優化",
+              "state": "todo"
+            }
+          ]
+        },
+        {
+          "title": "自動化測試第二階段",
+          "caption": "AI 導入",
+          "color": "#5B6F7A",
+          "dashed": true,
+          "steps": [
+            {
+              "label": "尚未開始（規劃中）",
+              "state": "todo"
+            }
+          ]
+        }
+      ],
+      "source": "",
+      "notes": "後續到 12/28：自動化部署建置方面，先完成測試環境的設定與測試，接著串接雷影的 pipeline，經 SIT／UAT 後上線，再導入精誠。WinCD 同步進行真機驗收，之後在雷影、精誠的主機上由 ADO Agent 呼叫 WinCD 換版，並依實際的換版案例與環境持續優化。自動化測試第二階段（AI 相關導入）目前尚未開始。尚未開始的項目先不訂時程，會依測試結果與其他部門的排程確定。"
+    }
+  ]
+}
