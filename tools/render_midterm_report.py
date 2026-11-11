@@ -400,30 +400,36 @@ def plan(s, d):
     """Ordered next steps per track; deliberately no estimated dates."""
     tints = {BLUE: SKY, TEAL: MINT}
     deadline_x, sx1, sx2 = 1108, 262, 1066
+    top, bottom, spacing = 172, 600, 10
+    count = len(d['groups'])
+    lh = (bottom - top - (count-1)*spacing) / count
+    bh = min(66, lh - 44)
     for k, g in enumerate(d['groups']):
-        y = 172 + k*144
+        y = top + k*(lh+spacing)
         dashed = g.get('dashed', False)
-        s.box(36, y, 1050, 132, tints.get(g['color'], STONE), g['color'] if dashed else None,
+        s.box(36, y, 1050, lh, tints.get(g['color'], STONE), g['color'] if dashed else None,
               radius=14, dashed=dashed)
-        s.box(36, y, 6, 132, g['color'], radius=3)
-        s.text(g['caption'], 58, y+36, 190, 22, g['color'], True, h=30)
-        s.text(g['title'], 58, y+74, 190, 14, MUTED, True, h=20)
+        s.box(36, y, 6, lh, g['color'], radius=3)
+        s.text(g['caption'], 58, y+lh/2-28, 190, 20, g['color'], True, h=28)
+        s.text(g['title'], 58, y+lh/2+6, 190, 13.5, MUTED, True, h=19)
         n = len(g['steps'])
         gap = 30
         w = (sx2 - sx1 - (n-1)*gap) / n
+        by = y + 30
+        cy = by + bh/2
         for j, step in enumerate(g['steps']):
             x = sx1 + j*(w+gap)
             doing = step['state'] == 'doing'
+            pending = dashed and not doing
             if doing:
-                s.text('進行中', x+4, y+12, 80, 12, ORANGE, True, h=17)
-            s.box(x, y+34, w, 66, SAND if doing else WHITE, ORANGE if doing else LINE,
-                  radius=12, dashed=dashed)
-            color = MUTED if dashed else INK
+                s.text('進行中', x+4, y+8, 80, 12, ORANGE, True, h=17)
+            s.box(x, by, w, bh, SAND if doing else WHITE, ORANGE if doing else LINE,
+                  radius=12, dashed=pending)
             lines = step['label'].count('\n') + 1
-            s.text(step['label'], x+8, y+67-lines*15.5*1.27/2, w-16, 15.5, color, True,
-                   h=lines*15.5*1.27+.2, align='center')
+            s.text(step['label'], x+8, cy-lines*15.5*1.27/2, w-16, 15.5,
+                   MUTED if pending else INK, True, h=lines*15.5*1.27+.2, align='center')
             if j < n-1:
-                s.path([(x+w+4, y+67), (x+w+gap-4, y+67)], g['color'], 2, arrow=True)
+                s.path([(x+w+4, cy), (x+w+gap-4, cy)], g['color'], 2, arrow=True)
     s.path([(deadline_x, 170), (deadline_x, 600)], ORANGE, 3, role='deadline')
     s.text(d['deadline'], deadline_x-50, 604, 100, 15, ORANGE, True, h=22, align='center')
 
