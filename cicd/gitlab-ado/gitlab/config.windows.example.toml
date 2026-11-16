@@ -1,0 +1,13 @@
+# REFERENCE ONLY. Let `gitlab-runner.exe register` generate the real config.toml.
+# Its runner authentication token is a secret: never commit the generated file.
+concurrent = 1
+check_interval = 3
+
+[[runners]]
+  name = "gitlab-bridge-windows"
+  url = "https://gitlab.example.internal"
+  token = "DO_NOT_COPY_THIS_USE_INTERACTIVE_REGISTRATION"
+  executor = "shell"
+  shell = "powershell" # Windows PowerShell 5.1; not the pwsh/PowerShell 7 default
+  builds_dir = 'C:\GitLab-Runner\builds'
+  cache_dir = 'C:\GitLab-Runner\cache'

@@ -1,0 +1,6 @@
+# Local settings, receipts and test output (never commit credentials).
+*.local.json
+.env
+out/
+.test-output/
+bridge-receipt.json

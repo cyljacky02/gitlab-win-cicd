@@ -1,0 +1,8 @@
+{
+  "object_kind": "push",
+  "event_name": "push",
+  "ref": "refs/heads/poc/ado-fetch",
+  "project": {
+    "path_with_namespace": "grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs"
+  }
+}

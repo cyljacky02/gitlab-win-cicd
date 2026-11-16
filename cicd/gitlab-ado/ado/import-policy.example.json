@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "gitlabBaseUrl": "https://gitlab.example.internal",
+  "projectId": "123",
+  "projectPath": "group/application",
+  "allowedRef": "main",
+  "packageJobName": "package",
+  "packageJobStage": "build",
+  "requiredJobs": [
+    { "name": "package", "stage": "build" },
+    { "name": "notify_ado", "stage": "notify" }
+  ],
+  "allowInsecureHttp": false,
+  "waitForPipelineSeconds": 600,
+  "pollIntervalSeconds": 5,
+  "maxPackageBytes": 67108864,
+  "maxExpandedBytes": 268435456,
+  "maxZipEntries": 10000
+}

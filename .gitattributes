@@ -2,3 +2,7 @@
 *.pdf binary
 *.pptx binary
 *.png binary
+
+# Linux CI entry points must remain runnable after a Windows checkout/copy.
+/cicd/gitlab-ado/gitlab/ci/*.sh text eol=lf
+/cicd/gitlab-ado/gitlab/ci/*.py text eol=lf

@@ -1,0 +1,66 @@
+# CD-owned Azure Repos repository. Import-only: NO deployment job/VM2 access.
+# Create an ADO YAML pipeline pointing to this file, not to the GitLab repo.
+trigger: none
+pr: none
+
+name: GitLab-Import-$(Date:yyyyMMdd)$(Rev:.r)
+
+parameters:
+  - name: gitlabProjectId
+    type: string
+    default: ''
+  - name: gitlabPipelineId
+    type: string
+    default: ''
+  - name: gitlabJobId
+    type: string
+    default: ''
+  - name: commitSha
+    type: string
+    default: ''
+  - name: releaseId
+    type: string
+    default: ''
+  - name: zipSha256
+    type: string
+    default: ''
+
+variables:
+  - group: gitlab-readonly # secret variable: GITLAB_READ_TOKEN; authorize THIS pipeline only
+
+pool:
+  name: VM1-Build # REPLACE with the existing dedicated VM1 build-agent pool
+
+jobs:
+  - job: Import
+    displayName: Verify GitLab candidate and store Build Artifact (no deployment)
+    timeoutInMinutes: 30
+    workspace:
+      clean: all
+    steps:
+      - checkout: self
+        clean: true
+        persistCredentials: false
+      - task: PowerShell@2
+        displayName: Verify final pipeline success, provenance and package hash
+        inputs:
+          targetType: filePath
+          filePath: '$(Build.SourcesDirectory)/cicd/gitlab-ado/ado/scripts/Import-GitLabCandidate.ps1'
+          arguments: >-
+            -PolicyPath "$(Build.SourcesDirectory)/cicd/gitlab-ado/ado/import-policy.json"
+            -OutputDirectory "$(Build.ArtifactStagingDirectory)/release"
+          pwsh: false
+        env:
+          GITLAB_READ_TOKEN: $(GITLAB_READ_TOKEN)
+          GITLAB_PROJECT_ID: ${{ parameters.gitlabProjectId }}
+          GITLAB_PIPELINE_ID: ${{ parameters.gitlabPipelineId }}
+          GITLAB_JOB_ID: ${{ parameters.gitlabJobId }}
+          GITLAB_COMMIT_SHA: ${{ parameters.commitSha }}
+          GITLAB_RELEASE_ID: ${{ parameters.releaseId }}
+          GITLAB_ZIP_SHA256: ${{ parameters.zipSha256 }}
+      - task: PublishBuildArtifacts@1
+        displayName: Store verified candidate on ADO Server
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/release'
+          ArtifactName: release
+          publishLocation: Container

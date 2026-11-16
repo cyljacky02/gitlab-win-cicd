@@ -1,0 +1,37 @@
+# Isolated smoke-test project ONLY. For a real project, merge the two jobs into
+# its existing pipeline; keep every required build/test job blocking.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"'
+    - when: never
+
+stages: [build, notify]
+
+default:
+  tags: [gitlab-bridge-linux] # REPLACE with the existing Linux Runner's actual tag
+  # Docker/Kubernetes executor: use an approved image containing Python >= 3.9.
+  # Shell executor ignores image:; Python must already be installed on its host.
+  image: python:3.12-alpine
+  before_script:
+    - python3 --version
+
+package:
+  stage: build
+  script:
+    # Replace demo-site with your actual successful build/publish output.
+    - sh ./ci/bridge/gitlab/ci/new-release-candidate.sh ./ci/bridge/gitlab/demo-site
+  artifacts:
+    paths: [out/site.zip, out/manifest.json]
+    expire_in: 30 days
+
+notify_ado:
+  stage: notify
+  dependencies: [package]
+  # Deliberately no needs:, retry:, or wait-for-ADO loop. All previous stages
+  # must finish, and this job must exit before GitLab can become success.
+  script:
+    - sh ./ci/bridge/gitlab/ci/send-ado-candidate.sh
+  artifacts:
+    when: always
+    paths: [out/bridge-receipt.json]
+    expire_in: 30 days

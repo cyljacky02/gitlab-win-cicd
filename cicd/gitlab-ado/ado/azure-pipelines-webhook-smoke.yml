@@ -1,0 +1,31 @@
+# TEMPORARY, UNAUTHENTICATED TRANSPORT SMOKE TEST ONLY.
+# No GitLab Runner, no ADO agent, no source checkout, no credentials, no deployment.
+# A successful run proves delivery/filtering only, NOT authenticated GitLab provenance.
+# Delete the temporary GitLab webhook / ADO connection / pipeline after the test.
+trigger: none
+pr: none
+
+name: webhook-smoke-$(Date:yyyyMMdd)$(Rev:.r)
+
+resources:
+  webhooks:
+    - webhook: WebHook
+      connection: gitlab-ado-smoke-rs
+      filters:
+        - path: object_kind
+          value: push
+        - path: ref
+          value: refs/heads/poc/ado-fetch
+        - path: project.path_with_namespace
+          value: grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs
+
+jobs:
+  - job: WebhookReceived
+    displayName: Transport probe only - no source, secrets, agents or deployment
+    pool: server
+    timeoutInMinutes: 1
+    steps:
+      - task: Delay@1
+        displayName: Webhook probe reached ADO - zero-minute no-op
+        inputs:
+          delayForMinutes: '0'
