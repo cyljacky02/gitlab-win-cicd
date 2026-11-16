@@ -1,6 +1,6 @@
 # GitLab ↔ Azure DevOps Server Express：VM1／VM2 串接指南
 
-> **最新實測入口：**本輪依使用者要求，先做 [GitLab 原生 webhook → ADO agentless probe](gitlab-ado-webhook-smoke.md)，**不需要 GitLab Runner**。本頁保留較早的 CI artifact 交接方案供後續選用，不是 webhook 連通測試的前置要求。
+> **目前採用路線：**GitLab 放原始碼／發 webhook，ADO VM1 取碼與建置；請從 [ADO source-build 指南](gitlab-ado-source-build.md) 繼續。原 [webhook agentless probe](gitlab-ado-webhook-smoke.md) 已由使用者回報手動 Test 自動 Run 成功。**本頁保留較早的 GitLab CI artifact 交接備選，不是目前必做步驟，也不要求 GitLab Runner。**
 
 ## 先說下一步
 

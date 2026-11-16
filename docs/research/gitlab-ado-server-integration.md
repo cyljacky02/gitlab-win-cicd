@@ -2,6 +2,8 @@
 
 Research date: **2026-11-16**. Sources: Microsoft and GitLab first-party documentation, fetched during this research. **No live API calls, credential tests, archive inspection, or script changes were performed.**
 
+> **Subsequent direction selected by the user:** GitLab hosts source and emits notifications; the Windows ADO VM1 Build Agent will fetch the exact source commit and perform build/test, with artifacts stored by ADO. The earlier GitLab-CI-artifact recommendation below is retained as historical research, **not the current implementation requirement**. The native agentless webhook probe has been reported successful by the user; the next [manual source-checkout runbook](../runbooks/gitlab-ado-source-build.md) keeps private-source credentials separate from that unauthenticated probe. Actual application build commands and authenticated automatic triggering remain pending.
+
 ## 1. Decision and evidence boundary
 
 **Recommendation: retain the tested artifact handoff, not a repository migration or a second build in ADO.** GitLab remains the application-source and CI system. A final GitLab CI notification starts the fixed ADO YAML pipeline through **Runs – Run Pipeline**, with candidate identifiers in `templateParameters`. VM1 validates the GitLab pipeline/job and imports the exact `site.zip` and manifest. Only an authorized **Deployer** can release the production deployment stage to the VM2 deployment agent. Starting an ADO run is **candidate notification**, not **Deployment Authorization**. The Runs API creates a run; environment approvals separately control when a resource-consuming stage may begin. [S04][S20–S22][S29–S31]

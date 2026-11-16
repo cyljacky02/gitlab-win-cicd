@@ -1,0 +1,56 @@
+# MANUAL SOURCE CHECKOUT ONLY. Do not attach the open smoke webhook/connection.
+# Keep this CD-owned YAML/scripts separate from application source.
+trigger: none
+pr: none
+
+parameters:
+  - name: gitlabCommitSha
+    displayName: Exact full GitLab commit SHA to read (40 hex characters)
+    type: string
+    default: ''
+  - name: allowInsecureHttpLab
+    displayName: Approved isolated-lab HTTP exception (plaintext credential/source)
+    type: boolean
+    default: false
+
+variables:
+  - group: gitlab-source-readonly # Only this pipeline; username + secret Git read token
+
+pool:
+  name: Default
+  demands:
+    - Agent.Name -equals SECSVR004-086T
+
+jobs:
+  - job: ReadGitLabSource
+    displayName: VM1 - read exact GitLab source, no application build/deployment
+    timeoutInMinutes: 15
+    workspace:
+      clean: all
+    steps:
+      - checkout: self # Only the trusted ADO CD repo, NOT GitLab application source
+        clean: true
+        persistCredentials: false
+      - task: PowerShell@2
+        displayName: Read fixed GitLab repo and verify exact detached commit
+        inputs:
+          targetType: filePath
+          # Copy scripts/Get-GitLabSource.ps1 beside this YAML in the ADO test repo.
+          filePath: '$(Build.SourcesDirectory)/scripts/Get-GitLabSource.ps1'
+          arguments: >-
+            -OutputDirectory "$(Pipeline.Workspace)/gitlab-source"
+            -EvidenceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
+          pwsh: false
+        env:
+          SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs.git'
+          SOURCE_REF: refs/heads/main # Read-only; creates no branch, commit or push in GitLab
+          EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+          ALLOW_INSECURE_HTTP_LAB: ${{ parameters.allowInsecureHttpLab }}
+          GITLAB_GIT_USERNAME: $(GITLAB_GIT_USERNAME)
+          GITLAB_GIT_TOKEN: $(GITLAB_GIT_TOKEN)
+      - task: PublishBuildArtifacts@1
+        displayName: Publish source provenance ONLY (not source, .git, or deployable bytes)
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)/source-provenance'
+          ArtifactName: source-provenance
+          publishLocation: Container

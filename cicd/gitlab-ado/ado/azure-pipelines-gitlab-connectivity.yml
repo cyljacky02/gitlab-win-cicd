@@ -1,0 +1,63 @@
+# MANUAL, ANONYMOUS VM1 -> GitLab connectivity probe.
+# Separate from the unauthenticated agentless webhook smoke pipeline.
+# No checkout, credentials, GitLab Runner, build, artifact download or deployment.
+trigger: none
+pr: none
+
+pool:
+  name: Default
+  demands:
+    # Confirmed VM1 Build Agent; do not remove this host restriction.
+    - Agent.Name -equals SECSVR004-086T
+
+jobs:
+  - job: GitLabConnectivity
+    displayName: VM1 to GitLab - anonymous connectivity only
+    timeoutInMinutes: 2
+    steps:
+      - checkout: none
+      - task: PowerShell@2
+        displayName: Check Git and anonymous GitLab response
+        inputs:
+          targetType: inline
+          pwsh: false
+          script: |
+            $ErrorActionPreference = 'Stop'
+            Write-Host "ADO agent: $env:AGENT_NAME; computer: $env:COMPUTERNAME"
+            $git = Get-Command git.exe -ErrorAction SilentlyContinue
+            if ($git) {
+              & $git.Source --version
+              if ($LASTEXITCODE -ne 0) { throw 'Git version check failed.' }
+            } else {
+              $bundled = Join-Path $env:AGENT_HOMEDIRECTORY 'externals\git\cmd\git.exe'
+              if (-not (Test-Path -LiteralPath $bundled)) { throw 'Git is unavailable to this agent.' }
+              & $bundled --version
+              if ($LASTEXITCODE -ne 0) { throw 'Bundled Git version check failed.' }
+            }
+            $request = [Net.HttpWebRequest]::Create('http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs.git/info/refs?service=git-upload-pack')
+            $request.Method = 'GET'
+            $request.AllowAutoRedirect = $false
+            $request.UseDefaultCredentials = $false
+            $request.Credentials = $null
+            $request.Timeout = 15000
+            $request.ReadWriteTimeout = 15000
+            $response = $null
+            try {
+              try { $response = $request.GetResponse() }
+              catch [Net.WebException] {
+                if ($_.Exception.Response) { $response = $_.Exception.Response }
+                else { throw 'No HTTP response from GitLab: check VM1 route/proxy/service.' }
+              }
+              $status = [int]$response.StatusCode
+              Write-Host "Anonymous GitLab HTTP status: $status"
+              if ($status -in @(200, 401, 403)) {
+                Write-Host 'HTTP response received. This does NOT prove authenticated source checkout.'
+              } elseif ($status -ge 300 -and $status -lt 400) {
+                throw 'Redirect received; confirm canonical Git URL/HTTPS endpoint. No redirect followed.'
+              } else {
+                throw 'Unexpected GitLab response; confirm the Git URL and access policy.'
+              }
+            } finally {
+              if ($response) { $response.Dispose() }
+              $request.Abort()
+            }

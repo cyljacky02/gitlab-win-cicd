@@ -1,10 +1,23 @@
-# GitLab → ADO Server Express：候選版本交接套件
+# GitLab → ADO Server：webhook、取碼與建置串接
 
-**用途：接通 GitLab CI → VM1 驗證／ADO 存版；不排程 VM2，不做換版。**
+**目前選定分工：GitLab 放原始碼／發 webhook，VM1 ADO Build Agent 取碼與建置，ADO 存放建置產物；VM2 只在部署放行後執行。這條路不需要 GitLab CI job／Runner，也不下載 GitLab CI artifacts。**
 
-> **本輪先做原生 webhook 連通測試：**請改從 [不經 Runner 的 agentless probe 指南](../../docs/runbooks/gitlab-ado-webhook-smoke.md) 開始，使用 [`ado/azure-pipelines-webhook-smoke.yml`](ado/azure-pipelines-webhook-smoke.yml)。它只驗事件接收，不建置／取碼／部署；下面的 CI 交接套件不是本輪實測的必要步驟。
+- 已回報通過：[GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；成功不等於來源驗章或取碼已完成。
+- **下一步：[VM1 → GitLab 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。** 不直接升級未驗章的 smoke pipeline；新增獨立手動流程。
 
-從這份[繁體中文操作指南](../../docs/runbooks/gitlab-ado-integration.md)開始。現場版號、URL、pool、Deploy Agent 類型仍須確認；此套件不是已在你的 VM 通過驗收的部署包。
+| 本輪檔案 | 用途 |
+|---|---|
+| [`ado/azure-pipelines-gitlab-connectivity.yml`](ado/azure-pipelines-gitlab-connectivity.yml) | 無憑證、無 checkout 的 VM1 → GitLab 連通檢查 |
+| [`ado/azure-pipelines-gitlab-source.yml`](ado/azure-pipelines-gitlab-source.yml) | **手動 source-only**：固定 repo/ref、指定完整 GitLab SHA，只發來源證據 artifact |
+| [`ado/scripts/Get-GitLabSource.ps1`](ado/scripts/Get-GitLabSource.ps1) | PS 5.1 fetch／detached checkout；短時子程序 credential、不持久化、不執行 app code |
+| [`ado/azure-pipelines-webhook-smoke.yml`](ado/azure-pipelines-webhook-smoke.yml) | 原未驗章 agentless 零動作探針；不可加入取碼／建置 secret |
+| [`tests/Test-GitLabSource.ps1`](tests/Test-GitLabSource.ps1) | 新取碼實作的離線測試（本機 Git fixture、假 credential） |
+
+建置／測試命令與輸出規格仍待確認；source-only pipeline **不冒充已產出應用候選版本**，也沒有自動部署／WinCD 呼叫。來源目前 HTTP，預設拒絕送 credential；正常使用需 HTTPS，隔離 HTTP 例外必須明確允許並使用短效專案唯讀 token。
+
+## 較早的 GitLab CI artifact 交接備選（不是本輪必做）
+
+以下保留原先「GitLab CI 建好 ZIP → ADO importer 驗證存版」實作供參考。它不是目前選定的 source-build 路線，不能把兩種產物／provenance 契約混用。[歷史操作指南](../../docs/runbooks/gitlab-ado-integration.md)。
 
 | 檔案 | 用途 |
 |---|---|
@@ -20,7 +33,7 @@
 | [`tests/Test-Bridge.ps1`](tests/Test-Bridge.ps1) | Windows ADO／既有 PS 實作的離線測試 |
 | [`tests/test_linux_jobs.py`](tests/test_linux_jobs.py) | Linux CI 實作的離線測試，含 loopback 通知及與 ADO ZIP 契約互通 |
 
-## 執行位置決定語言，不是 GitLab Server 的 OS
+## 執行位置決定語言（以下為較早的 CI artifact 備選）
 
 | 執行端 | 預設使用 |
 |---|---|
@@ -47,6 +60,16 @@ ADO 並未強制使用 PowerShell；保留 `.ps1` 是因目前 ADO Agent 在 Win
 - 沒有耐久去重／exactly-once；重送可能多一筆 importer build，所以本階段不能開自動部署。
 
 ## 本機驗證
+
+目前手動取碼實作（Windows PowerShell 5.1）：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitLabSource.ps1
+```
+
+本機離線 **19/19 通過**，另驗 Git client 對 loopback 送出暫時 URL-scoped header；未連公司 GitLab、未完成現場取碼或應用 build。
+
+以下則為保留的舊 CI artifact 實作回歸測試，不是本輪 Runner 前置要求：
 
 Linux CI 實作（Python 3.9+，只用標準函式庫；通知測試只打 localhost）：
 

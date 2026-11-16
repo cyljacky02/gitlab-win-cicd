@@ -1,193 +1,187 @@
-# 實測：GitLab 原生 webhook → ADO Server（不經 GitLab Runner）
+# 手動打通 GitLab Test webhook → ADO smoke pipeline
 
-## 目的、已知現況與證據界線
-
-**這次只測事件能否進入 ADO 並建立一筆 probe run，不取碼、不建置、不下載產物、不派送 VM2。**
-
-- 使用者回報：ADO Server **25H2 20260921.1**、collection `DefaultCollection`、project `Deployment`。
-- GitLab 測試專案：`grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs`；限定來源 `poc/ado-fetch`，不改 GitLab 應用 `main`。
-- 改用 ADO **agentless server job**，完全不用 GitLab Runner，也不用 VM1 `Default` pool。這同時避免尚未核實 pool 成員時誤派 VM2。
-- 本文件記錄操作方案，不是已成功的現場紀錄。本機對使用者提供的兩個內網服務做匿名 HEAD 均連線逾時；**不代表 GitLab 服務端到 ADO 不通**，也沒有測到認證／端點能力。
-- GitLab Server 版本尚未確認；已知 `16.11.1` 是 **Runner** 版本，不能反推 Server 版本。
-- 本原生 webhook 探針是使用者本輪要求的新測試入口，**不是 FINAL ZIP 已驗證的通知方式**，也不取代其中的部署程式。
+## 現在只做這件事
 
 ```text
-GitLab 服務端（發 webhook）
-  → ADO collection 的 Incoming WebHook endpoint
-  → 專用 pipeline：pool: server → Delay@1 0 分鐘
-  → 記錄 HTTP response 與新的 probe run
-
-不使用：GitLab CI job / PAT / GitLab read token / source checkout / Agent pool / VM2
+GitLab 網頁：Test → Push events
+  → ADO Incoming WebHook
+  → 已有的 smoke pipeline 自動新增一筆 run
+  → agentless Delay@1 0 分鐘成功
 ```
 
-## 重要：本輪是「短時未驗章連通探針」，不是安全整合
+**不建立 GitLab 分支、不 push、不修改 `.gitlab-ci.yml`／include，不使用 Runner、不取碼、不下載產物、不執行部署、不碰 VM2。** 這次只驗手動 Test 的通知路徑；真 push 與後續建置／部署都等此步通過後再討論。
 
-Microsoft Incoming WebHook 的可選 Secret 用於 **HMAC-SHA1 payload 驗章**。GitLab 傳統 Secret token 是 `X-Gitlab-Token` 的原值；新文件的 signing token 是另一種 HMAC-SHA256 格式。**不能在兩邊填同一字串，就假設可以互通。**[1][2]
+## 先確認兩個不同概念
 
-這次另建一個**全新的、測後即刪** service connection，Secret/Header 留空，只為確認 native endpoint 能否接到事件。它只訂閱本頁的零動作 server job：
+| 名稱 | 在哪裡 | 目前要做什麼 |
+|---|---|---|
+| `poc/webhook-smoke` | **ADO repo 的分支**，存放測試 YAML | 已建立，繼續使用，不重建 |
+| `poc/ado-fetch` | 前版為 **GitLab 來源分支**預設的名稱 | 本輪不需要，也不要求建立；已移除其 ref filter |
 
-- **任何能連到端點、知道名稱且能偽造 JSON 的人，都可能排入 probe run。** 分支／專案 filters 是路由，不是來源認證；此測試也不驗 JSON 是否來自真 push。
-- 沒有 secret、PAT、script、checkout、artifact、部署或 webhook 內容插入可執行文字；不可以把 Fetch／Deploy／其他有副作用的 job 接到這個入口。
-- 現場 URL 是 HTTP；本輪不傳 secret／程式碼。不得在 HTTP 上放入 PAT／正式 webhook secret。
-- 不更動既有 webhook、既有安全檢查、IIS Basic／Anonymous Authentication 或全域 GitLab outbound 安全限制來硬闖。
-- **只有在允許這種短時、內網、未驗章探針時才繼續。若公司禁止，停在此處，改規劃驗章接收器或經核准的閘道。** 不應把本頁當成取消認證的上線建議。
-- 測試完成立即按第 7 節移除入口。禁止向所有 pipelines 開放此 service connection。
+手動選 ADO 的 `poc/webhook-smoke` 執行，不等於 pipeline 的預設分支自動改成它。Incoming WebHook 必須從 **該 pipeline 的 default branch** 找到資源定義；這是本輪一定要確認的設定。[1]
 
-## 1. ADO：建立專用 Incoming WebHook connection
+## 使用者已回報的現況（不是本機代測結果）
 
-在使用者提供的 ADO collection 下，開啟 `Deployment` project：
+- ADO Server：**25H2 20260921.1**；project `Deployment`。
+- 已建立 Incoming WebHook connection：`gitlab-ado-smoke-rs`。
+- ADO 分支 `poc/webhook-smoke` 已有 YAML，**手動 Run 成功**。
+- 原先 GitLab Test 回 HTTP 200、payload 指向 main，但 ADO 沒有新增 run；當時 YAML 的 `poc/ado-fetch` ref filter 不匹配。
+- **移除本探針的 ref filter 後，使用者已確認：GitLab 按 Test 會在 ADO 自動新增 run，觸發來源顯示 Webhook。**
+- **使用者已確認 task `Webhook probe reached ADO - zero-minute no-op` 為綠色，整筆自動 run 為 Succeeded。本輪「GitLab 網頁手動 Test → ADO agentless probe」驗收通過。**
+- 上述為使用者的現場回報；尚未取得 run ID／截圖，沒有宣稱已由本開發機直接稽核。它不代表真 push、來源驗章、ADO → GitLab 讀取或部署驗收通過。
+- 本開發機無法連到使用者的公司內網服務，沒有直接操作現場或宣稱代測成功。
 
-**Project settings → Pipelines → Service connections → New service connection → Incoming WebHook**。
+## 1. 修改「已有的 ADO YAML」，不是 GitLab CI
 
-若找不到 Incoming WebHook，先停，提供選項清單／截圖；不要改用 **Service hooks**（那是出站通知）或隨便選 Generic。
+進入 ADO `Deployment` project：
 
-填寫：
+**Repos → Files → branch 下拉選 `poc/webhook-smoke` → `/azure-pipelines-webhook-smoke.yml` → Edit**。
 
-| 欄位 | 本次值 |
-|---|---|
-| WebHook Name | `gitlab-ado-smoke-rs` |
-| Service connection name | `gitlab-ado-smoke-rs`（故意和上面一致，減少誤填） |
-| Secret | 留空；僅此隔離探針例外 |
-| HTTP Header | 留空；不把 `X-Gitlab-Token` 當成 HMAC |
-| Grant access permission to all pipelines | **不要勾**；之後只授權這支新 probe pipeline |
-| Description | `Temporary unauthenticated transport-only probe; no source, secrets, agents or deployment; delete after test` |
+若當時用了不同檔名，修改 smoke pipeline 實際指向的那一份檔案，不另外建第二份 YAML。
 
-若同名 connection 已存在，**不要覆寫／重用**；先確認所有權與訂閱 pipeline，再決定換新名稱並同步修改 YAML／URL。
+用下列**完整內容取代**，不要只補貼幾行：
 
-產出：一個新 connection。尚未建立訂閱 pipeline 時，HTTP endpoint 仍可能找不到或不會排程，**不是此時就已打通**。
+```yaml
+trigger: none
+pr: none
 
-## 2. ADO：儲存最小 YAML，建立新 pipeline
+name: webhook-smoke-$(Date:yyyyMMdd)$(Rev:.r)
 
-程式來源：[azure-pipelines-webhook-smoke.yml](../../cicd/gitlab-ado/ado/azure-pipelines-webhook-smoke.yml)。
+resources:
+  webhooks:
+    - webhook: WebHook
+      connection: gitlab-ado-smoke-rs
+      filters:
+        - path: object_kind
+          value: push
+        - path: project.path_with_namespace
+          value: grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs
 
-1. 在 **ADO 的 CD／測試 repo** 建 `poc/webhook-smoke` 分支（或使用獨立測試 repo）。這不是修改 GitLab 應用 `main`。
-2. 只將上面的 YAML 複製到該 ADO 分支根目錄 `/azure-pipelines-webhook-smoke.yml`。不複製 FINAL deploy template、不引用 secrets／variable groups，不放應用程式碼。
-3. ADO **Pipelines → New pipeline → Azure Repos Git → 選該 ADO repo → Existing Azure Pipelines YAML file**，選 branch `poc/webhook-smoke`、path `/azure-pipelines-webhook-smoke.yml`。
-4. 建立全新 pipeline，命名例如 `GitLab-Webhook-Smoke`；不要覆蓋既有建置／部署 pipeline。
-5. **此 pipeline 的 Default branch for manual and scheduled builds 必須指向存有 webhook YAML 的分支**，例如 `refs/heads/poc/webhook-smoke`。這不是修改整個 repo 的 default branch。[1]
-   - 官方 troubleshooting 路徑：pipeline **Edit → … → Triggers → YAML → Get sources → Default branch for manual and scheduled builds**。現場 UI 若不同，先提供截圖確認，不改全域 repo 設定。
-6. 在新 connection 的 **Pipeline permissions** 只授權此 pipeline；或初次執行依 ADO 的 resource authorization 提示只授權本支。
-7. 先手動 Run 一次、選上述 ADO 分支，應只有 `WebhookReceived`／`Delay@1`，立即完成。手動 bootstrap 成功只證明 YAML／connection 授權／task 能用，**尚不代表 webhook 已送達**。
+jobs:
+  - job: WebhookReceived
+    displayName: Webhook transport smoke test only
+    pool: server
+    timeoutInMinutes: 1
+    steps:
+      - task: Delay@1
+        displayName: GitLab webhook received - no deployment
+        inputs:
+          delayForMinutes: '0'
+```
 
-YAML 不讀任何 webhook payload 到 shell／PowerShell；只用三個 filters：
+按 **Commit／Save** 時選擇儲存到**已有的 ADO `poc/webhook-smoke` 分支**。不建立新分支、不建 PR、不合併 main。
+
+檔案版本：[azure-pipelines-webhook-smoke.yml](../../cicd/gitlab-ado/ado/azure-pipelines-webhook-smoke.yml)。上述 YAML 與檔案的說明文字可能不同，但資源與兩個 filters 相同。
+
+本輪**沒有 `ref` filter**，所以可以接收 GitLab Test 產生的 main 事件。不等於修改 GitLab main，也不代表測試完成後可以把這個入口接到部署。project filter 只是路由條件，不是來源認證。
+
+## 2. 確認這支 pipeline 的預設分支
+
+到 **Pipelines → 原本那支 smoke pipeline**，不要 New pipeline。
+
+找到 **Default branch for manual and scheduled builds**，設定／確認為：
 
 ```text
-object_kind = push
-ref = refs/heads/poc/ado-fetch
-project.path_with_namespace = grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs
+refs/heads/poc/webhook-smoke
 ```
 
-如果 GitLab Recent events 顯示 canonical project path 與提供的 URL 大小寫不同，經人工確認同一專案後，調整這個**固定 allowlist 值**；不要直接移除 project filter。
+如果 UI 的下拉只顯示短名稱，選 `poc/webhook-smoke` 即可。
 
-## 3. 先從 VM1／能到 ADO 的工作站送「假 push JSON」（選做、建議）
+官方 troubleshooting 路徑為：**Edit → … → Triggers → YAML → Get sources → Default branch for manual and scheduled builds**。[1]
 
-這一步排除 ADO URL／註冊問題，但**不驗 GitLab 網路來源，不聲稱真 push**。
+- 這是**此 pipeline 的設定**，不是 Repos 的 repo default branch。
+- 不更動其他 build／deploy pipeline。
+- 若現場 UI 不同，提供 smoke pipeline 編輯畫面的截圖再確認，別為了找欄位去改 repo main。
 
-ADO Server 的候選 URL 為：
+## 3. 手動 Run「更新後」的同一支 pipeline
+
+- Branch 選 `poc/webhook-smoke`，使用第 1 步剛儲存的版本。
+- 若提示 connection resource authorization，只授權本支 smoke pipeline，不勾所有 pipelines。
+- 預期只有 `WebhookReceived`／`Delay@1`，立即成功。`pool: server` 是 agentless，不用 `Default` pool，也不會派送 VM1／VM2 agent。
+- 記下這筆**手動 run 的 ID／時間**，避免下一步把它誤認為 webhook 自動觸發的 run。
+
+此步只驗更新後 YAML 能執行，不算 GitLab 通知通過。
+
+## 4. 回到「已有的 GitLab webhook」再按 Test
+
+在 `grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs` 專案：
+
+**Settings → Webhooks → 找到指向 ADO 的那一筆**。不用重新 Add webhook。
+
+核對 URL 為本輪 connection 的 endpoint（沒有 `/Deployment/` project segment）：
 
 ```text
 {ADO_COLLECTION_URL}/_apis/public/distributedtask/webhooks/gitlab-ado-smoke-rs?api-version=6.0-preview
 ```
 
-`ADO_COLLECTION_URL` 請用本次已提供的 collection URL（結尾不要重複 `/`）。**Webhook URL 沒有 `/Deployment/`，也不是 `/pipelines/{id}/runs`。** Endpoint 尾端用 **WebHook Name**，不是 pipeline ID。
+`ADO_COLLECTION_URL` 使用先前已提供的 collection URL；endpoint 的 `gitlab-ado-smoke-rs` 是 **WebHook Name**，不是 pipeline ID。
 
-證據界線：官方 Server 資源文件支持 Incoming WebHook；官方 YAML 範例使用 `6.0-preview`，本例將 cloud org base 改成現場 collection base。現行 REST 頁面會回到 cloud `7.2-preview.2`，**不能用其 URL 範例證明本機版號／collection 路由已成功**；實際 URL／version 以本輪 response 驗證。[1][3]
+本輪設定：
 
-將 [webhook-smoke-push.example.json](../../cicd/gitlab-ado/ado/webhook-smoke-push.example.json) 放在能連到 ADO 的工作站。以 PowerShell 執行（填入已提供的 collection URL）：
-
-```powershell
-$collection = 'REPLACE_WITH_ADO_COLLECTION_URL'
-$uri = $collection.TrimEnd('/') + '/_apis/public/distributedtask/webhooks/gitlab-ado-smoke-rs?api-version=6.0-preview'
-Invoke-WebRequest -UseBasicParsing -Method Post -Uri $uri `
-  -ContentType 'application/json' `
-  -InFile '.\webhook-smoke-push.example.json' `
-  -MaximumRedirection 0 -TimeoutSec 15
-```
-
-不加 `UseDefaultCredentials`、PAT 或 Basic header。檢查兩件事：HTTP response（status／body）＋ADO 是否多一筆 **非手動**的 probe run。HTTP 200 仍可能匹配零支 pipeline，不能單看綠燈。
-
-## 4. GitLab：新增 project webhook，不改 `.gitlab-ci.yml`
-
-到測試專案：**Settings → Webhooks → Add new webhook**；需要該 project 的 Maintainer／Owner 權限。[2]
-
-| 欄位 | 本次值 |
+| 項目 | 值 |
 |---|---|
-| URL | 第 3 節 ADO incoming webhook URL |
-| Secret token / Signing token | 本輪皆不設定；不是將 PAT 放這裡 |
-| Trigger | 只勾 **Push events**；不是 Pipeline events |
-| Push events branch filter | `poc/ado-fetch`（若 UI 支援）；ADO 仍保留自己的固定 branch filter |
-| SSL verification | 保留正常設定；目前 HTTP 不會因此變 HTTPS，不用關閉 TLS 驗證 |
-| Custom headers / Custom payload template | 本輪不使用 |
+| Trigger | Push events |
+| Push events branch filter | 手動探針可選 All branches；若既有 Test 已能送達，也不必為此額外調整 |
+| Secret token／Signing token／Custom headers／Custom payload | 不設定；保持此短時未驗章探針範圍 |
+| SSL verification | 保留正常設定；HTTP 不會因此變 HTTPS，不需關閉驗證 |
 
-不要修改現有 webhook；這是一筆全新的 probe。沒有 `.gitlab-ci.yml` 修改，也沒有呼叫 CI job。
+按 **Test → Push events**，然後開該 webhook 的 **Edit → Recent events → 最新一筆 → View details**。
 
-### 先按 Test → Push events
+檢查：
 
-1. 新 webhook 選 **Test → Push events**。
-2. 打開 **Recent events → View details**，看 response status/body、request body 的 `ref`／`project.path_with_namespace`。
-3. **有些 GitLab 版本的 Test payload 用 default branch**，即使 webhook 限定測試分支，也可能送 `refs/heads/main`。這時 ADO 正確的行為是**不啟動 run**；不能為了讓測試過就拿掉 branch filter。
-4. 只有 request body 確實符合三個固定 filters，且 ADO 多一筆相對應的新 run，才算目前這筆 GitLab → ADO 通知匹配成功。
+1. HTTP response status／body。
+2. request body 的 `object_kind` 應為 `push`。
+3. `project.path_with_namespace` 應與 YAML 固定值**完全相同**，包括大小寫。若不同，先確認同一專案，再修正固定值；不要拿掉 project filter。
+4. `ref` 可能是 `refs/heads/main`；**本輪不再以 ref 限制，不用建立測試分支**。
 
-GitLab 在網頁按 Test 的來源可能是 Rails；真實事件通常從 Sidekiq 發送。因此 **Test 成功還要第 5 節的真 push 成功**，不能只測其中一種路徑。[2]
+## 5. 看 ADO 是否「另外自動新增」一筆 run
 
-## 5. 真實測試分支 push，但跳過 GitLab CI jobs
+回 **Pipelines → 同一支 smoke pipeline → Runs**，重新整理。
 
-不需要 Runner，也不改 main。先確認其他 webhook／自動化對測試分支的影響；`[skip ci]` 只控制 GitLab CI，不會關掉其他整合。
+| 結果 | 意義 |
+|---|---|
+| GitLab HTTP 200 ＋按 Test 後新增非手動 run ＋Delay 成功 | **本輪手動 Test → ADO smoke 觸發通過** |
+| GitLab HTTP 200，但沒有新 run | 尚未通過；核對 pipeline default branch、YAML path／儲存版本、兩個 filters、connection 名稱／權限 |
+| 只有第 3 步的手動 run | 不算 webhook 觸發成功 |
+| 出現 Agent 工作、取碼、下載／部署 | 停止；不是本輪的零動作 YAML，不可用 FINAL deploy template 代替 |
 
-在這個 GitLab 專案的本機 clone、乾淨 working tree、確認 remote 正確且測試分支沒有既有 MR 的情況下：
+請回覆：**GitLab response status／body、ADO 是否新 run／run ID**。若仍無 run，再提供 request 的 `object_kind`／`project.path_with_namespace` 和 pipeline default branch；不要貼 tokens／cookies／Authorization headers 或整份含使用者資料的 payload。
 
-```bash
-git remote -v
-git status --short
-# 確認 origin 是測試專案、working tree 沒有改動；再建立全新測試分支。
-git switch -c poc/ado-fetch
-git commit --allow-empty -m "test: webhook transport probe [skip ci]"
-git push -o ci.skip origin HEAD:refs/heads/poc/ado-fetch
-```
-
-- 如果 branch 已存在，不 force push、不刪除既有分支，先檢查它的用途再決定如何測。
-- 不修改應用檔案、不編輯 CI include、不開 MR、不合併 main。
-- GitLab 可能仍出現 **skipped pipeline 紀錄**；本測試的要求是沒有 CI job 需要 Runner 執行，不是 UI 一定完全沒有 pipeline 紀錄。[4]
-- `[skip ci]`／`ci.skip` 不是跳過安全稽核的上線機制，只用於本次無程式變更的受允許通知測試；若公司禁止使用，先停並請管理者提供不啟用 CI 的隔離專案。
-
-驗收：本次 Push Hook 的 request `ref` 正確、response 成功，ADO 新增 probe run，且 VM1／VM2 agent 都沒有新 job。記錄 GitLab Recent event 時間／event UUID（若有）、ADO run ID、branch／commit SHA；手動 run 與真 webhook run 分開記。
-
-## 6. 錯誤判讀（先看 response，不盲改設定）
+## 故障排查：不盲目放寬權限
 
 | 現象 | 下一步 |
 |---|---|
-| GitLab 顯示 local network／URL blocked | GitLab 的 outbound 安全限制可能擋內網 IP；由管理者針對 ADO 目的地做核准 allowlist。不要全域允許所有內網／SSRF 目的地。[5] |
-| Test timeout／connection refused | 查 **GitLab Rails／Sidekiq → ADO** 的網路、HTTP port、proxy；不是 Runner 網路。 |
-| 404／Cannot find webhook | 核對 URL 無 project segment、WebHook Name、collection base、pipeline default branch、YAML resource 已存入並 bootstrap；先不要加 PAT。 |
-| 401／403 | 查看是哪一層回應（IIS／proxy／ADO）。本探針預期公開 controller；不要開 IIS Basic／全域 Anonymous 或給 Full access PAT 來硬闖。若環境強制認證，先回報，改經核准的代理／接收器路線。 |
-| unsupported API version | 保存完整非敏感 error 與 supported versions；依該安裝版調整，不把 cloud `7.2-preview.2` 當保證。 |
-| HTTP 200，但沒有 ADO run | 先比對實際 payload 三個 filters、connection 訂閱、default branch；200 只代表 endpoint 處理，不保證排入。 |
-| 找不到 Incoming WebHook／Delay@1 | 取得實際 UI／task availability；功能要按已安裝 Server 實測，不能由版本字串推斷全部已配置。 |
-| bootstrap 提示 resource authorization | 只授權專用 probe pipeline，別勾所有 pipelines。 |
-| Run 要求 agent／checkout，或執行 script／取 artifact | 停止；這不是本探針 YAML，不應用舊部署 template 代替。 |
-| webhook Test 用 main | 不啟動正確；保留 filter，改做第 5 節真實測試分支 push。 |
-| 一次 push 多筆 probe run | 重送／多個 hooks／多個訂閱可能造成；本探針不宣稱 exactly-once，先記錄並去查，不連部署。 |
+| 200，但沒有 run | 先核對第 2 步：手動 Run 選分支不代表已設定 default branch。再檢查事件種類／project path／connection 訂閱。 |
+| Test 的 ref 是 main／ref_protected 為 true | 本輪不擋 main；分支保護 metadata 不是驗章，也不用解除 main 保護。 |
+| 404／Cannot find webhook | 核對 collection URL、WebHook Name、沒有 project segment、default branch、YAML 已 bootstrap；不要先加 PAT。 |
+| local network／URL blocked | 由 GitLab 管理者核准目的地 allowlist，不全域開放所有內網 SSRF 目的地。[4] |
+| timeout／connection refused | 查 GitLab Rails → ADO 的路徑；不是 Runner 網路。之後真事件的 Sidekiq 來源需另外驗收。[2] |
+| 401／403 | 分辨 IIS／proxy／ADO 哪層回應；不開 IIS Basic／全域 Anonymous，也不給 Full access PAT 硬闖。 |
+| API version 錯誤 | 保存 supported-versions 等非敏感 error，依安裝版驗證；不能把 cloud 最新版本當現場保證。 |
+| 同一次多筆 run | 查多個 hooks／多個訂閱／重送；這個 probe 不宣稱 exactly-once。 |
 
-請回報：**是哪一步、HTTP status、非敏感 response body、request 的 ref／project path、ADO 有沒有新 run／run ID**。不要貼完整 cookies、Authorization headers 或真 token。
+## 安全限制、測後清理與後續（本輪不做真 push）
 
-## 7. 測後清理與下一關
+- **這是短時未驗章的內網連通探針。** Incoming WebHook Secret 是 HMAC-SHA1，不是 GitLab `X-Gitlab-Token` 原值；不可兩邊填同字串就假設相容。GitLab 新文件的 HMAC-SHA256 signing 格式也不能直接當作相容。[2][3]
+- 任何能連 endpoint、知道名稱並偽造相符 payload 的人都可能排入 probe run。它沒有 source checkout、script、secret、artifact、Agent 或部署；**不允許把 Fetch／Deploy 接到未驗章入口**。
+- 本輪 HTTP 不送 PAT 或 webhook secret。若公司禁止未驗章測試，停止並改做核准的驗章接收器／閘道方案，不改既有正式入口或全域安全設定。
+- 不向所有 pipelines 開放 connection；只訂閱／授權此專用 probe。
+- 完成本輪後，刪除本次測試 GitLab webhook、停用／刪除專用 smoke pipeline、刪除專用 Incoming WebHook connection；保留非敏感驗收紀錄，不刪別人的資源／repo／分支。
+- **手動 Test 成功不等於真 push 成功**：GitLab UI Test 可能由 Rails 送出，真事件通常來自 Sidekiq。也不代表 ADO → GitLab 取碼、來源驗章、版本綁定或部署放行已完成。[2]
+- 真 push 是否要測、GitLab 來源分支怎麼命名、是否改由 ADO 建置等，等手動路徑通過後再另行確認；不要現在建立 `poc/ado-fetch` 或變更應用 main。
 
-1. 刪除本次新增的 **GitLab webhook**。
-2. 停用／刪除 `GitLab-Webhook-Smoke` 專用 pipeline。
-3. 刪除本次專用 Incoming WebHook service connection（保留必要的非敏感驗收紀錄；不刪別人的資源）。
-4. ADO／GitLab 測試分支是否保留按所有權決定；不自動刪 repo，不動 main、舊 POC 或既有部署。
-5. 需要驗證清理時，送同樣假 payload 應不再產生 run；HTTP status 仍以實際平台回應為準。
+**下一步：[ADO VM1 → GitLab 指定 SHA 取碼／建置路線](gitlab-ado-source-build.md)。** 使用另外的手動 pipeline，先做無憑證連通，再做唯讀取碼；不把這個未驗章 probe 加上 secrets／build。
 
-**通過本輪只代表 GitLab → ADO 的事件路徑成立，不代表 ADO → GitLab 取碼／下載產物已通，也不代表來源認證、最終 pipeline success、版本綁定或部署放行已完成。** 下一輪另做 HTTPS＋可互通的來源認證／驗章；若需要，再用 VM1 對 GitLab 做固定資源的唯讀驗證。未完成前不可把此未驗章連線接到 Fetch／Deploy。
+可選假 payload：[webhook-smoke-push.example.json](../../cicd/gitlab-ado/ado/webhook-smoke-push.example.json)。它只供之後針對 ADO endpoint 的人工 HTTP 測試，**不代表必須建立同名 GitLab 分支**；不是此流程的必要步驟。
 
-## 官方來源
+## 官方來源與版本界線
 
 [1]: https://learn.microsoft.com/en-us/azure/devops/pipelines/process/resources?view=azure-devops-server#webhooks-resource
 [2]: https://docs.gitlab.com/user/project/integrations/webhooks/
 [3]: https://learn.microsoft.com/en-us/azure/devops/pipelines/yaml-schema/resources-webhooks-webhook?view=azure-pipelines-server
-[4]: https://docs.gitlab.com/ci/pipelines/#skip-a-pipeline
-[5]: https://docs.gitlab.com/security/webhooks/
+[4]: https://docs.gitlab.com/security/webhooks/
 
-- [Incoming WebHook／default-branch troubleshooting][1]、[YAML filters／HMAC-SHA1／未設 secret 的公開入口][3]。
-- [Delay@1：YAML＋server job、0 分鐘為無延遲](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/delay-v1?view=azure-pipelines-server)。
-- [GitLab webhook 設定、Test／Recent events、Rails／Sidekiq 發送來源][2]；GitLab 文件為滾動版，不能將所有新選項套到未知 Server 版號。
+- [Incoming WebHook、pipeline default-branch troubleshooting][1]；[filters／HMAC-SHA1／不設 secret 的公開入口][3]。
+- [Delay@1：YAML＋server job、0 分鐘無延遲](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/delay-v1?view=azure-pipelines-server)。
+- [GitLab webhook 設定、Test／Recent events、Rails／Sidekiq 發送來源][2]；GitLab 文件為滾動版，Runner 16.11.1 不是 GitLab Server 版號。
+- URL 以官方的 `6.0-preview` incoming webhook 範例加現場 collection base 實測；不能把現行 cloud `7.2-preview.2` 的文件 redirect 當成本機路由／版號已驗收證據。
