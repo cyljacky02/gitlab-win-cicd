@@ -23,6 +23,8 @@ GitLab Rayin / poc/cicd push
 | VM2 Environment／VM resource | `test-deploy-agent`／`SECSVR4-80`；不是一般 pool 或 Classic Deployment Group |
 | VM2 目的目錄 | 本次使用 `D:\TestCICD`；Agent 服務帳號須有寫入權，D: 須存在 |
 | GitLab Webhook UI | 使用者已確認有 Custom headers 與 Custom webhook template |
+| 取碼 credential／variable group | 使用者已回報完成；不用重建 |
+| 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
 先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**Rayin 真 push、VM1 取碼、ADO Server task 可用性及 VM2 放檔均待現場驗收。** 本機未連公司內網，沒有代設 credentials 或操作 VM。
 
@@ -76,7 +78,7 @@ GITLAB_GIT_TOKEN    = <短效 Token，設為 secret 鎖頭>
 ### 傳輸不可默默放寬
 
 - **優先 HTTPS**：取得已核准的 GitLab HTTPS clone URL，將新 YAML 的三處 `SOURCE_REPOSITORY_URL` 一起改成相同值；正常驗 TLS／CA。
-- **目前提供的 GitLab HTTP URL 預設會拒絕送 credential。** 只有明確核准的隔離 POC 才在手動 Run 勾 `allowInsecureHttpLab`，使用專案限定、短效唯讀 token，測後撤銷。這次使用者確認 UI 欄位，不等於已核准 HTTP credential 例外。
+- **目前提供的 GitLab HTTP URL 預設會拒絕送 credential。** 本次使用者已指定只用 PRIVATE NETWORK 的 HTTP，並回報完成唯讀憑證／variable group；此 POC 手動 Run 勾 `allowInsecureHttpLab`，沿用短效專案唯讀 token，測後撤銷。PRIVATE NETWORK 不會把 HTTP 變成加密通道。
 - ADO Library 管理頁及下節的 webhook／PAT 傳輸也要使用 HTTPS／受核准管理通道；Git 取碼例外不會一併核准 ADO PAT 的 HTTP 傳輸。
 - 不關閉 TLS、不加 PAT 到公開 incoming-webhook endpoint，也不開 IIS Basic 來硬闖。
 
@@ -87,7 +89,7 @@ GITLAB_GIT_TOKEN    = <短效 Token，設為 secret 鎖頭>
 1. GitLab → Rayin → Code → Commits → branch `poc/cicd` → 複製完整 **40 碼 SHA**。
 2. ADO → **新的 `GitLab-Rayin-Zip-Delivery` → Run pipeline**。
 3. ADO branch 選 `poc/webhook-smoke`；`gitlabCommitSha` 填上述 GitLab SHA。
-4. HTTP lab 例外只有已核准才勾；否則先取得 HTTPS，不要為了綠燈直接勾選。
+4. 本次依使用者指定的內網 HTTP POC，勾 `allowInsecureHttpLab`；此 checkbox 只控制 GitLab 取碼，不會加密流量。
 5. 確認 Package 在 VM1、Deliver 在 Environment 的 `SECSVR4-80`，不是在 VM1 直接寫 D:。
 
 成功後：
@@ -185,13 +187,46 @@ GitLab 可能重送，ADO Runs API 不提供本套件的持久去重；可能產
 - 先複製暫存檔、驗 hash，再在同目錄 rename 成最終 ZIP；不同內容的同名檔拒絕、不覆蓋。相同包重試可直接驗證成功。從不 mirror／purge／刪除既有包或目的目錄。
 - ADO artifact／stage retry 與 retention 依現場設定；本 POC 不提供 rollback、耐久去重或自動清理機制。
 
+## VM1 checkout 的 `gitVersion` null 修正
+
+使用者回報 **PackageSource／`SECSVR004-086T`** 在 ADO 自己的 checkout 失敗：
+
+```text
+Syncing repository: Deployment (Git)
+Prepending Path environment variable with directory containing git.exe
+git version
+error launching git:
+Value cannot be null. (Parameter 'gitVersion')
+```
+
+這是在取 Git 版本時失敗，**還沒進入 GitLab fetch／credential 步驟**。Agent source 的 prepend 訊息出自內附 Git 分支；Git launcher 無法啟動導致沒有可解析版本。仍不能僅靠這段 log 斷言是 bundle 損毀或特定 Windows／防毒問題。[6][7]
+
+修正版僅調整 VM1：
+
+- PackageSource 設 `System.PreferGitFromPath: 'true'`。
+- 在 `checkout: self` **前**以 inline PowerShell 實測 Git for Windows 2.31+，依序檢查 Program Files 安裝、服務帳號 PATH、Agent bundle；不能啟動／沒有版本的候選者會跳過。
+- 印出選用的 executable 與版本，以 `task.prependpath` 交給後續 checkout／取碼；不是只改 PowerShell 當下的 PATH。
+- 若都不可用，在 checkout 前停止並明確要求 VM 管理者安裝／修復核准的 Git，不自動下載，不改 Agent service／token／VM2。
+
+**現場只需更新一個檔案**：ADO 原 repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`，完整取代為[最新版](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-file-delivery.yml)。不用改三支 scripts、不重建 pipeline。儲存後用 **Run pipeline 開新的 run**，不要只 Retry 舊 run 的 stage；GitLab SHA 沿用欲驗收的完整值，HTTP POC 勾 `allowInsecureHttpLab`。
+
+先看新 task `Select and validate Git before VM1 checkout` 是否印出 `Selected checkout Git:` 與 `git version ...`，再看後面的 checkout 是否成功。本機無法執行公司 Agent，因此這是有前置驗證的 workaround；現場尚待回報。若 preflight 仍顯示沒有可用 Git，只提供這個 task 的非敏感輸出，不需 token／整份環境變數。
+
 ## 本機檢查與現場故障排查
 
-本機 Windows PowerShell 5.1：三支 script parser、YAML／JSON parsing、既有取碼回歸 **19/19 通過**。另以暫存 real-Git fixture 實際執行新 ZIP／Copy 腳本，確認 tracked dotfile／Unicode filename 可封裝、untracked 不入包、`export-ignore` 不漏包、只放 ZIP、hash 相同及相同包重試不覆蓋；手動拒絕檢查涵蓋篡改 ZIP、不同內容同名檔保留、`..` 目的路徑、錯誤 run、全零 SHA、LFS pointer 與失敗後不發布／清理暫存。這是本機操作檢查，不是新正式測試套件或現場 E2E 證據。
+本機 Windows PowerShell 5.1：新增的 Git bootstrap 檢查 **7/7 通過**（直接執行 YAML inline code：正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **19/19 通過**。
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitCheckoutBootstrap.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitLabSource.ps1
+```
+
+三支交付 script parser、YAML／JSON parsing 先前通過。另以暫存 real-Git fixture 實際執行新 ZIP／Copy 腳本，確認 tracked dotfile／Unicode filename 可封裝、untracked 不入包、`export-ignore` 不漏包、只放 ZIP、hash 相同及相同包重試不覆蓋；手動拒絕檢查涵蓋篡改 ZIP、不同內容同名檔保留、`..` 目的路徑、錯誤 run、全零 SHA、LFS pointer 與失敗後不發布／清理暫存。這是本機操作檢查，不是現場 E2E 證據。
 
 | 現象 | 檢查 |
 |---|---|
-| HTTP refused | 預期安全預設；改 HTTPS 或先取得明確隔離 lab 例外，不直接關 TLS。 |
+| VM1 checkout 的 `gitVersion` null | 依上節更新同一份 YAML；先看 preflight 選用的 Git／版本，沒有可用 Git 時修復 VM1 工具安裝，不改 GitLab token。 |
+| HTTP refused | 預期安全預設；本次內網 HTTP POC 勾 `allowInsecureHttpLab`，不關 TLS。 |
 | Fetch 401／403 | Rayin 的 token Username／期限／`read_repository`；勿誤用 Tools.Rs project token。 |
 | Environment/resource not found | `test-deploy-agent`、`SECSVR4-80`、case-sensitive `virtualMachine`、Agent online／pipeline resource authorization。 |
 | DownloadBuildArtifacts@1 不存在 | 核對現場 Server task inventory／版本；本機 YAML parser 不能驗證 task 可用性。[1] |
@@ -206,5 +241,10 @@ GitLab 可能重送，ADO Runs API 不提供本套件的持久去重；可能產
 [3]: https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/runs/run-pipeline?view=azure-devops-server-rest-7.1
 [4]: https://docs.gitlab.com/user/project/integrations/webhooks/
 [5]: https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops-server
+[6]: https://github.com/microsoft/azure-pipelines-agent/blob/master/src/Agent.Plugins/GitCliManager.cs
+[7]: https://github.com/git-for-windows/MINGW-packages/blob/main/mingw-w64-git/git-wrapper.c
+[8]: https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/windows-agent?view=azure-devops-server#what-version-of-git-does-my-agent-run
+
+Microsoft 文件列明 [`System.PreferGitFromPath`][8] 可覆寫 Windows Agent 的內附 Git 選用；這不會修復 Git 安裝本身。
 
 觸發方式的第一方來源與版本限制見[研究筆記](../research/gitlab-ado-file-delivery-trigger.md)。

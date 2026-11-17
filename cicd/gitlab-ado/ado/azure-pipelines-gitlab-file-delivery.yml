@@ -25,6 +25,9 @@ stages:
         variables:
           # Authorize ONLY this controlled pipeline. Never authorize the smoke.
           - group: gitlab-source-readonly
+          # Avoid the agent-bundled Git launcher when a working installed Git exists.
+          - name: System.PreferGitFromPath
+            value: 'true'
         pool:
           name: Default
           demands:
@@ -32,6 +35,69 @@ stages:
         workspace:
           clean: all
         steps:
+          # Inline and before checkout: a repo script cannot repair failed checkout.
+          - task: PowerShell@2
+            displayName: Select and validate Git before VM1 checkout
+            inputs:
+              targetType: inline
+              workingDirectory: '$(Agent.TempDirectory)'
+              pwsh: false
+              script: |
+                # BEGIN CHECKOUT GIT BOOTSTRAP
+                $ErrorActionPreference = 'Stop'
+                function Get-WorkingGitVersion([string]$File) {
+                    $start = New-Object Diagnostics.ProcessStartInfo
+                    $start.FileName = $File
+                    $start.Arguments = 'version'
+                    $start.WorkingDirectory = $env:AGENT_TEMPDIRECTORY
+                    $start.UseShellExecute = $false
+                    $start.CreateNoWindow = $true
+                    $start.RedirectStandardOutput = $true
+                    $start.RedirectStandardError = $true
+                    $process = New-Object Diagnostics.Process
+                    $process.StartInfo = $start
+                    try {
+                        if (-not $process.Start()) { return $null }
+                        $stdout = $process.StandardOutput.ReadToEndAsync()
+                        $stderr = $process.StandardError.ReadToEndAsync()
+                        if (-not $process.WaitForExit(15000)) {
+                            $process.Kill()
+                            return $null
+                        }
+                        $version = $stdout.GetAwaiter().GetResult().Trim()
+                        $null = $stderr.GetAwaiter().GetResult()
+                        if ($process.ExitCode -ne 0 -or $version -notmatch '^git version (\d+)\.(\d+)\.') { return $null }
+                        if ([int]$Matches[1] -lt 2 -or ([int]$Matches[1] -eq 2 -and [int]$Matches[2] -lt 31)) { return $null }
+                        return $version
+                    } catch {
+                        return $null
+                    } finally {
+                        $process.Dispose()
+                    }
+                }
+                $candidates = @(
+                    foreach ($base in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+                        if ($base) { Join-Path $base 'Git\cmd\git.exe' }
+                    }
+                    Get-Command git.exe -CommandType Application -All -ErrorAction SilentlyContinue | ForEach-Object { $_.Source }
+                    if ($env:AGENT_HOMEDIRECTORY) { Join-Path $env:AGENT_HOMEDIRECTORY 'externals\git\cmd\git.exe' }
+                )
+                $selected = $null
+                foreach ($candidate in ($candidates | Select-Object -Unique)) {
+                    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+                    $version = Get-WorkingGitVersion $candidate
+                    if ($version) { $selected = $candidate; break }
+                    Write-Host "Git candidate cannot run or is below 2.31: $candidate"
+                }
+                if (-not $selected) {
+                    throw 'No working Git for Windows 2.31+ found under the agent service account. Have the VM administrator install/repair approved Git or the agent Git bundle, then retry.'
+                }
+                $gitDirectory = Split-Path -Parent $selected
+                Write-Host "Selected checkout Git: $selected"
+                Write-Host $version
+                $env:PATH = $gitDirectory + ';' + $env:PATH
+                Write-Host "##vso[task.prependpath]$gitDirectory"
+                # END CHECKOUT GIT BOOTSTRAP
           - checkout: self
             clean: true
             persistCredentials: false
