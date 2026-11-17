@@ -1,19 +1,24 @@
-# GitLab → ADO Server：webhook、取碼與建置串接
+# GitLab → ADO Server → VM：原始碼 ZIP 交付
 
-**目前選定分工：GitLab 放原始碼／發 webhook，VM1 ADO Build Agent 取碼與建置，ADO 存放建置產物；VM2 只在部署放行後執行。這條路不需要 GitLab CI job／Runner，也不下載 GitLab CI artifacts。**
+**目前 POC：GitLab `Cathaysec.Com.Smt.Rayin`／`poc/cicd` 提供來源與 push 事件；VM1 ADO Agent 取碼、封裝原始碼 ZIP 並存版；VM2 接收 ZIP 本身。不編譯、不解壓、不啟停服務，不需要 GitLab Runner／CI artifacts。**
 
-- 已回報通過：[GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；成功不等於來源驗章或取碼已完成。
-- **下一步：[VM1 → GitLab 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。** 不直接升級未驗章的 smoke pipeline；新增獨立手動流程。
+- **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／`poc/webhook-smoke`；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
+- 已回報通過：[先前 Tools.Rs 專案的 GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；不等於新專案真 push、來源驗章或取碼完成。
+- [VM1 → Rayin 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。現有 YAML 已改為新 repo／ref；不直接升級未驗章 smoke。
 
-| 本輪檔案 | 用途 |
+| 目前檔案 | 用途 |
 |---|---|
-| [`ado/azure-pipelines-gitlab-connectivity.yml`](ado/azure-pipelines-gitlab-connectivity.yml) | 無憑證、無 checkout 的 VM1 → GitLab 連通檢查 |
-| [`ado/azure-pipelines-gitlab-source.yml`](ado/azure-pipelines-gitlab-source.yml) | **手動 source-only**：固定 repo/ref、指定完整 GitLab SHA，只發來源證據 artifact |
+| [`ado/azure-pipelines-gitlab-file-delivery.yml`](ado/azure-pipelines-gitlab-file-delivery.yml) | **本輪主流程**：精確 SHA → ZIP → Server Build Artifact → Environment VM2 驗 hash／只放 ZIP |
+| [`ado/scripts/New-GitLabSourcePackage.ps1`](ado/scripts/New-GitLabSourcePackage.ps1) | 只封裝 tracked regular files，排除 `.git`／untracked，拒絕 LFS pointer／symlink／submodule |
+| [`ado/scripts/Copy-GitLabSourcePackage.ps1`](ado/scripts/Copy-GitLabSourcePackage.ps1) | 驗 repo／ref／SHA／run／hash，暫存後 rename，不解壓、不覆蓋不同內容 |
+| [`ado/gitlab-file-delivery-push.template.json`](ado/gitlab-file-delivery-push.template.json) | GitLab Custom webhook template；authenticated Runs REST 傳 push SHA，不含 credential |
+| [`ado/azure-pipelines-gitlab-connectivity.yml`](ado/azure-pipelines-gitlab-connectivity.yml) | 無憑證、無 checkout 的 VM1 → Rayin 連通檢查 |
+| [`ado/azure-pipelines-gitlab-source.yml`](ado/azure-pipelines-gitlab-source.yml) | **手動 source-only**：Rayin／`poc/cicd`、指定完整 SHA，只發來源證據 artifact |
 | [`ado/scripts/Get-GitLabSource.ps1`](ado/scripts/Get-GitLabSource.ps1) | PS 5.1 fetch／detached checkout；短時子程序 credential、不持久化、不執行 app code |
-| [`ado/azure-pipelines-webhook-smoke.yml`](ado/azure-pipelines-webhook-smoke.yml) | 原未驗章 agentless 零動作探針；不可加入取碼／建置 secret |
-| [`tests/Test-GitLabSource.ps1`](tests/Test-GitLabSource.ps1) | 新取碼實作的離線測試（本機 Git fixture、假 credential） |
+| [`ado/azure-pipelines-webhook-smoke.yml`](ado/azure-pipelines-webhook-smoke.yml) | 未驗章 agentless 零動作探針；project filter 已切至 Rayin，不可加入 secret／交付工作 |
+| [`tests/Test-GitLabSource.ps1`](tests/Test-GitLabSource.ps1) | 取碼實作的離線測試（本機 Git fixture、假 credential） |
 
-建置／測試命令與輸出規格仍待確認；source-only pipeline **不冒充已產出應用候選版本**，也沒有自動部署／WinCD 呼叫。來源目前 HTTP，預設拒絕送 credential；正常使用需 HTTPS，隔離 HTTP 例外必須明確允許並使用短效專案唯讀 token。
+**新 ZIP／VM2 流程已提供，本機實際 Git／ZIP／copy 操作檢查通過；現場手動整條線與 authenticated 真 push 均尚未驗收。** source-only pipeline 仍只發 metadata，不會送檔。完整流程請只建新的 `GitLab-Rayin-Zip-Delivery`，不把舊 smoke 改成有權限的工作。不要求 solution／SDK／MSBuild／publish command。來源目前 HTTP，預設拒絕送 credential；HTTPS 優先，隔離 HTTP 例外必須明確允許並使用短效專案唯讀 token；GitLab → ADO PAT 傳輸要獨立核准。
 
 ## 較早的 GitLab CI artifact 交接備選（不是本輪必做）
 
@@ -67,7 +72,7 @@ ADO 並未強制使用 PowerShell；保留 `.ps1` 是因目前 ADO Agent 在 Win
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitLabSource.ps1
 ```
 
-本機離線 **19/19 通過**，另驗 Git client 對 loopback 送出暫時 URL-scoped header；未連公司 GitLab、未完成現場取碼或應用 build。
+本機離線 **19/19 通過**，另驗 Git client 對 loopback 送出暫時 URL-scoped header；未連公司 GitLab、未完成現場取碼或 VM2 ZIP 交付。
 
 以下則為保留的舊 CI artifact 實作回歸測試，不是本輪 Runner 前置要求：
 

@@ -34,7 +34,7 @@ jobs:
               & $bundled --version
               if ($LASTEXITCODE -ne 0) { throw 'Bundled Git version check failed.' }
             }
-            $request = [Net.HttpWebRequest]::Create('http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs.git/info/refs?service=git-upload-pack')
+            $request = [Net.HttpWebRequest]::Create('http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git/info/refs?service=git-upload-pack')
             $request.Method = 'GET'
             $request.AllowAutoRedirect = $false
             $request.UseDefaultCredentials = $false

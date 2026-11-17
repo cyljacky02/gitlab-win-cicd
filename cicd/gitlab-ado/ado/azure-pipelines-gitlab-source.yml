@@ -42,8 +42,8 @@ jobs:
             -EvidenceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
           pwsh: false
         env:
-          SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs.git'
-          SOURCE_REF: refs/heads/main # Read-only; creates no branch, commit or push in GitLab
+          SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+          SOURCE_REF: refs/heads/poc/cicd # Read-only; creates no branch, commit or push in GitLab
           EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
           ALLOW_INSECURE_HTTP_LAB: ${{ parameters.allowInsecureHttpLab }}
           GITLAB_GIT_USERNAME: $(GITLAB_GIT_USERNAME)

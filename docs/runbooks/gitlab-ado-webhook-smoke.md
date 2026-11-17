@@ -1,5 +1,7 @@
 # 手動打通 GitLab Test webhook → ADO smoke pipeline
 
+> 本輪應用來源已改為 `grp-smt-maint/Cathaysec.Com.Smt.Rayin`／`poc/cicd`，ADO project／repo／`poc/webhook-smoke` 沿用。下列 YAML 的 project filter 已更新；**先前成功回報針對 Tools.Rs，不等於 Rayin 已驗收**。此檔仍只記錄零動作探針，不是[原始碼 ZIP 交付流程](gitlab-ado-file-delivery.md)。
+
 ## 現在只做這件事
 
 ```text
@@ -55,7 +57,7 @@ resources:
         - path: object_kind
           value: push
         - path: project.path_with_namespace
-          value: grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs
+          value: grp-smt-maint/Cathaysec.Com.Smt.Rayin
 
 jobs:
   - job: WebhookReceived
@@ -104,9 +106,9 @@ refs/heads/poc/webhook-smoke
 
 ## 4. 回到「已有的 GitLab webhook」再按 Test
 
-在 `grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs` 專案：
+在 `grp-smt-maint/Cathaysec.Com.Smt.Rayin` 專案：
 
-**Settings → Webhooks → 找到指向 ADO 的那一筆**。不用重新 Add webhook。
+**Settings → Webhooks → 找到指向 ADO 的那一筆**。若只有舊 Tools.Rs 專案設定過 webhook，Rayin 需要自己的測試 webhook；不修改／搬動舊專案的 hook，也不重建 ADO connection。
 
 核對 URL 為本輪 connection 的 endpoint（沒有 `/Deployment/` project segment）：
 
@@ -170,7 +172,7 @@ refs/heads/poc/webhook-smoke
 - **手動 Test 成功不等於真 push 成功**：GitLab UI Test 可能由 Rails 送出，真事件通常來自 Sidekiq。也不代表 ADO → GitLab 取碼、來源驗章、版本綁定或部署放行已完成。[2]
 - 真 push 是否要測、GitLab 來源分支怎麼命名、是否改由 ADO 建置等，等手動路徑通過後再另行確認；不要現在建立 `poc/ado-fetch` 或變更應用 main。
 
-**下一步：[ADO VM1 → GitLab 指定 SHA 取碼／建置路線](gitlab-ado-source-build.md)。** 使用另外的手動 pipeline，先做無憑證連通，再做唯讀取碼；不把這個未驗章 probe 加上 secrets／build。
+**下一步：[ADO VM1 → Rayin `poc/cicd` 指定 SHA 取碼](gitlab-ado-source-build.md)，再接[原始碼 ZIP 交付](gitlab-ado-file-delivery.md)。** 使用另外的受控流程，不把這個未驗章 probe 加上 secrets／VM2 工作。本次不做編譯。
 
 可選假 payload：[webhook-smoke-push.example.json](../../cicd/gitlab-ado/ado/webhook-smoke-push.example.json)。它只供之後針對 ADO endpoint 的人工 HTTP 測試，**不代表必須建立同名 GitLab 分支**；不是此流程的必要步驟。
 

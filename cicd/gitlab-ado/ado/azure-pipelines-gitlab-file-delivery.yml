@@ -1,0 +1,132 @@
+# CD-owned pipeline, stored in the existing ADO repo / poc/webhook-smoke branch.
+# Do NOT attach the unauthenticated incoming-webhook smoke connection.
+# First validate manually. Later, authenticated Runs REST supplies gitlabCommitSha.
+trigger: none
+pr: none
+
+name: rayin-zip-$(Date:yyyyMMdd)$(Rev:.r)
+
+parameters:
+  - name: gitlabCommitSha
+    displayName: Full GitLab poc/cicd push commit SHA (40 hex characters)
+    type: string
+    default: ''
+  - name: allowInsecureHttpLab
+    displayName: Explicitly approved isolated-lab HTTP source exception
+    type: boolean
+    default: false
+
+stages:
+  - stage: Package
+    displayName: VM1 - fetch exact GitLab SHA and package source only
+    jobs:
+      - job: PackageSource
+        timeoutInMinutes: 20
+        variables:
+          # Authorize ONLY this controlled pipeline. Never authorize the smoke.
+          - group: gitlab-source-readonly
+        pool:
+          name: Default
+          demands:
+            - Agent.Name -equals SECSVR004-086T
+        workspace:
+          clean: all
+        steps:
+          - checkout: self
+            clean: true
+            persistCredentials: false
+          - task: PowerShell@2
+            displayName: Reject missing, invalid or branch-deletion SHA before fetch
+            inputs:
+              targetType: inline
+              pwsh: false
+              script: |
+                $ErrorActionPreference = 'Stop'
+                if ($env:EXPECTED_COMMIT_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z' -or $env:EXPECTED_COMMIT_SHA -eq ('0' * 40)) {
+                  throw 'A nonzero full GitLab push SHA is required; no latest fallback.'
+                }
+                Write-Host "Package agent: $env:AGENT_NAME; computer: $env:COMPUTERNAME"
+            env:
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+          - task: PowerShell@2
+            displayName: Read fixed Rayin poc/cicd source and verify detached SHA
+            inputs:
+              targetType: filePath
+              filePath: '$(Build.SourcesDirectory)/scripts/Get-GitLabSource.ps1'
+              arguments: >-
+                -OutputDirectory "$(Pipeline.Workspace)/gitlab-source"
+                -EvidenceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
+              pwsh: false
+            env:
+              SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+              SOURCE_REF: refs/heads/poc/cicd
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+              ALLOW_INSECURE_HTTP_LAB: ${{ parameters.allowInsecureHttpLab }}
+              GITLAB_GIT_USERNAME: $(GITLAB_GIT_USERNAME)
+              GITLAB_GIT_TOKEN: $(GITLAB_GIT_TOKEN)
+          - task: PowerShell@2
+            displayName: ZIP tracked checkout files, without .git or application execution
+            inputs:
+              targetType: filePath
+              filePath: '$(Build.SourcesDirectory)/scripts/New-GitLabSourcePackage.ps1'
+              arguments: >-
+                -SourceDirectory "$(Pipeline.Workspace)/gitlab-source"
+                -ProvenanceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
+                -PackageDirectory "$(Build.ArtifactStagingDirectory)/source-package"
+              pwsh: false
+            env:
+              SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+              SOURCE_REF: refs/heads/poc/cicd
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+          - task: PublishBuildArtifacts@1
+            displayName: Store ZIP and integrity/provenance for this ADO run
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/source-package'
+              ArtifactName: source-package
+              publishLocation: Container
+
+  - stage: Deliver
+    displayName: VM2 - deliver ZIP itself to D:\TestCICD
+    dependsOn: Package
+    condition: succeeded()
+    # Production hosts require deployer-controlled checks BEFORE this stage starts.
+    jobs:
+      - deployment: DeliverSourceZip
+        displayName: SECSVR4-80 - verified ZIP only, no extraction
+        timeoutInMinutes: 15
+        workspace:
+          clean: all
+        environment:
+          name: test-deploy-agent
+          resourceName: SECSVR4-80
+          resourceType: virtualMachine
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Disable implicit artifact downloads; select this exact run below.
+                - download: none
+                - checkout: self
+                  clean: true
+                  persistCredentials: false
+                - task: DownloadBuildArtifacts@1
+                  displayName: Download source-package from THIS run, never latest
+                  inputs:
+                    buildType: current
+                    downloadType: single
+                    artifactName: source-package
+                    downloadPath: '$(Pipeline.Workspace)/current-source-package'
+                    cleanDestinationFolder: true
+                - task: PowerShell@2
+                  displayName: Verify SHA/run/hash and copy ZIP without overwrite
+                  inputs:
+                    targetType: filePath
+                    filePath: '$(Build.SourcesDirectory)/scripts/Copy-GitLabSourcePackage.ps1'
+                    arguments: >-
+                      -ArtifactDirectory "$(Pipeline.Workspace)/current-source-package/source-package"
+                      -DestinationDirectory "D:\TestCICD"
+                    pwsh: false
+                  env:
+                    SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+                    SOURCE_REF: refs/heads/poc/cicd
+                    EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}

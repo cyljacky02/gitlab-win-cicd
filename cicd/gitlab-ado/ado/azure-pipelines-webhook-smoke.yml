@@ -17,7 +17,7 @@ resources:
         - path: object_kind
           value: push
         - path: project.path_with_namespace
-          value: grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs
+          value: grp-smt-maint/Cathaysec.Com.Smt.Rayin
 
 jobs:
   - job: WebhookReceived

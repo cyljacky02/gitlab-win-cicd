@@ -1,0 +1,13 @@
+{
+  "resources": {
+    "repositories": {
+      "self": {
+        "refName": "refs/heads/poc/webhook-smoke"
+      }
+    }
+  },
+  "templateParameters": {
+    "gitlabCommitSha": "{{checkout_sha}}",
+    "allowInsecureHttpLab": false
+  }
+}

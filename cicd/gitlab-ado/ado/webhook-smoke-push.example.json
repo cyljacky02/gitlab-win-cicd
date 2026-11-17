@@ -1,8 +1,8 @@
 {
   "object_kind": "push",
   "event_name": "push",
-  "ref": "refs/heads/poc/ado-fetch",
+  "ref": "refs/heads/poc/cicd",
   "project": {
-    "path_with_namespace": "grp-smt-maint/Cathaysec.Com.Smt.Tools.Rs"
+    "path_with_namespace": "grp-smt-maint/Cathaysec.Com.Smt.Rayin"
   }
 }

@@ -1,4 +1,4 @@
-# Manual CD-owned source checkout, PowerShell 5.1. Never attach to the open smoke webhook.
+# CD-owned source checkout, PowerShell 5.1. Never attach to the open smoke webhook.
 [CmdletBinding()]
 param(
     [string]$RepositoryUrl = $env:SOURCE_REPOSITORY_URL,
@@ -20,6 +20,9 @@ function Invoke-SourceGit {
     $start.CreateNoWindow = $true
     $start.RedirectStandardOutput = $true
     $start.RedirectStandardError = $true
+    # Git -z paths are UTF-8, including on Windows with a non-UTF-8 console.
+    $start.StandardOutputEncoding = New-Object Text.UTF8Encoding($false)
+    $start.StandardErrorEncoding = New-Object Text.UTF8Encoding($false)
     $fixed = @('-c','credential.helper=','-c','credential.interactive=false',
         '-c','http.sslVerify=true','-c','http.sslBackend=schannel','-c','http.followRedirects=false',
         '-c','http.lowSpeedLimit=1','-c','http.lowSpeedTime=30',
@@ -122,7 +125,7 @@ function Get-GitLabSource {
         if ($head -cne $CommitSha) { throw 'Checked-out HEAD differs from the selected exact commit.' }
         [IO.Directory]::Move($temp,$output); $moved = $true
         $record = [ordered]@{
-            schema = 1; purpose = 'ManualGitLabSourceCheckoutOnly'
+            schema = 1; purpose = 'GitLabSourceCheckoutOnly'
             repositoryUrl = $RepositoryUrl; sourceRef = $SourceRef; gitlabCommitSha = $CommitSha
             adoBuildId = [string]$env:BUILD_BUILDID; adoToolCommit = [string]$env:BUILD_SOURCEVERSION
             gitVersion = $version; fetchedAtUtc = [DateTime]::UtcNow.ToString('o')
