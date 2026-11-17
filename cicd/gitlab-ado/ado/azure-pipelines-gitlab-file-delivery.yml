@@ -144,12 +144,33 @@ stages:
               SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
               SOURCE_REF: refs/heads/poc/cicd
               EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
-          - task: PublishBuildArtifacts@1
+          # PublishBuildArtifacts@1 on this Server requires a missing Node16 runner.
+          # Use the same agent-native Container upload command via working PowerShell.
+          - task: PowerShell@2
             displayName: Store ZIP and integrity/provenance for this ADO run
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/source-package'
-              ArtifactName: source-package
-              publishLocation: Container
+              targetType: inline
+              pwsh: false
+              script: |
+                # BEGIN NATIVE BUILD ARTIFACT UPLOAD
+                $ErrorActionPreference = 'Stop'
+                [Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
+                $package = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-package'
+                if (-not (Test-Path -LiteralPath $package -PathType Container)) { throw 'Source package directory is missing; nothing published.' }
+                $directory = Get-Item -LiteralPath $package -Force
+                $files = @(Get-ChildItem -LiteralPath $package -Force)
+                if (($directory.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $files.Count -ne 3 -or
+                    @($files | Where-Object { $_.PSIsContainer -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) }).Count -ne 0 -or
+                    @($files | Where-Object { $_.Extension -ieq '.zip' }).Count -ne 1 -or
+                    $files.Name -notcontains 'source-package.json' -or $files.Name -notcontains 'source-provenance.json') {
+                    throw 'Expected only the source ZIP, manifest and provenance regular files; nothing published.'
+                }
+                # Escape command data, not file contents. One directory command lets
+                # the agent finish upload before associating this current-run artifact.
+                $path = $directory.FullName.Replace('%', '%AZP25').Replace("`r", '%0D').Replace("`n", '%0A').Replace(';', '%3B').Replace(']', '%5D')
+                Write-Host 'Publishing source-package through the agent-native Build Artifact Container uploader.'
+                Write-Host "##vso[artifact.upload containerfolder=source-package;artifactname=source-package;]$path"
+                # END NATIVE BUILD ARTIFACT UPLOAD
 
   - stage: Deliver
     displayName: VM2 - deliver ZIP itself to D:\TestCICD
