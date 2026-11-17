@@ -34,13 +34,16 @@ jobs:
       - task: PowerShell@2
         displayName: Read fixed GitLab repo and verify exact detached commit
         inputs:
-          targetType: filePath
-          # Copy scripts/Get-GitLabSource.ps1 beside this YAML in the ADO test repo.
-          filePath: '$(Build.SourcesDirectory)/scripts/Get-GitLabSource.ps1'
-          arguments: >-
-            -OutputDirectory "$(Pipeline.Workspace)/gitlab-source"
-            -EvidenceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
+          targetType: inline
           pwsh: false
+          # Explicit & invokes main; filePath dot-sources the guarded script.
+          script: |
+            # BEGIN SOURCE CHECKOUT INVOCATION
+            $ErrorActionPreference = 'Stop'
+            & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/Get-GitLabSource.ps1') `
+              -OutputDirectory (Join-Path $env:PIPELINE_WORKSPACE 'gitlab-source') `
+              -EvidenceDirectory (Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-provenance')
+            # END SOURCE CHECKOUT INVOCATION
         env:
           SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
           SOURCE_REF: refs/heads/poc/cicd # Read-only; creates no branch, commit or push in GitLab

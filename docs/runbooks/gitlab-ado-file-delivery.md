@@ -26,7 +26,7 @@ GitLab Rayin / poc/cicd push
 | 取碼 credential／variable group | 使用者已回報完成；不用重建 |
 | 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
-先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新使用者回報：Rayin 在 VM1 的 Git preflight、ADO checkout、GitLab 精確 SHA 取碼與 ZIP 封裝均已通過；目前停在 Build Artifact 上傳 task 缺少 `node16` runtime。** Rayin 真 push 自動觸發、artifact 上傳／下載及 VM2 放檔仍待現場驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
+先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：VM1 Git preflight 與 ADO checkout 已通過，取碼／ZIP task 顯示綠燈，但上傳時 `source-package` 目錄不存在。** 本機已重現 `filePath` dot-source 與腳本入口 guard 造成的成功空跑，故先前取碼／封裝的綠燈不能算實際檔案驗收。Rayin 的真實取碼／ZIP、真 push、自動 artifact 上傳／下載及 VM2 放檔仍待依新版輸出重新驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
@@ -210,7 +210,7 @@ Value cannot be null. (Parameter 'gitVersion')
 
 **現場只需更新一個檔案**：ADO 原 repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`，完整取代為[最新版](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-file-delivery.yml)。不用改三支 scripts、不重建 pipeline。儲存後用 **Run pipeline 開新的 run**，不要只 Retry 舊 run 的 stage；GitLab SHA 沿用欲驗收的完整值，HTTP POC 勾 `allowInsecureHttpLab`。
 
-先看新 task `Select and validate Git before VM1 checkout` 是否印出 `Selected checkout Git:` 與 `git version ...`，再看後面的 checkout 是否成功。**使用者已回報此 task 與後續 checkout／GitLab 取碼／ZIP 封裝均通過**，目前不用再改 Git 選用或 token。此結果是使用者的現場回報，不是本開發機代測。
+先看新 task `Select and validate Git before VM1 checkout` 是否印出 `Selected checkout Git:` 與 `git version ...`，再看後面的 checkout 是否成功。**使用者已回報 preflight 與 ADO checkout 通過**，目前不用再改 Git 選用。後續取碼／ZIP 雖顯示綠燈，但因發現 entrypoint 空跑，不能把它們視為實際檔案驗收；需依下節的新 wrapper 重跑。本機沒有代測公司 GitLab credential。
 
 ## VM1 上傳 artifact 缺少 `node16` runtime 的修正
 
@@ -234,11 +234,43 @@ C:\azagent\A1\externals\node16\bin\node.exe
 
 上傳成功的驗收是新 run 的 `source-package` artifact 確實含 ZIP＋兩份 JSON，且 Package stage 成功；PowerShell 印出 upload 指令本身不代表 Server 已收妥。接著才觀察 Deliver／VM2。此修正本機僅測指令／檔案檢查契約，尚未連公司 Server 驗證傳輸。
 
+## ZIP task 綠燈但上傳目錄不存在：腳本入口修正
+
+使用者套用原生上傳版本後，`Store ZIP...` 在 `Source package directory is missing; nothing published` 停止。**本機已重現同一種成功空跑模式**：
+
+```text
+. New-GitLabSourcePackage.ps1 <arguments>
+# 沒報錯、沒有建立 package；只載入 function
+& New-GitLabSourcePackage.ps1 <arguments>
+# 實際進入 main，驗證來源並封裝
+```
+
+Microsoft 的 PowerShell@2 Windows／TypeScript runner 都會將 `targetType: filePath` 的目標腳本 dot-source（`.`）。我們的三支腳本用 `$MyInvocation.InvocationName -ne '.'` 保留「直接執行才進 main、helper import 不自動執行」的邊界，因此在舊 task 寫法下 main 被跳過。[11][12]
+
+**不能只加 `runScriptInSeparateScope: true`**：它改的是 task 生成之暫存 wrapper 的執行方式，內層 `filePath` 仍會 dot-source。可靠修正是將 Get／New／Copy 三個 task 都改成 `targetType: inline`，明確用 `&` 呼叫既有腳本，保留 helper／離線測試需要的 import guard。[11][12]
+
+- 新 wrapper 的來源、證據、package 路徑皆以同一組 Agent environment 變數計算。
+- ZIP wrapper 在腳本返回後立即確認 manifest 已存在，並印出 `Source package directory:`；上傳步驟也印出自己讀取的完整目錄，不再用綠燈推論有檔案。
+- VM2 Copy wrapper 亦明確 `&` 執行，否則相同問題會使 Deliver 假成功。目的目錄仍是受控 YAML 固定的 `D:\TestCICD`，不接受 webhook 指定。
+- 這不是 token scope 或 Server 上傳 API 的問題，不改 credential、不改已通過的 checkout workaround，也不 fallback 搜尋其他 run 的 ZIP。
+
+**現場只需再次完整更新交付 YAML**（同一 ADO repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`）。三支 scripts 不用改。另有同步修正診斷用 source-only YAML 的相同 Get 呼叫；沒使用該 pipeline 就不用額外操作。
+
+儲存後 **Run pipeline 新 run**，保留完整 GitLab SHA，HTTP POC 勾 `allowInsecureHttpLab`。本次要確認真正的輸出：
+
+1. Get task 有 `Checked out exact GitLab commit ...`，不是只顯示 task 起訖。
+2. ZIP task 有 `Packaged ...`、ZIP SHA-256、`Source package directory: ...`。
+3. 上傳讀取相同目錄，run 的 `source-package` artifact 含 ZIP＋兩份 JSON。
+4. Deliver task 有 `Delivered ZIP:`，VM2 目的目錄確實有相同 ZIP／hash。
+
+本機回歸直接執行 YAML inline wrappers，以 real Git fixture 實際產生 ZIP、複製到暫存目的地並核對內容／SHA／hash；Get wrapper 以無效 SHA 驗證確實進入 main 且在 network／credential 之前拒絕。這修正了先前測試只以 `& script.ps1` 執行、沒有覆蓋 task 呼叫方式的缺口；不宣稱已連公司 GitLab 或完成現場交付。
+
 ## 本機檢查與現場故障排查
 
-本機 Windows PowerShell 5.1：原生 artifact upload 檢查 **12/12 通過**（直接執行 YAML inline code：固定 artifact／root、只發一次目錄指令、path escaping、缺檔／額外檔案／假 ZIP 目錄不發上傳指令、不修改 package；未測 Server 傳輸）。Git bootstrap 檢查 **7/7 通過**（正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **19/19 通過**。
+本機 Windows PowerShell 5.1：task entrypoint 檢查 **8/8 通過**（實際 YAML wrappers、real Git ZIP／manifest／Copy／hash、Get 入口前置驗證、helper import 不執行 main）；原生 artifact upload 檢查 **12/12 通過**（直接執行 YAML inline code：固定 artifact／root、只發一次目錄指令、path escaping、缺檔／額外檔案／假 ZIP 目錄不發上傳指令、不修改 package；未測 Server 傳輸）。Git bootstrap 檢查 **7/7 通過**（正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **19/19 通過**。
 
 ```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-PowerShellTaskEntrypoints.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-BuildArtifactUpload.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitCheckoutBootstrap.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitLabSource.ps1
@@ -252,6 +284,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 | HTTP refused | 預期安全預設；本次內網 HTTP POC 勾 `allowInsecureHttpLab`，不關 TLS。 |
 | Fetch 401／403 | Rayin 的 token Username／期限／`read_repository`；勿誤用 Tools.Rs project token。 |
 | Environment/resource not found | `test-deploy-agent`、`SECSVR4-80`、case-sensitive `virtualMachine`、Agent online／pipeline resource authorization。 |
+| ZIP task 綠燈但 source package directory missing | 更新交付 YAML 的三個 inline `&` wrappers；確認 Get／ZIP 的實際 SHA、包名與完整目錄輸出，不只看 task 綠燈。 |
 | VM1 Publish 缺少 `externals\node16\bin\node.exe` | 更新同一份 YAML，使用 PowerShell 發出原生 Build Artifact upload 指令；不重新建 token 或自動安裝 Node。 |
 | DownloadBuildArtifacts@1 不存在／缺 runtime | 查 VM2 的 Server task／Agent runtime；VM1 上傳修正不代表 VM2 已驗收，提供該下載 task 的非敏感錯誤再定位。[1] |
 | D: absent／Access denied | 查 VM2 本機 D: 與 Agent 服務帳號 ACL，不給 GitLab VM 密碼或改成 VM1 share copy。 |
@@ -270,6 +303,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 [8]: https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/windows-agent?view=azure-devops-server#what-version-of-git-does-my-agent-run
 [9]: https://learn.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops#upload-upload-an-artifact
 [10]: https://github.com/microsoft/azure-pipelines-agent/blob/v2.214.1/src/Agent.Worker/Build/ArtifactCommandExtension.cs
+[11]: https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PowerShellV2/powershell.ps1
+[12]: https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PowerShellV2/powershell.ts
 
 原 Publish task 的 [Container 分支](https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PublishBuildArtifactsV1/publishbuildartifacts.ts) 發出 `artifact.upload`；[FileContainerServer source](https://github.com/microsoft/azure-pipelines-agent/blob/v2.214.1/src/Agent.Worker/Build/FileContainerServer.cs) 處理目錄內容與相對路徑。
 

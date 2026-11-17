@@ -117,12 +117,15 @@ stages:
           - task: PowerShell@2
             displayName: Read fixed Rayin poc/cicd source and verify detached SHA
             inputs:
-              targetType: filePath
-              filePath: '$(Build.SourcesDirectory)/scripts/Get-GitLabSource.ps1'
-              arguments: >-
-                -OutputDirectory "$(Pipeline.Workspace)/gitlab-source"
-                -EvidenceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
+              targetType: inline
               pwsh: false
+              script: |
+                # BEGIN SOURCE CHECKOUT INVOCATION
+                $ErrorActionPreference = 'Stop'
+                & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/Get-GitLabSource.ps1') `
+                  -OutputDirectory (Join-Path $env:PIPELINE_WORKSPACE 'gitlab-source') `
+                  -EvidenceDirectory (Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-provenance')
+                # END SOURCE CHECKOUT INVOCATION
             env:
               SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
               SOURCE_REF: refs/heads/poc/cicd
@@ -133,13 +136,21 @@ stages:
           - task: PowerShell@2
             displayName: ZIP tracked checkout files, without .git or application execution
             inputs:
-              targetType: filePath
-              filePath: '$(Build.SourcesDirectory)/scripts/New-GitLabSourcePackage.ps1'
-              arguments: >-
-                -SourceDirectory "$(Pipeline.Workspace)/gitlab-source"
-                -ProvenanceDirectory "$(Build.ArtifactStagingDirectory)/source-provenance"
-                -PackageDirectory "$(Build.ArtifactStagingDirectory)/source-package"
+              targetType: inline
               pwsh: false
+              script: |
+                # BEGIN SOURCE PACKAGE INVOCATION
+                $ErrorActionPreference = 'Stop'
+                $package = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-package'
+                & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/New-GitLabSourcePackage.ps1') `
+                  -SourceDirectory (Join-Path $env:PIPELINE_WORKSPACE 'gitlab-source') `
+                  -ProvenanceDirectory (Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-provenance') `
+                  -PackageDirectory $package
+                if (-not (Test-Path -LiteralPath (Join-Path $package 'source-package.json') -PathType Leaf)) {
+                  throw "Packaging returned without its manifest: $package"
+                }
+                Write-Host "Source package directory: $package"
+                # END SOURCE PACKAGE INVOCATION
             env:
               SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
               SOURCE_REF: refs/heads/poc/cicd
@@ -156,7 +167,8 @@ stages:
                 $ErrorActionPreference = 'Stop'
                 [Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
                 $package = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-package'
-                if (-not (Test-Path -LiteralPath $package -PathType Container)) { throw 'Source package directory is missing; nothing published.' }
+                Write-Host "Source package directory for upload: $package"
+                if (-not (Test-Path -LiteralPath $package -PathType Container)) { throw "Source package directory is missing: $package; nothing published." }
                 $directory = Get-Item -LiteralPath $package -Force
                 $files = @(Get-ChildItem -LiteralPath $package -Force)
                 if (($directory.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $files.Count -ne 3 -or
@@ -207,13 +219,17 @@ stages:
                 - task: PowerShell@2
                   displayName: Verify SHA/run/hash and copy ZIP without overwrite
                   inputs:
-                    targetType: filePath
-                    filePath: '$(Build.SourcesDirectory)/scripts/Copy-GitLabSourcePackage.ps1'
-                    arguments: >-
-                      -ArtifactDirectory "$(Pipeline.Workspace)/current-source-package/source-package"
-                      -DestinationDirectory "D:\TestCICD"
+                    targetType: inline
                     pwsh: false
+                    script: |
+                      # BEGIN SOURCE DELIVERY INVOCATION
+                      $ErrorActionPreference = 'Stop'
+                      & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/Copy-GitLabSourcePackage.ps1') `
+                        -ArtifactDirectory (Join-Path $env:PIPELINE_WORKSPACE 'current-source-package/source-package') `
+                        -DestinationDirectory $env:DELIVERY_DIRECTORY
+                      # END SOURCE DELIVERY INVOCATION
                   env:
+                    DELIVERY_DIRECTORY: 'D:\TestCICD' # CD-owned constant, not webhook data
                     SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
                     SOURCE_REF: refs/heads/poc/cicd
                     EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
