@@ -15,7 +15,7 @@ function Invoke-SourceGit {
     param([string]$GitPath, [string]$Directory, [string[]]$Arguments, [string]$AuthHeader, [string]$RepositoryUrl, [int]$TimeoutSeconds = 120)
     # Log only an allowlisted operation, never argv, URL, headers or raw stderr.
     $operation = 'git-command'
-    if ($Arguments.Count -gt 0 -and $Arguments[0] -in @('--version','check-ref-format','init','config','remote','fetch','rev-parse','merge-base','checkout','diff','ls-tree')) { $operation = $Arguments[0] }
+    if ($Arguments.Count -gt 0 -and $Arguments[0] -in @('--version','check-ref-format','init','config','remote','ls-remote','fetch','rev-parse','merge-base','checkout','diff','ls-tree')) { $operation = $Arguments[0] }
     Write-Host "[GitSource] start $operation; timeout=${TimeoutSeconds}s"
     $start = New-Object Diagnostics.ProcessStartInfo
     $start.FileName = $GitPath
@@ -95,7 +95,8 @@ function Invoke-SourceGit {
         if ($timedOut) { throw "Git timed out during $operation after ${TimeoutSeconds}s; no source checkout accepted." }
         if ($process.ExitCode -ne 0) {
             $category = 'unspecified'
-            if ($diagnostics -match 'Authentication failed|HTTP[^\r\n]*(?:401|403)|could not read Username') { $category = 'authentication' }
+            if ($operation -eq 'ls-remote' -and $process.ExitCode -eq 2) { $category = 'ref-not-found' }
+            elseif ($diagnostics -match 'Authentication failed|HTTP[^\r\n]*(?:401|403)|could not read Username') { $category = 'authentication' }
             elseif ($diagnostics -match 'Could not resolve host|Could not resolve proxy') { $category = 'name-resolution' }
             elseif ($diagnostics -match 'Failed to connect|Connection refused|Connection timed out|Could not connect') { $category = 'connection' }
             elseif ($diagnostics -match 'SSL certificate|certificate problem|schannel:') { $category = 'tls' }
@@ -158,6 +159,14 @@ function Get-GitLabSource {
         $null = Invoke-SourceGit @gitBase -Arguments @('init','--quiet',"--template=$empty")
         $null = Invoke-SourceGit @gitBase -Arguments @('config','core.hooksPath', $empty)
         $null = Invoke-SourceGit @gitBase -Arguments @('remote','add','origin',$RepositoryUrl)
+        # Read only one ref before downloading history, using the same Git process
+        # isolation and transient URL-scoped credential as fetch. Never print refs.
+        Write-Host "[GitSource] ALL_PROXY present: $([bool]$env:ALL_PROXY); proxy values are not logged."
+        $advertisedRef = Invoke-SourceGit @gitBase -Arguments @('ls-remote','--exit-code','--refs','origin',$SourceRef) -AuthHeader $auth -RepositoryUrl $RepositoryUrl -TimeoutSeconds 30
+        if ($advertisedRef -cnotmatch ('\A[0-9a-fA-F]{40}\t' + [regex]::Escape($SourceRef) + '\z')) {
+            throw 'Ref probe returned no unique valid commit for the fixed source ref; no fetch or checkout accepted.'
+        }
+        Write-Host '[GitSource] Git ref probe passed; fixed source ref is readable. Starting exact-commit fetch.'
         # Fetch the fixed branch, not a caller-selected URL; verify SHA ancestry.
         $null = Invoke-SourceGit @gitBase -Arguments @('fetch','--progress','--no-tags','--no-recurse-submodules','origin',("+${SourceRef}:refs/remotes/origin/selected")) -AuthHeader $auth -RepositoryUrl $RepositoryUrl -TimeoutSeconds 300
         $auth = $null

@@ -88,7 +88,7 @@ Checked out exact GitLab commit <40碼SHA> on the selected VM1 agent. No applica
 
 script fetch 固定 `poc/cicd`，核對 SHA 可達性並以 detached HEAD checkout；不把排隊後的新 tip 偷換成所選版本。若 SHA 不存在／被 force rewrite，失敗即停止。
 
-此 pipeline **只發布 `source-provenance` metadata artifact**，包含 repo、ref、SHA、ADO build ID／工具 commit 等；沒有 ZIP、VM2 job 或放檔。取碼 credential 只在 fetch 子程序的 URL-scoped runtime config 中存在，不保留到 `.git/config`／URL／argv；不執行 app scripts、hooks、LFS smudge 或 submodules。[2]
+此 pipeline **只發布 `source-provenance` metadata artifact**，包含 repo、ref、SHA、ADO build ID／工具 commit 等；沒有 ZIP、VM2 job 或放檔。取碼 credential 只供固定來源的 30 秒 ref probe（`ls-remote`）與 fetch 子程序使用，各透過 URL-scoped runtime config 傳入，不保留到 `.git/config`／URL／argv；其他子命令不帶 credential，不執行 app scripts、hooks、LFS smudge 或 submodules。[2]
 
 ## 第四步：使用新的原始碼 ZIP 交付 pipeline
 

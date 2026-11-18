@@ -29,6 +29,7 @@ public class DiagnosticGit {
             Thread.Sleep(30000);
             return 0;
         }
+        if (input.Contains("--fixture-no-ref")) { return 2; }
         if (input.Contains("--fixture-auth")) {
             Console.Error.WriteLine("fatal: Authentication failed for http://offline-user:offline-token@gitlab.invalid/private-repo-name.git/");
             return 1;
@@ -60,13 +61,19 @@ public class DiagnosticGit {
     } 6>&1 | ForEach-Object { [string]$_ }) -join "`n"
     Assert-Check ($logs -match '\[GitSource\] fetch elapsed=\d+s; temporary-pack-bytes=4096') 'A real wait emits the 15-second heartbeat and numeric local pack size'
     Assert-Check ($logs -notmatch 'offline-token|Authorization|private-repo-name') 'Heartbeat does not expose raw remote data'
-    foreach ($case in @(@{Flag='--fixture-auth';Category='authentication'}, @{Flag='--fixture-connect';Category='connection'})) {
+    $logs = @(& {
+        try { $null = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments @('ls-remote','--fixture-hang') -TimeoutSeconds 1 }
+        catch { $script:message = $_.Exception.Message }
+    } 6>&1 | ForEach-Object { [string]$_ }) -join "`n"
+    Assert-Check ($message -match 'Git timed out during ls-remote after 1s') 'Ref probe timeout is identified separately from the full fetch'
+    Assert-Check ($logs -notmatch 'offline-token|Authorization|private-repo-name') 'Ref probe timeout does not expose raw remote data'
+    foreach ($case in @(@{Operation='fetch';Flag='--fixture-auth';Category='authentication'}, @{Operation='fetch';Flag='--fixture-connect';Category='connection'}, @{Operation='ls-remote';Flag='--fixture-no-ref';Category='ref-not-found'})) {
         $script:message = $null
         $logs = @(& {
-            try { $null = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments @('fetch',$case.Flag) -TimeoutSeconds 5 }
+            try { $null = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments @($case.Operation,$case.Flag) -TimeoutSeconds 5 }
             catch { $script:message = $_.Exception.Message }
         } 6>&1 | ForEach-Object { [string]$_ }) -join "`n"
-        Assert-Check ($message -match ('Git failed\..*fetch.*category=' + $case.Category)) ('Safe failure category: ' + $case.Category)
+        Assert-Check ($message -match ('Git failed\..*' + $case.Operation + '.*category=' + $case.Category)) ('Safe failure category: ' + $case.Category)
         Assert-Check (($logs + $message) -notmatch 'offline-token|offline-user|Authorization|cHJpdmF0ZTpwYXNz|private-repo-name') ('No raw error data logged for ' + $case.Category)
     }
     $result = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments @('config','--fixture-success') -TimeoutSeconds 5

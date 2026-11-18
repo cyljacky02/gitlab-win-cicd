@@ -21,7 +21,7 @@ function Case([string]$Name, [scriptblock]$Body) {
     $script:count++
     $env:GITLAB_GIT_USERNAME = 'offline-user'; $env:GITLAB_GIT_TOKEN = 'offline-token'
     $env:BUILD_BUILDID = '123'; $env:BUILD_SOURCEVERSION = ('b' * 40)
-    $script:failFetch = $false; $script:failAncestry = $false; $script:wrongHead = $false
+    $script:failFetch = $false; $script:failProbe = $false; $script:wrongProbe = $false; $script:failAncestry = $false; $script:wrongHead = $false
     $script:calls = New-Object 'Collections.Generic.List[object]'
     $script:caseDir = Join-Path $root ([Guid]::NewGuid().ToString('N'))
     [IO.Directory]::CreateDirectory($script:caseDir) | Out-Null
@@ -31,7 +31,7 @@ function Case([string]$Name, [scriptblock]$Body) {
 function Checkout-Args {
     return @{RepositoryUrl=$repoUrl;SourceRef='refs/heads/main';CommitSha=$script:firstSha;OutputDirectory=(Join-Path $script:caseDir 'source');EvidenceDirectory=(Join-Path $script:caseDir 'evidence')}
 }
-function Reject([string]$Name,[scriptblock]$Change,[string]$Pattern) {
+function Reject([string]$Name,[scriptblock]$Change,[string]$Pattern,[switch]$BeforeFetch) {
     Case $Name {
         $params = Checkout-Args; & $Change $params; $message = $null
         try { Get-GitLabSource @params } catch { $message = $_.Exception.Message }
@@ -39,6 +39,7 @@ function Reject([string]$Name,[scriptblock]$Change,[string]$Pattern) {
         Assert-Test (-not (Test-Path -LiteralPath $params.OutputDirectory)) 'Rejected source was published.'
         Assert-Test (-not (Test-Path -LiteralPath $params.EvidenceDirectory)) 'Rejected evidence was published.'
         Assert-Test (@(Get-ChildItem $script:caseDir -Force -Filter '.gitlab-*').Count -eq 0) 'Owned temporary directories leaked.'
+        if ($BeforeFetch) { Assert-Test (@($script:calls | Where-Object { $_.Arguments[0] -eq 'fetch' }).Count -eq 0) 'Fetch ran after rejected ref probe.' }
     }
 }
 try {
@@ -72,13 +73,22 @@ try {
         Assert-Test ($message -match '^Git failed\.' -and $message -notmatch 'offline-token') 'Native stderr escaped or error was lost.'
     }
 
-    # Only fetch is substituted with a local test fixture; all verification/checkout
-    # commands still use the actual production Git process helper.
+    # Only the network read operations are replaced with the real local fixture;
+    # all other verification/checkout uses the production Git process helper.
     function Invoke-SourceGit {
         param([string]$GitPath,[string]$Directory,[string[]]$Arguments,[string]$AuthHeader,[string]$RepositoryUrl,[int]$TimeoutSeconds=120)
-        $script:calls.Add([pscustomobject]@{Arguments=$Arguments;HasAuth=[bool]$AuthHeader;Directory=$Directory})
+        $script:calls.Add([pscustomobject]@{Arguments=$Arguments;HasAuth=[bool]$AuthHeader;Directory=$Directory;TimeoutSeconds=$TimeoutSeconds})
         Assert-Test (-not (($Arguments -join ' ') -match 'offline-token|Authorization:')) 'Credential appeared in argv.'
         Assert-Test (-not $env:GITLAB_GIT_TOKEN -and -not $env:GITLAB_GIT_USERNAME) 'Parent credential env was not cleared before Git.'
+        if ($Arguments[0] -eq 'ls-remote') {
+            Assert-Test ([bool]$AuthHeader -and $RepositoryUrl -ceq $repoUrl) 'Ref probe credential not scoped to fixed origin.'
+            Assert-Test ($TimeoutSeconds -eq 30 -and ($Arguments -join ' ') -ceq 'ls-remote --exit-code --refs origin refs/heads/main') 'Ref probe must be bounded and restricted to the fixed branch.'
+            if ($script:failProbe) { throw 'Fake ls-remote timed out.' }
+            if ($script:wrongProbe) { return ($script:lastSha + "`trefs/heads/unexpected") }
+            $result=& $gitPath -c protocol.file.allow=always -C $Directory ls-remote --exit-code --refs $fixture refs/heads/main 2>&1
+            if ($LASTEXITCODE -ne 0) { throw 'Local fixture ref probe failed.' }
+            return ($result -join "`n").Trim()
+        }
         if ($Arguments[0] -eq 'fetch') {
             Assert-Test ([bool]$AuthHeader -and $RepositoryUrl -ceq $repoUrl) 'Fetch credential not scoped to fixed origin.'
             if ($script:failFetch) { throw 'Fake fetch failed.' }
@@ -86,7 +96,7 @@ try {
             if ($LASTEXITCODE -ne 0) { throw 'Local fixture fetch failed.' }
             return ''
         }
-        Assert-Test (-not $AuthHeader) 'Non-fetch child received credential.'
+        Assert-Test (-not $AuthHeader) 'Non-network-read child received credential.'
         if ($script:failAncestry -and $Arguments[0] -eq 'merge-base') { throw 'Fake commit is outside allowed branch.' }
         if ($script:wrongHead -and $Arguments[0] -eq 'rev-parse' -and $Arguments[1] -eq 'HEAD') { return ('f'*40) }
         return (& $nativeGit -GitPath $GitPath -Directory $Directory -Arguments $Arguments -TimeoutSeconds $TimeoutSeconds)
@@ -102,9 +112,13 @@ try {
         Assert-Test ($record.gitlabCommitSha -ceq $script:firstSha -and $record.adoBuildId -ceq '123' -and -not $record.applicationBuildExecuted) 'Evidence binding incorrect.'
         $persisted=[IO.File]::ReadAllText((Join-Path $params.OutputDirectory '.git/config')) + [IO.File]::ReadAllText((Join-Path $params.EvidenceDirectory 'source-provenance.json'))
         Assert-Test ($persisted -notmatch 'offline-token|offline-user|Authorization:|extraHeader') 'Credential persisted to config/evidence.'
-        Assert-Test (@($script:calls | Where-Object HasAuth).Count -eq 1) 'Credential exposed outside fetch.'
+        $networkCalls = @($script:calls | Where-Object HasAuth)
+        Assert-Test ($networkCalls.Count -eq 2 -and $networkCalls[0].Arguments[0] -ceq 'ls-remote' -and $networkCalls[1].Arguments[0] -ceq 'fetch') 'Only ref probe then fetch may receive the transient credential.'
+        Assert-Test ($networkCalls[0].TimeoutSeconds -eq 30 -and $networkCalls[1].TimeoutSeconds -eq 300) 'Probe must be short without changing the full fetch deadline.'
         Assert-Test (@(Get-ChildItem $script:caseDir -Force -Filter '.gitlab-*').Count -eq 0) 'Temporary directories leaked.'
     }
+    Reject 'ref probe timeout stops before fetch and publishes nothing' {param($p) $script:failProbe=$true} 'Fake ls-remote timed out' -BeforeFetch
+    Reject 'wrong advertised ref is refused without fetch' {param($p) $script:wrongProbe=$true} 'Ref probe returned no unique valid commit for the fixed source ref' -BeforeFetch
     Reject 'short SHA rejected before fetch' {param($p) $p.CommitSha='deadbeef'} '40-character'
     Reject 'unknown SHA rejected without latest fallback' {param($p) $p.CommitSha=('f'*40)} 'Git failed'
     Reject 'wrong branch ancestry rejected' {param($p) $script:failAncestry=$true} 'outside allowed branch'
