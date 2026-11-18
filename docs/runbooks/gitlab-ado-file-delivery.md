@@ -26,7 +26,7 @@ GitLab Rayin / poc/cicd push
 | 取碼 credential／variable group | 使用者已回報完成；不用重建 |
 | 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
-先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：VM1 匿名 HTTP probe 約 5 秒收到 401，`HTTP_PROXY`／`HTTPS_PROXY`／`NO_PROXY` 都為 False；Git fetch 仍約 5 分鐘 timeout、pack bytes 為 0。** 匿名 401 不證明 Git credential 可用；三個環境變數未設也不證明沒有其他 proxy 來源。新版 Get script 增加 30 秒同客戶端 ref probe，區分 Git 連線／認證／ref 讀取與後續資料傳輸；根因仍待現場結果。VM1 Git preflight／ADO checkout 已通過；先前取碼／ZIP 的綠燈因 entrypoint 空跑不能算檔案驗收。Rayin 的真實取碼／ZIP、真 push、artifact 上傳／下載及 VM2 放檔仍待驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
+先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：同一 Git／credential 的 ref probe 已通過，但接續 fetch 仍在 300 秒 timeout，pack bytes 持續為 0。** 匿名 HTTP 先前約 5 秒收到 401，三個 proxy 環境變數為 False。這已證明固定 ref 可被該 Git 讀取，但不能證明 pack 協商／傳輸已開始；根因仍待 fetch 本身的 HTTP method/status 與 Server 證據。新版僅新增不輸出原始 header 的 HTTP 階段摘要。VM1 Git preflight／ADO checkout 已通過；先前取碼／ZIP 的綠燈因 entrypoint 空跑不能算檔案驗收。Rayin 的真實取碼／ZIP、真 push、artifact 上傳／下載及 VM2 放檔仍待驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
@@ -320,9 +320,41 @@ Git timed out during fetch after 300s; no source checkout accepted.
 
 本機另以真實 Git client 對 loopback smart-HTTP fixture 執行相同 helper，驗證固定路徑帶短時 header 能讀 ref、錯誤 credential 安全分類為 authentication、缺 ref 分類為 ref-not-found，且不建立 `.git`／credential config。此 fixture 使用假 credential，不是公司 GitLab 的驗收。
 
+## Ref probe 已通、fetch 仍無 pack：取得 fetch 的 HTTP 階段證據
+
+使用者已回報 `Git ref probe passed; fixed source ref is readable`，接著 fetch 在 300 秒 timeout，暫存 pack bytes 仍為 0。這排除了「同一 Git 根本無法讀取固定 ref」的情況；**不應因此重建 token，也不能只憑 pack 為 0 就認定 repo 太大／完全沒連線**。
+
+這時要區分 fetch 的 HTTP request 是否得到回應，而不是再做一次匿名 HTTP。另須注意：依 Git protocol 版本，`ls-remote` 本身也可能使用 POST，故不能把目前結果簡化成「GET 通、POST 不通」。[14]
+
+**現場只更新 `/scripts/Get-GitLabSource.ps1`**（ADO 原 repo／`poc/webhook-smoke`，同一[完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)），YAML／credential 不變。跑 **`GitLab-Rayin-Zip-Delivery` 的新 run**，原完整 SHA，HTTP checkbox 勾選。
+
+新版只對 fetch 子程序啟用 `GIT_TRACE_CURL=1`、`GIT_TRACE_CURL_NO_DATA=1` 與 `GIT_TRACE_REDACT=1`；trace 只導向該子程序的私有 stderr 記憶體，不落檔、不原樣輸出。返回／timeout 後，只從白名單解析 method（GET／POST）與三位數 HTTP status，原始 headers、URL、cookies、credential 和 body 都不進 pipeline log。[15]
+
+回報 task 尾端新增的行，例如：
+
+```text
+[GitSource] HTTP request 1: method=GET; response-status=200
+[GitSource] HTTP request 2: method=POST; response-status=not-observed
+```
+
+或第二行為 `response-status=200`／其他 status。
+
+| 觀察 | 下一個有證據的查核方向 |
+|---|---|
+| POST `not-observed` | client trace 未觀察到這個 request 的回應 status；依同一 run 的時間查 GitLab／中間設備是否收到並完成請求。這不是證明 backend 一定沒收到。 |
+| POST `200` 但無 pack／Receiving | 已觀察到 HTTP response status，不代表 Git payload 已完整開始／完成；對照 Server pack 準備、串流與 client trace 同時段。 |
+| 401／403／其他 status | 依 fetch request 的實際 status 查 Server／權限／中間設備，不把匿名 probe 的 401 混為同一個證據。 |
+| 沒有 method/status events | 記錄不足，不據此宣稱沒有送 request；需進一步在 Agent／Server 端對照。 |
+
+status 是 client 觀察到的最後一個 response code，可能含中間或 provisional response，不是完整 HTTP transaction／Git 成功驗收。**此輪仍不延長 300 秒、不改 HTTP 協定版本、不降為 shallow、不換成 latest，也不要求使用者貼 raw trace**。
+
+若再次卡在 POST 等待或 200 後無資料，就用此次 ADO run ID、起訖時間、已成功讀 ref／fetch method/status 與 GitLab 管理者對照相同時段的 access／backend 紀錄；不再無根據地輪換 token 或重等同一份 run。
+
+本機用實際 Git＋loopback smart-HTTP fixture（假 credential）分別重現 POST 不回 header，以及 POST 回 200 後不送 body，確認摘要能區分且不輸出 auth／cookie／URL；另以受控 executable 檢查同樣資訊邊界。這不是公司 GitLab 的根因重現或現場修復。
+
 ## 本機檢查與現場故障排查
 
-本機 Windows PowerShell 5.1：Git process 診斷檢查 **17/17 通過**（受控 executable 驗 timeout／heartbeat／安全分類／數字進度及 stderr 不洩漏，未測公司 GitLab）；task entrypoint 檢查 **8/8 通過**（實際 YAML wrappers、real Git ZIP／manifest／Copy／hash、Get 入口前置驗證、helper import 不執行 main）；原生 artifact upload 檢查 **12/12 通過**（直接執行 YAML inline code：固定 artifact／root、只發一次目錄指令、path escaping、缺檔／額外檔案／假 ZIP 目錄不發上傳指令、不修改 package；未測 Server 傳輸）。Git bootstrap 檢查 **7/7 通過**（正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **21/21 通過**（另核對 probe 30 秒、先 probe 再 fetch、probe 失敗不下載、錯誤 ref 拒絕，歷史 SHA 不換成 probe tip）。
+本機 Windows PowerShell 5.1：Git process 診斷檢查 **25/25 通過**（受控 executable 驗 timeout／heartbeat／安全分類／數字進度及 stderr 不洩漏，未測公司 GitLab）；task entrypoint 檢查 **8/8 通過**（實際 YAML wrappers、real Git ZIP／manifest／Copy／hash、Get 入口前置驗證、helper import 不執行 main）；原生 artifact upload 檢查 **12/12 通過**（直接執行 YAML inline code：固定 artifact／root、只發一次目錄指令、path escaping、缺檔／額外檔案／假 ZIP 目錄不發上傳指令、不修改 package；未測 Server 傳輸）。Git bootstrap 檢查 **7/7 通過**（正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **21/21 通過**（另核對 probe 30 秒、先 probe 再 fetch、probe 失敗不下載、錯誤 ref 拒絕，歷史 SHA 不換成 probe tip）。
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitSourceDiagnostics.ps1
@@ -340,7 +372,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 | HTTP refused | 預期安全預設；本次內網 HTTP POC 勾 `allowInsecureHttpLab`，不關 TLS。 |
 | Fetch 401／403 | Rayin 的 token Username／期限／`read_repository`；勿誤用 Tools.Rs project token。 |
 | Environment/resource not found | `test-deploy-agent`、`SECSVR4-80`、case-sensitive `virtualMachine`、Agent online／pipeline resource authorization。 |
-| Read task 約 5 分鐘 timeout | 更新 Get script：先看 30 秒 `ls-remote` 是否完成，再依 fetch operation／pack bytes／安全摘要定位；不先增加 timeout、不換成 latest，現場根因尚未確定。 |
+| Read task 約 5 分鐘 timeout | ref probe 若已通，更新 Get script 後取 fetch method/status 摘要；根據同一 run 時間對照 Server，不先增加 timeout、不換成 latest，現場根因尚未確定。 |
 | ZIP task 綠燈但 source package directory missing | 更新交付 YAML 的三個 inline `&` wrappers；確認 Get／ZIP 的實際 SHA、包名與完整目錄輸出，不只看 task 綠燈。 |
 | VM1 Publish 缺少 `externals\node16\bin\node.exe` | 更新同一份 YAML，使用 PowerShell 發出原生 Build Artifact upload 指令；不重新建 token 或自動安裝 Node。 |
 | DownloadBuildArtifacts@1 不存在／缺 runtime | 查 VM2 的 Server task／Agent runtime；VM1 上傳修正不代表 VM2 已驗收，提供該下載 task 的非敏感錯誤再定位。[1] |
@@ -363,6 +395,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 [11]: https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PowerShellV2/powershell.ps1
 [12]: https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PowerShellV2/powershell.ts
 [13]: https://git-scm.com/docs/git-ls-remote
+[14]: https://git-scm.com/docs/http-protocol
+[15]: https://git-scm.com/docs/git#Documentation/git.txt-GIT_TRACE_CURL
 
 原 Publish task 的 [Container 分支](https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PublishBuildArtifactsV1/publishbuildartifacts.ts) 發出 `artifact.upload`；[FileContainerServer source](https://github.com/microsoft/azure-pipelines-agent/blob/v2.214.1/src/Agent.Worker/Build/FileContainerServer.cs) 處理目錄內容與相對路徑。
 

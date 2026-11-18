@@ -18,6 +18,20 @@ public class DiagnosticGit {
     public static int Main(string[] args) {
         string input = String.Join(" ", args);
         Console.Error.WriteLine("remote: offline-token Authorization: Basic cHJpdmF0ZTpwYXNz; private-repo-name");
+        if (input.Contains("--fixture-http-wait")) {
+            if (Environment.GetEnvironmentVariable("GIT_TRACE_CURL") != "1" ||
+                Environment.GetEnvironmentVariable("GIT_TRACE_CURL_NO_DATA") != "1" ||
+                Environment.GetEnvironmentVariable("GIT_TRACE_REDACT") != "1") { return 44; }
+            Console.Error.WriteLine("12:00:00 http.c:001 => Send header: GET /private-repo-name.git/info/refs?service=git-upload-pack HTTP/1.1");
+            Console.Error.WriteLine("12:00:00 http.c:002 <= Recv header: HTTP/1.1 200 OK");
+            Console.Error.WriteLine("12:00:00 http.c:003 => Send header: POST /private-repo-name.git/git-upload-pack HTTP/1.1");
+            Console.Error.WriteLine("12:00:00 http.c:004 => Send header: Authorization: Basic cHJpdmF0ZTpwYXNz");
+            Console.Error.WriteLine("12:00:00 http.c:005 <= Recv header: Set-Cookie: private-cookie=offline-token");
+            if (input.Contains("--fixture-http-response")) { Console.Error.WriteLine("12:00:00 http.c:006 <= Recv header: HTTP/1.1 200 OK"); }
+            Console.Error.Flush();
+            Thread.Sleep(30000);
+            return 0;
+        }
         if (input.Contains("--fixture-hang")) {
             if (input.Contains("--fixture-heartbeat")) {
                 string pack = Path.Combine(Environment.CurrentDirectory, ".git", "objects", "pack");
@@ -75,6 +89,19 @@ public class DiagnosticGit {
         } 6>&1 | ForEach-Object { [string]$_ }) -join "`n"
         Assert-Check ($message -match ('Git failed\..*' + $case.Operation + '.*category=' + $case.Category)) ('Safe failure category: ' + $case.Category)
         Assert-Check (($logs + $message) -notmatch 'offline-token|offline-user|Authorization|cHJpdmF0ZTpwYXNz|private-repo-name') ('No raw error data logged for ' + $case.Category)
+    }
+    foreach ($state in @('not-observed','200')) {
+        $flags = @('fetch','--fixture-http-wait')
+        if ($state -eq '200') { $flags += '--fixture-http-response' }
+        $script:message = $null
+        $logs = @(& {
+            try { $null = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments $flags -TimeoutSeconds 1 }
+            catch { $script:message = $_.Exception.Message }
+        } 6>&1 | ForEach-Object { [string]$_ }) -join "`n"
+        Assert-Check ($message -match 'Git timed out during fetch after 1s') "Header diagnostics preserve fetch timeout behavior ($state)"
+        Assert-Check ($logs -match '\[GitSource\] HTTP request 1: method=GET; response-status=200') "Fetch advertisement HTTP status is summarized ($state)"
+        Assert-Check ($logs -match ("\[GitSource\] HTTP request 2: method=POST; response-status=" + $state)) "Fetch POST response state is summarized ($state)"
+        Assert-Check (($logs + $message) -notmatch 'offline-token|offline-user|Authorization|cHJpdmF0ZTpwYXNz|private-repo-name|private-cookie|Set-Cookie') "No raw headers, URLs, cookies or credentials reach HTTP diagnostics ($state)"
     }
     $result = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments @('config','--fixture-success') -TimeoutSeconds 5
     Assert-Check ($result -ceq 'expected-command-result') 'Status logs do not contaminate the Git stdout return value'

@@ -52,6 +52,13 @@ function Invoke-SourceGit {
         $start.EnvironmentVariables['GIT_CONFIG_KEY_0'] = "http.$RepositoryUrl.extraHeader"
         $start.EnvironmentVariables['GIT_CONFIG_VALUE_0'] = $AuthHeader
     }
+    if ($operation -eq 'fetch') {
+        # Capture headers/info in this process's private stderr only. Never dump
+        # trace text or body data; below emits only method/status allowlist fields.
+        $start.EnvironmentVariables['GIT_TRACE_CURL'] = '1'
+        $start.EnvironmentVariables['GIT_TRACE_CURL_NO_DATA'] = '1'
+        $start.EnvironmentVariables['GIT_TRACE_REDACT'] = '1'
+    }
     $process = New-Object Diagnostics.Process
     $process.StartInfo = $start
     $clock = [Diagnostics.Stopwatch]::StartNew()
@@ -91,6 +98,22 @@ function Invoke-SourceGit {
                 }
             }
             if (-not $hasProgress) { Write-Host '[GitSource] fetch: no numeric transfer progress captured; connection state is not established by this observation.' }
+            $requests = New-Object 'Collections.Generic.List[object]'
+            $events = [regex]::Matches($diagnostics, '(?m)(?:=> Send header: (?:(GET|POST)\s+[^\r\n]*?\s+HTTP/[0-9.]+|:method:\s*(GET|POST))|<= Recv header: HTTP/[0-9.]+\s+([0-9]{3}))')
+            foreach ($event in $events) {
+                if ($event.Groups[1].Success -or $event.Groups[2].Success) {
+                    $method = if ($event.Groups[1].Success) { $event.Groups[1].Value } else { $event.Groups[2].Value }
+                    $requests.Add([pscustomobject]@{ Method=$method; Status='not-observed' })
+                } elseif ($requests.Count -gt 0) {
+                    # Last observed HTTP status, not a claim of backend receipt or
+                    # a complete response body. Never include any header value.
+                    $requests[$requests.Count - 1].Status = $event.Groups[3].Value
+                }
+            }
+            for ($index = 0; $index -lt $requests.Count; $index++) {
+                Write-Host "[GitSource] HTTP request $($index + 1): method=$($requests[$index].Method); response-status=$($requests[$index].Status)"
+            }
+            if ($requests.Count -eq 0) { Write-Host '[GitSource] HTTP trace: no method/status events captured; this does not prove no request was sent.' }
         }
         if ($timedOut) { throw "Git timed out during $operation after ${TimeoutSeconds}s; no source checkout accepted." }
         if ($process.ExitCode -ne 0) {

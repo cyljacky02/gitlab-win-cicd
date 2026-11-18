@@ -3,7 +3,7 @@
 **目前 POC：GitLab `Cathaysec.Com.Smt.Rayin`／`poc/cicd` 提供來源與 push 事件；VM1 ADO Agent 取碼、封裝原始碼 ZIP 並存版；VM2 接收 ZIP 本身。不編譯、不解壓、不啟停服務，不需要 GitLab Runner／CI artifacts。**
 
 - **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／`poc/webhook-smoke`；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
-- **最新現場回報：VM1 匿名 HTTP 約 5 秒收到 401，三個 HTTP proxy 環境變數為 False；Git fetch 仍 timeout、pack bytes 為 0。** 這尚未驗證 Git 認證。新版 Get script 先用相同 Git／短時唯讀憑證做 30 秒 `ls-remote`，成功才進 300 秒 fetch；請回報 ref probe 結果。沒有延長 timeout 或改抓 latest，現場根因仍未確認，artifact／VM2 未驗收。
+- **最新現場回報：同一 Git／credential 已通過 ref probe，但 fetch 在 300 秒 timeout、pack bytes 為 0。** 新版 Get script 只增加安全的 fetch HTTP GET／POST/status 摘要，不輸出 raw trace／headers／URL／token。下一步以 method/status 與同一 run 的時間對照 Server，沒有延長 timeout、改 shallow 或換成 latest。現場 fetch 根因仍未確認，artifact／VM2 未驗收。
 - 已回報通過：[先前 Tools.Rs 專案的 GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；不等於 Rayin 真 push 自動觸發或來源驗章。
 - [VM1 → Rayin 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。現有 YAML 已改為新 repo／ref；不直接升級未驗章 smoke。
 
@@ -21,7 +21,7 @@
 | [`tests/Test-GitCheckoutBootstrap.ps1`](tests/Test-GitCheckoutBootstrap.ps1) | checkout 前的 Git 選用檢查（本機 7/7） |
 | [`tests/Test-BuildArtifactUpload.ps1`](tests/Test-BuildArtifactUpload.ps1) | 原生上傳 logging command／檔案範圍的離線檢查（12/12，不連 Server） |
 | [`tests/Test-PowerShellTaskEntrypoints.ps1`](tests/Test-PowerShellTaskEntrypoints.ps1) | 執行實際 YAML inline wrappers，驗真實 ZIP／Copy 及入口不空跑（8/8，不連公司 GitLab／ADO） |
-| [`tests/Test-GitSourceDiagnostics.ps1`](tests/Test-GitSourceDiagnostics.ps1) | 實際 process timeout／heartbeat／安全數字摘要與分類（17/17，受控 executable，不連公司 GitLab） |
+| [`tests/Test-GitSourceDiagnostics.ps1`](tests/Test-GitSourceDiagnostics.ps1) | 實際 process timeout／heartbeat／安全數字摘要、HTTP method/status 與分類（25/25，受控 executable，不連公司 GitLab） |
 
 **新 ZIP／VM2 流程已提供，本機實際 Git／ZIP／copy 操作檢查通過；現場手動整條線與 authenticated 真 push 均尚未驗收。** source-only pipeline 仍只發 metadata，不會送檔。完整流程請只建新的 `GitLab-Rayin-Zip-Delivery`，不把舊 smoke 改成有權限的工作。不要求 solution／SDK／MSBuild／publish command。來源目前 HTTP，預設拒絕送 credential；HTTPS 優先，隔離 HTTP 例外必須明確允許並使用短效專案唯讀 token；GitLab → ADO PAT 傳輸要獨立核准。
 
