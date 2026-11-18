@@ -17,23 +17,18 @@ jobs:
     steps:
       - checkout: none
       - task: PowerShell@2
-        displayName: Check Git and anonymous GitLab response
+        displayName: Check anonymous GitLab HTTP response only
         inputs:
           targetType: inline
           pwsh: false
           script: |
             $ErrorActionPreference = 'Stop'
             Write-Host "ADO agent: $env:AGENT_NAME; computer: $env:COMPUTERNAME"
-            $git = Get-Command git.exe -ErrorAction SilentlyContinue
-            if ($git) {
-              & $git.Source --version
-              if ($LASTEXITCODE -ne 0) { throw 'Git version check failed.' }
-            } else {
-              $bundled = Join-Path $env:AGENT_HOMEDIRECTORY 'externals\git\cmd\git.exe'
-              if (-not (Test-Path -LiteralPath $bundled)) { throw 'Git is unavailable to this agent.' }
-              & $bundled --version
-              if ($LASTEXITCODE -ne 0) { throw 'Bundled Git version check failed.' }
-            }
+            Write-Host 'Anonymous HTTP probe only; no Git executable or credential is used.'
+            Write-Host 'HTTP request timeout: 15 seconds; redirects are not followed.'
+            # Report presence only: proxy values can contain credentials. Git and
+            # .NET may use different proxy settings, so this is not a Git fetch test.
+            Write-Host "Git HTTP_PROXY present: $([bool]$env:HTTP_PROXY); HTTPS_PROXY present: $([bool]$env:HTTPS_PROXY); NO_PROXY present: $([bool]$env:NO_PROXY)"
             $request = [Net.HttpWebRequest]::Create('http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git/info/refs?service=git-upload-pack')
             $request.Method = 'GET'
             $request.AllowAutoRedirect = $false
@@ -46,7 +41,7 @@ jobs:
               try { $response = $request.GetResponse() }
               catch [Net.WebException] {
                 if ($_.Exception.Response) { $response = $_.Exception.Response }
-                else { throw 'No HTTP response from GitLab: check VM1 route/proxy/service.' }
+                else { throw "No HTTP response from GitLab (WebExceptionStatus=$($_.Exception.Status)): check VM1 route/proxy/service. No source fetch attempted." }
               }
               $status = [int]$response.StatusCode
               Write-Host "Anonymous GitLab HTTP status: $status"

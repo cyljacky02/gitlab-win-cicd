@@ -267,7 +267,7 @@ Microsoft 的 PowerShell@2 Windows／TypeScript runner 都會將 `targetType: fi
 
 ## Read task 約 5 分鐘 timeout：先取得實際 fetch 證據
 
-使用者回報新版 Read task 執行約 **5 分鐘 3 秒** 後 `Git timed out; no source checkout accepted`。fetch 的設定上限是 300 秒，其他 Git 子命令是 120 秒；這強烈指向 fetch，但舊錯誤沒有標出子命令，不能光靠耗時就確定網路／認證／速度根因。
+使用者回報新版 Read task 執行約 **5 分鐘 3 秒** 後 `Git timed out; no source checkout accepted`，之後診斷版的 `temporary-pack-bytes` 持續為 0。fetch 的設定上限是 300 秒，其他 Git 子命令是 120 秒；這指向 fetch 等待，但 **pack 為 0 只代表未觀察到本機 pack 檔資料，不足以斷言 token、TCP、proxy 或 Server 狀態**。
 
 現有 fetch 會讀取固定 branch 的歷史，以驗證指定 SHA 的 ancestry；不是只下載一個 ZIP 或一個 commit。若 repo 歷史很大可能影響時間，但**未取得進度前不直接增加 timeout，也不偷改 shallow／latest，避免變更精確版本驗證契約**。
 
@@ -292,6 +292,10 @@ Git timed out during fetch after 300s; no source checkout accepted.
 ```
 
 若出現持續增加的 pack bytes／Receiving，下一步才評估傳輸量／速度與 timeout／封裝策略。若沒有這類證據，先核對 VM1 → GitLab 的連線／proxy／Server 回應；不能把 GitLab → ADO webhook 已通當作反向取碼也通。已有[無憑證 connectivity pipeline](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)可獨立核對 HTTP response，但其 .NET HTTP 路徑與 Git/proxy 不一定相同，亦不代表 authenticated fetch 成功。
+
+**目前的下一步改跑短時匿名連通，不再重等一次 fetch 的 300 秒**：更新 ADO 原 repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-connectivity.yml`，完整使用[新版 YAML](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)。沿用 `GitLab-Connectivity-VM1`；若尚未建立，就 New pipeline → 同一 repo／同一 ADO branch／Existing YAML 選此檔。這不是 ZIP 交付 pipeline，沒有 credential group、checkout、Git executable 或 VM2 工作，只在 `SECSVR004-086T` 做 request timeout 15 秒的匿名 HTTP probe（job 上限 2 分鐘）。
+
+回報 Agent.Name 與 `Anonymous GitLab HTTP status:`，或 `No HTTP response ... WebExceptionStatus=...`；proxy 只顯示有／無，不回報值。收到 200／401／403 只證明收到 HTTP 回應；沒有回應才先查此 Agent 的 route／proxy／服務。若 probe 成功而 Git 仍無進度，再比對 Git 與 .NET 的 proxy／認證／Server Git backend 等證據。不能用互動式登入者瀏覽器可開頁面，代替 Agent 服務帳號的連線驗收。本機已用 loopback HTTP fixture 執行同一段 inline probe，確認 401 接收、302 不跟隨、404 拒絕、無 Authorization／Cookie header、proxy 值不輸出；沒有連公司 endpoint。
 
 這是診斷增補，**不是已解決現場 fetch timeout**。本機用受控 executable 重現實際 runner 的 timeout／終止路徑（縮短至 1 秒），另以 16 秒等待驗 heartbeat，並檢查憑證及 remote 文字不出現在日誌；沒有連公司 GitLab。
 

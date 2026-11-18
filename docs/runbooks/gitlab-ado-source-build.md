@@ -21,16 +21,17 @@
 1. ADO **Repos → Files → 現有 repo → branch `poc/webhook-smoke`**。
 2. 新增或更新根目錄 `/azure-pipelines-gitlab-connectivity.yml`，完整內容用[此 YAML](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)。本版 URL 已改為 Rayin。
 3. 若已有 `GitLab-Connectivity-VM1`，沿用，不重建；若尚未建立，**New pipeline → Azure Repos Git → 同一 repo → Existing YAML**，選同一分支與檔案。
-4. 手動 Run，預期只有 Git version 與匿名 HTTP response，不帶 secret、不 checkout、不使用 VM2。
+4. 手動 Run，只有匿名 HTTP response 與 proxy 環境變數「是否存在」，不顯示其值、不帶 secret、不 checkout、不使用 VM2。此版不再檢查 Git executable，避免已知的 Agent bundle 問題擋住純 HTTP 測試。
 
 ```text
 ADO agent: SECSVR004-086T; computer: <VM1>
-git version ...
+Anonymous HTTP probe only; no Git executable or credential is used.
+HTTP request timeout: 15 seconds; redirects are not followed.
 Anonymous GitLab HTTP status: 200 或 401 或 403
 HTTP response received. This does NOT prove authenticated source checkout.
 ```
 
-401／403 只代表收到 HTTP 回應，不代表 token 可讀 repo。302 先確認 canonical clone URL／HTTPS；timeout 查 VM1 出站路由／proxy。這與已通過的 GitLab → ADO 是反方向。
+401／403 只代表收到 HTTP 回應，不代表 token 可讀 repo。302 先確認 canonical clone URL／HTTPS；timeout 查 VM1 出站路由／proxy。這與已通過的 GitLab → ADO 是反方向。此 HTTP request 設 15 秒 timeout、job 上限 2 分鐘；.NET 與 Git 的 proxy 設定可能不同，HTTP 成功也不能當作 Git authenticated fetch 已通。
 
 ## 第二步：唯讀 Git credential 與傳輸
 
