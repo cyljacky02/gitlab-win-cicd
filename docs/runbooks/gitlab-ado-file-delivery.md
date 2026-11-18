@@ -18,7 +18,7 @@ GitLab Rayin / poc/cicd push
 | GitLab repo | `http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git` |
 | GitLab source ref | `refs/heads/poc/cicd` |
 | ADO project／repo | 沿用 `Deployment`／原本的受控測試 repo |
-| ADO YAML branch | 沿用 `poc/webhook-smoke`，不是 GitLab branch |
+| ADO YAML branch | 沿用 **`poc/webook-smoke`（現場拼字沒有 h）**，不是 GitLab branch |
 | ADO 交付 pipeline／definitionId | `GitLab-Rayin-Zip-Delivery`／`5`（使用者已確認） |
 | ADO project URL | `http://10.92.4.86/DefaultCollection/Deployment`（使用者提供的 webhook URL 前綴） |
 | VM1 pool／Agent.Name | `Default`／`SECSVR004-086T` |
@@ -28,13 +28,13 @@ GitLab Rayin / poc/cicd push
 | 取碼 credential／variable group | 使用者已回報完成；不用重建 |
 | 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
-先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：手動交付整筆成功；GitLab webhook 的認證已通過，但 Runs API 回 400，無法解析 ADO `refs/heads/poc/webhook-smoke`。補 `Code → Read` 後仍相同 400，故尚未證實 scope 是根因，不再繼續擴權。** 接下來使用同一 PAT 的唯讀工具比對 pipeline 5 的實際 repo／ref／最近成功 run，不修改 template／分支或 queue 部署。這是使用者回報，本機未連公司內網代驗；真 push 自動交付仍待驗收。
+先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場證據：使用者截圖確認現存 ADO 分支是 `poc/webook-smoke`（沒有 h），而 template／診斷原本查的是 `poc/webhook-smoke`。這個拼字不一致解釋了 `exactRefCount=0` 與 unresolved-ref 400，並非重新授權就能修正。** 已更正 Custom webhook template 的 `self.refName`、診斷預設與操作說明；保留現有分支，不改 main、不重建分支、不再擴權。手動交付已回報成功；修正後的真 push 自動交付尚待現場驗收。本機沒有代設公司 ADO／GitLab 或宣稱已代驗成功。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
 ## 第一步：同一 ADO 分支放入四個檔案
 
-到 **ADO → Deployment → Repos → 原本 repo → branch `poc/webhook-smoke`**。新增以下 YAML／腳本；若已有 `Get-GitLabSource.ps1`，更新為本版：
+到 **ADO → Deployment → Repos → 原本 repo → branch `poc/webook-smoke`**。新增以下 YAML／腳本；若已有 `Get-GitLabSource.ps1`，更新為本版：
 
 | ADO repo 路徑 | 本 repo 的完整檔案 |
 |---|---|
@@ -43,7 +43,7 @@ GitLab Rayin / poc/cicd push
 | `/scripts/New-GitLabSourcePackage.ps1` | [tracked checkout files 封裝](../../cicd/gitlab-ado/ado/scripts/New-GitLabSourcePackage.ps1) |
 | `/scripts/Copy-GitLabSourcePackage.ps1` | [驗證並複製 ZIP](../../cicd/gitlab-ado/ado/scripts/Copy-GitLabSourcePackage.ps1) |
 
-Commit 到**已有的 ADO `poc/webhook-smoke`**，不是 GitLab 的 `poc/cicd`。不改／覆蓋舊 smoke YAML，不建立新 repo 或 branch。
+Commit 到**已有的 ADO `poc/webook-smoke`**，不是 GitLab 的 `poc/cicd`。不改／覆蓋舊 smoke YAML，不建立新 repo 或 branch。
 
 目前 YAML 已指定：
 
@@ -59,7 +59,7 @@ VM1 另保留 `Default`＋`Agent.Name -equals SECSVR004-086T`。不要把 Enviro
 ## 第二步：建立交付 pipeline，但先不要 Run
 
 1. **Pipelines → New pipeline → Azure Repos Git → 同一 repo → Existing Azure Pipelines YAML file**。
-2. Branch 選 `poc/webhook-smoke`，path 選 `/azure-pipelines-gitlab-file-delivery.yml`。
+2. Branch 選 `poc/webook-smoke`，path 選 `/azure-pipelines-gitlab-file-delivery.yml`。
 3. **Save**，命名 `GitLab-Rayin-Zip-Delivery`。不要選原本 `GitLab-Webhook-Smoke` 來修改。
 4. 若 UI 先自動啟動空 SHA 的 run，取消即可；它應在 fetch 前拒絕空 SHA，不應派送 VM2 工作。
 5. 只授權這支受控 pipeline 使用 VM1 pool 與 Environment `test-deploy-agent`，不開放所有 pipelines。確認 resource `SECSVR4-80` online。
@@ -90,7 +90,7 @@ GITLAB_GIT_TOKEN    = <短效 Token，設為 secret 鎖頭>
 
 1. GitLab → Rayin → Code → Commits → branch `poc/cicd` → 複製完整 **40 碼 SHA**。
 2. ADO → **新的 `GitLab-Rayin-Zip-Delivery` → Run pipeline**。
-3. ADO branch 選 `poc/webhook-smoke`；`gitlabCommitSha` 填上述 GitLab SHA。
+3. ADO branch 選 `poc/webook-smoke`；`gitlabCommitSha` 填上述 GitLab SHA。
 4. 本次依使用者指定的內網 HTTP POC，勾 `allowInsecureHttpLab`；此 checkbox 只控制 GitLab 取碼，不會加密流量。
 5. 確認 Package 在 VM1、Deliver 在 Environment 的 `SECSVR4-80`，不是在 VM1 直接寫 D:。
 
@@ -154,7 +154,7 @@ try {
 {
   "resources": {
     "repositories": {
-      "self": { "refName": "refs/heads/poc/webhook-smoke" }
+      "self": { "refName": "refs/heads/poc/webook-smoke" }
     }
   },
   "templateParameters": {
@@ -168,17 +168,28 @@ try {
 
 建議正常請求再於 `self` 加上 `version: <已審核的ADO工具完整commit SHA>` 釘住工具版本，後續更新工具時同步；這仍不取代 queue ACL／repo 信任邊界。Server 若回 API version unsupported，保留非敏感錯誤核對安裝版；不因 cloud 文件而猜最新版本可用。[3]
 
-### 目前 400：唯讀核對 pipeline 綁定與 ref，不再擴權
+### 此次 400 已定位：ADO ref 拼字不一致
 
-使用者已提供上述完整 URL，並回報加入 `Code → Read` 仍是同一個 unresolved-ref 400。**目前不更改 GitLab source branch、不把 ADO ref 改成 main、不刪除 `resources` 以碰運氣使用預設分支，也不新增 repo 寫入／管理權限。**
+唯讀報告顯示 definition 5／repo `Deployment` 的 API 都回 200，但對原請求的 ref 精確查詢為 0；成功 run 的歷史 branch 紀錄不能當成現存 ref 的證據。使用者隨後提供 ADO Branches 截圖，實際分支清楚是：
 
-下載[唯讀查詢工具](../../cicd/gitlab-ado/tools/Test-AdoPipelineReference.ps1)到你本機 Windows 的工作目錄（不是放進 GitLab repo，也不是新增 pipeline task），用 **Windows PowerShell** 執行：
+```text
+現存 ADO 分支：poc/webook-smoke
+原本誤填：    poc/webhook-smoke
+```
+
+**本次只更新 GitLab Rayin 那筆 webhook 的 Custom webhook template**，使用上面的完整 JSON（或連結的最新 template 檔），使 `self.refName` 為 `refs/heads/poc/webook-smoke`。Name 少了 h 是現場既存名稱，保留它；不用改 ADO pipeline YAML／三支 scripts、不建立／重新命名分支、不再加 scope。GitLab app branch／push filter 仍是 `poc/cicd`，Authorization 與 Content-Type 保持已通過的設定。
+
+儲存後依下一節做 `poc/cicd` 的受控真 push 驗收；這次會真的 queue pipeline 5 並交付 ZIP。GitHub 的 commit／push 只更新參考套件，不能代替使用者在公司 GitLab 儲存 webhook。
+
+### 唯讀核對工具（供後續相同類型問題使用，不是本次必要下一步）
+
+先前為排查上述 400 加上 `Code → Read` 仍未解決；已知拼字錯誤後，不再擴權、改成 main 或刪除 `resources`。如日後仍需核對，下載[唯讀查詢工具](../../cicd/gitlab-ado/tools/Test-AdoPipelineReference.ps1)到你本機 Windows 的工作目錄（不是放進 GitLab repo，也不是新增 pipeline task），用 **Windows PowerShell** 執行：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Test-AdoPipelineReference.ps1
 ```
 
-提示時輸入 **與 webhook 相同的原始 ADO PAT**，不是 `Basic ...` 編碼後的整串，也不是 GitLab deploy token。PAT 以隱藏輸入接收，不寫入檔案或輸出；此工具同樣依本次 HTTP POC 使用已提供的內網 URL。預設 project URL、pipeline `5`、`refs/heads/poc/webhook-smoke` 都已填好。
+提示時輸入 **與 webhook 相同的原始 ADO PAT**，不是 `Basic ...` 編碼後的整串，也不是 GitLab deploy token。PAT 以隱藏輸入接收，不寫入檔案或輸出；此工具同樣依本次 HTTP POC 使用已提供的內網 URL。預設 project URL、pipeline `5`、`refs/heads/poc/webook-smoke` 都已填好。
 
 工具只執行 GET，**不建立 run、不執行 pipeline、不改 ADO／GitLab 設定、不派送 VM2**，也不跟隨 redirect／使用 Windows 自動登入。查詢：
 
@@ -196,7 +207,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Test-AdoPipelineRefere
 - `exactRefCount=1`：此 PAT 已能讀到該 ref；若 Runs 仍 400，接著比對 GitLab 實際送出的 `resources.repositories.self` 與這份 report，而不是再加權限。
 - 現在的 `adoRepoId` 與 `lastSuccessfulRepoId` 不同：有 definition 綁定／成功 run 來源差異的直接證據，先核對再決定修正，不自動切換 repo 或版本。
 
-本機以假的 ADO HTTP fixture 執行真實 PowerShell 工具，驗證 **7/7 通過**：正常 metadata、相似 ref、ref 拒絕、非預期 JSON、repo 差異、redirect 不跟隨、definition 401 不洩漏資料且不繼續呼叫。這不是公司 ADO 的根因重現；目前需要的是這支工具的現場報告。[16][17][18]
+本機以假的 ADO HTTP fixture 執行真實 PowerShell 工具，驗證 **9/9 通過**：正常 metadata、相似 ref、ref 拒絕、非預期 JSON、repo 差異、redirect 不跟隨、definition 401 不洩漏資料，另重現「原誤填 ref 查不到現存分支」，並鎖定 template／診斷預設使用截圖確認的拼字。這不代表已在公司環境重跑自動交付。[16][17][18]
 
 ### 5.3 真 push 驗收
 
@@ -241,7 +252,7 @@ Value cannot be null. (Parameter 'gitVersion')
 - 印出選用的 executable 與版本，以 `task.prependpath` 交給後續 checkout／取碼；不是只改 PowerShell 當下的 PATH。
 - 若都不可用，在 checkout 前停止並明確要求 VM 管理者安裝／修復核准的 Git，不自動下載，不改 Agent service／token／VM2。
 
-**現場只需更新一個檔案**：ADO 原 repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`，完整取代為[最新版](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-file-delivery.yml)。不用改三支 scripts、不重建 pipeline。儲存後用 **Run pipeline 開新的 run**，不要只 Retry 舊 run 的 stage；GitLab SHA 沿用欲驗收的完整值，HTTP POC 勾 `allowInsecureHttpLab`。
+**現場只需更新一個檔案**：ADO 原 repo／`poc/webook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`，完整取代為[最新版](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-file-delivery.yml)。不用改三支 scripts、不重建 pipeline。儲存後用 **Run pipeline 開新的 run**，不要只 Retry 舊 run 的 stage；GitLab SHA 沿用欲驗收的完整值，HTTP POC 勾 `allowInsecureHttpLab`。
 
 先看新 task `Select and validate Git before VM1 checkout` 是否印出 `Selected checkout Git:` 與 `git version ...`，再看後面的 checkout 是否成功。**使用者已回報 preflight 與 ADO checkout 通過**，目前不用再改 Git 選用。後續取碼／ZIP 雖顯示綠燈，但因發現 entrypoint 空跑，不能把它們視為實際檔案驗收；需依下節的新 wrapper 重跑。本機沒有代測公司 GitLab credential。
 
@@ -263,7 +274,7 @@ C:\azagent\A1\externals\node16\bin\node.exe
 - 由 Agent 的現有 job connection 完成上傳；非同步上傳／關聯錯誤仍由 Agent 回報 step 失敗。不要設定 `continueOnError` 或在上傳後清理 package。
 - VM2 的 `DownloadBuildArtifacts@1 buildType: current` 不變；VM2 自己的 runtime 可用性尚未驗收，不因這次 VM1 錯誤就預先改掉 consumer。
 
-**現場仍只需更新同一份** `/azure-pipelines-gitlab-file-delivery.yml`（ADO 原 repo／`poc/webhook-smoke`），再 **Run pipeline 開新 run**，完整 SHA 與 `allowInsecureHttpLab` 沿用。三支 scripts、variable group、pipeline definition 都不用重建。
+**現場仍只需更新同一份** `/azure-pipelines-gitlab-file-delivery.yml`（ADO 原 repo／`poc/webook-smoke`），再 **Run pipeline 開新 run**，完整 SHA 與 `allowInsecureHttpLab` 沿用。三支 scripts、variable group、pipeline definition 都不用重建。
 
 上傳成功的驗收是新 run 的 `source-package` artifact 確實含 ZIP＋兩份 JSON，且 Package stage 成功；PowerShell 印出 upload 指令本身不代表 Server 已收妥。接著才觀察 Deliver／VM2。此修正本機僅測指令／檔案檢查契約，尚未連公司 Server 驗證傳輸。
 
@@ -287,7 +298,7 @@ Microsoft 的 PowerShell@2 Windows／TypeScript runner 都會將 `targetType: fi
 - VM2 Copy wrapper 亦明確 `&` 執行，否則相同問題會使 Deliver 假成功。目的目錄仍是受控 YAML 固定的 `D:\TestCICD`，不接受 webhook 指定。
 - 這不是 token scope 或 Server 上傳 API 的問題，不改 credential、不改已通過的 checkout workaround，也不 fallback 搜尋其他 run 的 ZIP。
 
-**現場只需再次完整更新交付 YAML**（同一 ADO repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`）。三支 scripts 不用改。另有同步修正診斷用 source-only YAML 的相同 Get 呼叫；沒使用該 pipeline 就不用額外操作。
+**現場只需再次完整更新交付 YAML**（同一 ADO repo／`poc/webook-smoke` 的 `/azure-pipelines-gitlab-file-delivery.yml`）。三支 scripts 不用改。另有同步修正診斷用 source-only YAML 的相同 Get 呼叫；沒使用該 pipeline 就不用額外操作。
 
 儲存後 **Run pipeline 新 run**，保留完整 GitLab SHA，HTTP POC 勾 `allowInsecureHttpLab`。本次要確認真正的輸出：
 
@@ -312,7 +323,7 @@ Microsoft 的 PowerShell@2 Windows／TypeScript runner 都會將 `targetType: fi
 - 已返回的明確錯誤僅報 authentication／connection／name-resolution／tls／low-speed 類別，不輸出 URL、headers、token、remote 文字、stdout 或完整 argv。
 - 該診斷輪次仍維持 300 秒，逾時終止 Git process tree，不發布 source／evidence／ZIP，不切換版本或目標；最新 900 秒調整依據見下節 Receiving 92% 的新證據。
 
-**本次現場只更新 script，不用再改 YAML**：ADO 原 repo → `poc/webhook-smoke` → `/scripts/Get-GitLabSource.ps1`，完整取代為[最新版](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)。保留已修正 inline `&` 的交付 YAML，按 Run pipeline 開新 run、沿用完整 SHA、勾 `allowInsecureHttpLab`。
+**本次現場只更新 script，不用再改 YAML**：ADO 原 repo → `poc/webook-smoke` → `/scripts/Get-GitLabSource.ps1`，完整取代為[最新版](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)。保留已修正 inline `&` 的交付 YAML，按 Run pipeline 開新 run、沿用完整 SHA、勾 `allowInsecureHttpLab`。
 
 回報以下 `[GitSource]` 行即可，不需 token 或全份 debug log：
 
@@ -326,7 +337,7 @@ Git timed out during fetch after 300s; no source checkout accepted.
 
 若出現持續增加的 pack bytes／Receiving，下一步才評估傳輸量／速度與 timeout／封裝策略。若沒有這類證據，先核對 VM1 → GitLab 的連線／proxy／Server 回應；不能把 GitLab → ADO webhook 已通當作反向取碼也通。已有[無憑證 connectivity pipeline](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)可獨立核對 HTTP response，但其 .NET HTTP 路徑與 Git/proxy 不一定相同，亦不代表 authenticated fetch 成功。
 
-**上一輪已改跑短時匿名連通，而非重等 fetch 的 300 秒**：更新 ADO 原 repo／`poc/webhook-smoke` 的 `/azure-pipelines-gitlab-connectivity.yml`，完整使用[新版 YAML](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)。沿用 `GitLab-Connectivity-VM1`；若尚未建立，就 New pipeline → 同一 repo／同一 ADO branch／Existing YAML 選此檔。這不是 ZIP 交付 pipeline，沒有 credential group、checkout、Git executable 或 VM2 工作，只在 `SECSVR004-086T` 做 request timeout 15 秒的匿名 HTTP probe（job 上限 2 分鐘）。
+**上一輪已改跑短時匿名連通，而非重等 fetch 的 300 秒**：更新 ADO 原 repo／`poc/webook-smoke` 的 `/azure-pipelines-gitlab-connectivity.yml`，完整使用[新版 YAML](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)。沿用 `GitLab-Connectivity-VM1`；若尚未建立，就 New pipeline → 同一 repo／同一 ADO branch／Existing YAML 選此檔。這不是 ZIP 交付 pipeline，沒有 credential group、checkout、Git executable 或 VM2 工作，只在 `SECSVR004-086T` 做 request timeout 15 秒的匿名 HTTP probe（job 上限 2 分鐘）。
 
 回報 Agent.Name 與 `Anonymous GitLab HTTP status:`，或 `No HTTP response ... WebExceptionStatus=...`；proxy 只顯示有／無，不回報值。收到 200／401／403 只證明收到 HTTP 回應；沒有回應才先查此 Agent 的 route／proxy／服務。若 probe 成功而 Git 仍無進度，再比對 Git 與 .NET 的 proxy／認證／Server Git backend 等證據。不能用互動式登入者瀏覽器可開頁面，代替 Agent 服務帳號的連線驗收。本機已用 loopback HTTP fixture 執行同一段 inline probe，確認 401 接收、302 不跟隨、404 拒絕、無 Authorization／Cookie header、proxy 值不輸出；沒有連公司 endpoint。
 
@@ -336,7 +347,7 @@ Git timed out during fetch after 300s; no source checkout accepted.
 
 使用者已回報同一 VM1 的匿名 HTTP 約 5 秒收到 401，以及 `HTTP_PROXY`／`HTTPS_PROXY`／`NO_PROXY` 均為 False。這只能證明該 .NET HTTP request 收到回應與這三個環境變數未設定；不證明 Git 認證成功，也不排除 `ALL_PROXY` 等來源。
 
-下一步 **只更新 ADO 原 repo／`poc/webhook-smoke` 的 `/scripts/Get-GitLabSource.ps1`**，使用[最新版完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)，交付 YAML 不用改。以 `GitLab-Rayin-Zip-Delivery` 開新 run、原本完整 GitLab SHA、HTTP checkbox 勾選。
+下一步 **只更新 ADO 原 repo／`poc/webook-smoke` 的 `/scripts/Get-GitLabSource.ps1`**，使用[最新版完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)，交付 YAML 不用改。以 `GitLab-Rayin-Zip-Delivery` 開新 run、原本完整 GitLab SHA、HTTP checkbox 勾選。
 
 新版先用與 fetch 相同 Git、相同 runtime-only credential／隔離 config，在 **30 秒**上限內執行 `ls-remote --exit-code --refs origin <固定 source ref>`；不下載歷史、不列出或記錄其他 refs、不執行應用程式。只接受固定 ref 的單一有效 commit advertisement。成功後仍依原契約 fetch／驗 ancestry／checkout 輸入的 SHA，**不拿 probe 看到的 tip 偷換所選版本**。[13]
 
@@ -359,7 +370,7 @@ Git timed out during fetch after 300s; no source checkout accepted.
 
 這時要區分 fetch 的 HTTP request 是否得到回應，而不是再做一次匿名 HTTP。另須注意：依 Git protocol 版本，`ls-remote` 本身也可能使用 POST，故不能把目前結果簡化成「GET 通、POST 不通」。[14]
 
-**現場只更新 `/scripts/Get-GitLabSource.ps1`**（ADO 原 repo／`poc/webhook-smoke`，同一[完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)），YAML／credential 不變。跑 **`GitLab-Rayin-Zip-Delivery` 的新 run**，原完整 SHA，HTTP checkbox 勾選。
+**現場只更新 `/scripts/Get-GitLabSource.ps1`**（ADO 原 repo／`poc/webook-smoke`，同一[完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)），YAML／credential 不變。跑 **`GitLab-Rayin-Zip-Delivery` 的新 run**，原完整 SHA，HTTP checkbox 勾選。
 
 新版只對 fetch 子程序啟用 `GIT_TRACE_CURL=1`、`GIT_TRACE_CURL_NO_DATA=1` 與 `GIT_TRACE_REDACT=1`；trace 只導向該子程序的私有 stderr 記憶體，不落檔、不原樣輸出。返回／timeout 後，只從白名單解析 method（GET／POST）與三位數 HTTP status，原始 headers、URL、cookies、credential 和 body 都不進 pipeline log。[15]
 
@@ -403,9 +414,9 @@ Receiving objects: 92% (5731/6194)
 - 完整固定 branch fetch、SHA existence／ancestry／detached HEAD 驗證，不 shallow、不改成最新 tip。
 - 超時／失敗仍終止，沒有半成品 source／evidence／ZIP 發布或 VM2 派工。
 
-**現場仍只更新一支 script**：ADO 原 repo／`poc/webhook-smoke` 的 `/scripts/Get-GitLabSource.ps1`，使用[最新版完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)。交付 YAML 不用改；現有 Package job 的外層上限為 20 分鐘。source-only 診斷 YAML 另同步調為 20 分鐘，以容納 15 分鐘 fetch，未使用該診斷 pipeline 就不必更新它。
+**現場仍只更新一支 script**：ADO 原 repo／`poc/webook-smoke` 的 `/scripts/Get-GitLabSource.ps1`，使用[最新版完整腳本](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)。交付 YAML 不用改；現有 Package job 的外層上限為 20 分鐘。source-only 診斷 YAML 另同步調為 20 分鐘，以容納 15 分鐘 fetch，未使用該診斷 pipeline 就不必更新它。
 
-然後跑 **`GitLab-Rayin-Zip-Delivery` 新 run**，ADO branch `poc/webhook-smoke`、原完整 GitLab SHA、`allowInsecureHttpLab` 勾選。先確認日誌是 `start fetch; timeout=900s`。真正取碼完成的證據是 `completed fetch`、後續 SHA／HEAD 驗證與 `Checked out exact GitLab commit ...`；僅 Receiving 100% 仍不是整條交付完成。
+然後跑 **`GitLab-Rayin-Zip-Delivery` 新 run**，ADO branch `poc/webook-smoke`、原完整 GitLab SHA、`allowInsecureHttpLab` 勾選。先確認日誌是 `start fetch; timeout=900s`。真正取碼完成的證據是 `completed fetch`、後續 SHA／HEAD 驗證與 `Checked out exact GitLab commit ...`；僅 Receiving 100% 仍不是整條交付完成。
 
 若在 900 秒後仍失敗，或一直停在同一個 Receiving 數值，不再反覆提高上限。需提供該次 run 的最後 Counting／Receiving／Resolving、HTTP 摘要與時間，查是否大物件、吞吐量／串流或本機資源停滯；若是外層 job timeout，亦需區分於 fetch timeout。單憑目前百分比不指定某個效能根因。
 
@@ -436,7 +447,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 | D: absent／Access denied | 查 VM2 本機 D: 與 Agent 服務帳號 ACL，不給 GitLab VM 密碼或改成 VM1 share copy。 |
 | LFS／submodule／symlink refused | 本 POC 未支援；先定義需求，不略過檢查當完整交付。 |
 | ZIP hash／run／SHA mismatch | 停止，查是否下載錯 run 或 artifact 被替換；不 fallback 到 latest。 |
-| Webhook 已通認證但 unresolved-ref 400；補 Code Read 無效 | 不再擴權／改成 main；在本機執行 `tools/Test-AdoPipelineReference.ps1`，用相同 PAT 唯讀核對 definition 5 的 repo／精確 ref／最近成功 run。 |
+| Webhook unresolved-ref 400；補 Code Read 無效 | 本次已由截圖確認 ADO 分支為 `poc/webook-smoke`，template 曾誤填 `poc/webhook-smoke`；只修正 GitLab Custom webhook template 的 self ref，不重建分支、不改 main、不再擴權。 |
 | GitLab webhook 401／403 | 分辨 ADO／IIS／proxy；查 PAT、有效 queue ACL、傳輸政策，不開 IIS Basic。[5] |
 | HTTP 200 但檔案未到 | 200 只代表新 run 被建立；查 Package／Deliver／Environment checks 與新 run ID。 |
 

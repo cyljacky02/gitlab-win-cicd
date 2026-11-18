@@ -2,8 +2,8 @@
 
 **目前 POC：GitLab `Cathaysec.Com.Smt.Rayin`／`poc/cicd` 提供來源與 push 事件；VM1 ADO Agent 取碼、封裝原始碼 ZIP 並存版；VM2 接收 ZIP 本身。不編譯、不解壓、不啟停服務，不需要 GitLab Runner／CI artifacts。**
 
-- **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／`poc/webhook-smoke`；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
-- **最新現場回報：手動交付成功（definitionId `5`）；webhook 認證已通，但 unresolved-ref 400 在補 Code Read 後仍相同。** 暫不再擴權或改分支，改用下列本機唯讀工具核對同一 PAT 下的 pipeline repo／YAML／精確 ref／最近成功 run。本機沒有代驗公司環境，真 push 自動交付尚未通過。
+- **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／**`poc/webook-smoke`（現場拼字沒有 h）**；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
+- **最新現場證據：截圖確認 ADO 分支實為 `poc/webook-smoke`，但 webhook template 曾誤填 `poc/webhook-smoke`，因此 ref 查詢為 0 並回 unresolved-ref 400。** 已修正 template 與診斷預設值，保留現場分支，不重建、不改 main、不再擴權。手動交付已回報成功（definitionId `5`）；修正後的真 push 自動交付仍待現場驗收。
 - 已回報通過：[先前 Tools.Rs 專案的 GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；不等於 Rayin 真 push 自動觸發或來源驗章。
 - [VM1 → Rayin 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。現有 YAML 已改為新 repo／ref；不直接升級未驗章 smoke。
 
@@ -14,7 +14,7 @@
 | [`ado/scripts/Copy-GitLabSourcePackage.ps1`](ado/scripts/Copy-GitLabSourcePackage.ps1) | 驗 repo／ref／SHA／run／hash，暫存後 rename，不解壓、不覆蓋不同內容 |
 | [`ado/gitlab-file-delivery-push.template.json`](ado/gitlab-file-delivery-push.template.json) | 本次 HTTP POC 的 Custom webhook template（`allowInsecureHttpLab: true`）；傳 push SHA，不含 credential |
 | [`tools/Test-AdoPipelineReference.ps1`](tools/Test-AdoPipelineReference.ps1) | 本機 Windows 唯讀 GET 診斷 pipeline 5／repo／ref／成功 run；不放進 pipeline、不 queue／交付 |
-| [`tests/test_ado_reference_probe.py`](tests/test_ado_reference_probe.py) | 真實 PS 工具＋本機假 ADO HTTP fixture（7/7，含拒絕／redirect／exact-ref／不洩漏資料） |
+| [`tests/test_ado_reference_probe.py`](tests/test_ado_reference_probe.py) | 真實 PS 工具＋本機假 ADO HTTP fixture（9/9，含現場 ref 拼字／template 回歸、拒絕／redirect／不洩漏資料） |
 | [`ado/azure-pipelines-gitlab-connectivity.yml`](ado/azure-pipelines-gitlab-connectivity.yml) | 無憑證、無 checkout 的 VM1 → Rayin 連通檢查 |
 | [`ado/azure-pipelines-gitlab-source.yml`](ado/azure-pipelines-gitlab-source.yml) | **手動 source-only**：Rayin／`poc/cicd`、指定完整 SHA，只發來源證據 artifact |
 | [`ado/scripts/Get-GitLabSource.ps1`](ado/scripts/Get-GitLabSource.ps1) | PS 5.1 fetch／detached checkout；短時子程序 credential、不持久化、不執行 app code |

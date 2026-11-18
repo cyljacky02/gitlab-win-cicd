@@ -4,7 +4,7 @@
 param(
     [string]$ProjectUrl = 'http://10.92.4.86/DefaultCollection/Deployment',
     [ValidateRange(1,2147483647)][int]$PipelineId = 5,
-    [string]$SourceRef = 'refs/heads/poc/webhook-smoke',
+    [string]$SourceRef = 'refs/heads/poc/webook-smoke', # Observed ADO spelling; no h.
     [Security.SecureString]$Pat
 )
 Set-StrictMode -Version Latest

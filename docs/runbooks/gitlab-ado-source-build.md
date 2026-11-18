@@ -9,7 +9,7 @@
 | GitLab repo | `http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git` |
 | GitLab source ref | `refs/heads/poc/cicd` |
 | ADO project／repo | 沿用 `Deployment` 與現有測試 repo |
-| ADO YAML branch | 沿用 `poc/webhook-smoke`，不是 GitLab branch |
+| ADO YAML branch | 沿用 **`poc/webook-smoke`（沒有 h）**，不是 GitLab branch |
 | VM1 pool／Agent.Name | `Default`／`SECSVR004-086T` |
 
 不新增 GitLab branch、不改 main／共用 CI include；不要求 GitLab Runner、job ID 或 GitLab artifacts。VM1 同時承載 ADO Server，本次不執行應用程式碼、build targets 或 application scripts。
@@ -18,7 +18,7 @@
 
 ## 第一步：VM1 → 新 GitLab project 的匿名連通
 
-1. ADO **Repos → Files → 現有 repo → branch `poc/webhook-smoke`**。
+1. ADO **Repos → Files → 現有 repo → branch `poc/webook-smoke`**。
 2. 新增或更新根目錄 `/azure-pipelines-gitlab-connectivity.yml`，完整內容用[此 YAML](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)。本版 URL 已改為 Rayin。
 3. 若已有 `GitLab-Connectivity-VM1`，沿用，不重建；若尚未建立，**New pipeline → Azure Repos Git → 同一 repo → Existing YAML**，選同一分支與檔案。
 4. 手動 Run，只有匿名 HTTP response 與 proxy 環境變數「是否存在」，不顯示其值、不帶 secret、不 checkout、不使用 VM2。此版不再檢查 Git executable，避免已知的 Agent bundle 問題擋住純 HTTP 測試。
@@ -59,7 +59,7 @@ GITLAB_GIT_TOKEN    = <Token，設為 secret 鎖頭>
 
 ## 第三步：手動取碼，不是 ZIP／交付 pipeline
 
-在同一 ADO repo 的 **`poc/webhook-smoke`** 新增或更新：
+在同一 ADO repo 的 **`poc/webook-smoke`** 新增或更新：
 
 | ADO repo 路徑 | 完整內容 |
 |---|---|
@@ -76,7 +76,7 @@ pool:
 ```
 
 1. GitLab **Code → Commits → branch 選 `poc/cicd` → Copy full SHA**。
-2. ADO 手動 Run，branch 選 **ADO 的 `poc/webhook-smoke`**。
+2. ADO 手動 Run，branch 選 **ADO 的 `poc/webook-smoke`**。
 3. `gitlabCommitSha` 填 GitLab 完整 40 碼 SHA；不填 `latest`、分支名、短 SHA 或 ADO repo 的 commit。
 4. 只有已核准 HTTP 隔離例外才勾 `allowInsecureHttpLab`。
 

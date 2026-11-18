@@ -1,4 +1,5 @@
-# CD-owned pipeline, stored in the existing ADO repo / poc/webhook-smoke branch.
+# CD-owned pipeline, stored in the existing ADO repo / poc/webook-smoke branch.
+# "webook" is the observed branch spelling (no h); do not rename it implicitly.
 # Do NOT attach the unauthenticated incoming-webhook smoke connection.
 # First validate manually. Later, authenticated Runs REST supplies gitlabCommitSha.
 trigger: none

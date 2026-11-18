@@ -2,7 +2,7 @@
   "resources": {
     "repositories": {
       "self": {
-        "refName": "refs/heads/poc/webhook-smoke"
+        "refName": "refs/heads/poc/webook-smoke"
       }
     }
   },

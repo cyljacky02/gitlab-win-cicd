@@ -15,12 +15,14 @@ PROBE = ROOT / "tools" / "Test-AdoPipelineReference.ps1"
 POWERSHELL = shutil.which("powershell.exe")
 REPO_ID = "11111111-1111-1111-1111-111111111111"
 OLD_REPO_ID = "22222222-2222-2222-2222-222222222222"
-REF = "refs/heads/poc/webhook-smoke"
+# Exact spelling observed in the user's ADO Branches screenshot (no "h").
+REF = "refs/heads/poc/webook-smoke"
+PREVIOUS_WRONG_REF = "refs/heads/poc/webhook-smoke"
 
 
 @unittest.skipUnless(POWERSHELL, "Requires Windows PowerShell 5.1")
 class AdoReferenceProbeTests(unittest.TestCase):
-    def run_probe(self, mode):
+    def run_probe(self, mode, source_ref=None):
         self.assertTrue(PROBE.exists(), "Read-only ADO reference probe is missing")
         requests = []
         expected_auth = "Basic " + base64.b64encode(b":offline-token").decode()
@@ -48,14 +50,15 @@ class AdoReferenceProbeTests(unittest.TestCase):
                             "variables": {"SECRET": {"value": "PRIVATE-MARKER offline-token"}},
                         }
                 elif path.endswith(f"/git/repositories/{REPO_ID}/refs"):
-                    if query.get("filter") != ["heads/poc/webhook-smoke"]:
-                        status = 400
                     if mode == "ref-denied":
                         status = 403
-                    # A prefix match alone is NOT the exact branch.
-                    body = {"value": [{"name": REF + "-old", "objectId": "c" * 40}]}
+                    # Model the API's prefix filter against the ACTUAL branch,
+                    # rather than making the fixture agree with any requested name.
+                    refs = [{"name": REF + "-old", "objectId": "c" * 40}]
                     if mode not in ("missing-ref", "ref-denied"):
-                        body["value"].append({"name": REF, "objectId": "a" * 40})
+                        refs.append({"name": REF, "objectId": "a" * 40})
+                    prefix = "refs/" + query.get("filter", [""])[0]
+                    body = {"value": [r for r in refs if r["name"].startswith(prefix)]}
                     if mode == "invalid-ref-json":
                         body = {"message": "PRIVATE-MARKER offline-token"}
                 elif path.endswith("/build/builds"):
@@ -86,14 +89,17 @@ class AdoReferenceProbeTests(unittest.TestCase):
             with tempfile.TemporaryDirectory(prefix="ado ref probe tests-") as tmp:
                 wrapper = Path(tmp) / "invoke.ps1"
                 wrapper.write_text(
-                    "param([string]$Script,[string]$Url)\n"
+                    "param([string]$Script,[string]$Url,[string]$RequestedRef)\n"
                     "$ErrorActionPreference='Stop'\n"
                     "$secret=ConvertTo-SecureString 'offline-token' -AsPlainText -Force\n"
-                    "& $Script -ProjectUrl $Url -Pat $secret\n", encoding="utf-8-sig")
-                result = subprocess.run(
-                    [POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(wrapper),
-                     "-Script", str(PROBE), "-Url", f"http://127.0.0.1:{server.server_port}/collection/Deployment"],
-                    capture_output=True, text=True, timeout=30)
+                    "$parameters=@{ProjectUrl=$Url;Pat=$secret}\n"
+                    "if($RequestedRef){$parameters.SourceRef=$RequestedRef}\n"
+                    "& $Script @parameters\n", encoding="utf-8-sig")
+                command = [POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(wrapper),
+                           "-Script", str(PROBE), "-Url", f"http://127.0.0.1:{server.server_port}/collection/Deployment"]
+                if source_ref is not None:
+                    command.extend(["-RequestedRef", source_ref])
+                result = subprocess.run(command, capture_output=True, text=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn("offline-token", result.stdout + result.stderr)
             self.assertNotIn("PRIVATE-MARKER", result.stdout + result.stderr)
@@ -114,6 +120,19 @@ class AdoReferenceProbeTests(unittest.TestCase):
         self.assertEqual(report["refTipCommit"], "a" * 40)
         self.assertEqual(report["lastSuccessfulAdoToolCommit"], "b" * 40)
         self.assertEqual(report["lastSuccessfulRunId"], 321)
+
+    def test_template_targets_observed_ado_spelling_without_changing_gitlab_version(self):
+        template = json.loads((ROOT / "ado" / "gitlab-file-delivery-push.template.json").read_text(encoding="utf-8"))
+        self.assertEqual(template["resources"]["repositories"]["self"]["refName"], REF)
+        self.assertEqual(template["templateParameters"]["gitlabCommitSha"], "{{checkout_sha}}")
+        self.assertIs(template["templateParameters"]["allowInsecureHttpLab"], True)
+
+    def test_previous_wrong_spelling_does_not_resolve_the_existing_branch(self):
+        report, _ = self.run_probe("good", source_ref=PREVIOUS_WRONG_REF)
+        self.assertEqual(report["requestedAdoRef"], PREVIOUS_WRONG_REF)
+        self.assertEqual(report["refsHttpStatus"], 200)
+        self.assertEqual(report["exactRefCount"], 0)
+        self.assertEqual(report["lastSuccessfulAdoRef"], REF)
 
     def test_similar_ref_name_is_not_treated_as_the_requested_ref(self):
         report, _ = self.run_probe("missing-ref")
