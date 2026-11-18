@@ -20,6 +20,7 @@ GitLab Rayin / poc/cicd push
 | ADO project／repo | 沿用 `Deployment`／原本的受控測試 repo |
 | ADO YAML branch | 沿用 `poc/webhook-smoke`，不是 GitLab branch |
 | ADO 交付 pipeline／definitionId | `GitLab-Rayin-Zip-Delivery`／`5`（使用者已確認） |
+| ADO project URL | `http://10.92.4.86/DefaultCollection/Deployment`（使用者提供的 webhook URL 前綴） |
 | VM1 pool／Agent.Name | `Default`／`SECSVR004-086T` |
 | VM2 Environment／VM resource | `test-deploy-agent`／`SECSVR4-80`；不是一般 pool 或 Classic Deployment Group |
 | VM2 目的目錄 | 本次使用 `D:\TestCICD`；Agent 服務帳號須有寫入權，D: 須存在 |
@@ -27,7 +28,7 @@ GitLab Rayin / poc/cicd push
 | 取碼 credential／variable group | 使用者已回報完成；不用重建 |
 | 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
-先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：fetch 總上限改為 900 秒後，使用者已確認手動 `GitLab-Rayin-Zip-Delivery` 整筆執行成功，並提供 definitionId `5`。** 這是使用者現場回報，尚未提供成功 run ID／ZIP hash／VM2 檔案對帳證據，本機未連公司內網代驗。現在進入 Rayin `poc/cicd` 的 authenticated webhook 設定；真 push 自動觸發與該次交付尚未驗收。過程中的 Receiving 92%／原 300 秒 deadline 等歷程保留於下方故障排查。
+先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：手動交付整筆成功；GitLab webhook 的認證已通過，但 Runs API 回 400，無法解析 ADO `refs/heads/poc/webhook-smoke`。補 `Code → Read` 後仍相同 400，故尚未證實 scope 是根因，不再繼續擴權。** 接下來使用同一 PAT 的唯讀工具比對 pipeline 5 的實際 repo／ref／最近成功 run，不修改 template／分支或 queue 部署。這是使用者回報，本機未連公司內網代驗；真 push 自動交付仍待驗收。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
@@ -109,7 +110,7 @@ GITLAB_GIT_TOKEN    = <短效 Token，設為 secret 鎖頭>
 
 由有權人員準備專用低權限身分與短效 PAT：
 
-- scope：**Build (Read & execute)**，作用域限本 collection。
+- scope：**Build (Read & execute)**，作用域限本 collection。現場為排查 unresolved-ref 曾補上 **Code (Read)**，但同一 400 未解決；不能據此宣稱 Code scope 就是 Runs API 的根因。下節的直接 Git Refs GET 查詢需要 Code 讀取 scope，PAT 身分也必須有對應 repo Read；scope 不會賦予帳號本來沒有的權限，不再加 Write／Manage／Full access。
 - 有效權限只允許 queue 此交付 pipeline；不授予 edit pipeline、repo write、管理權或其他 deployment definition 權限。PAT scope 本身不是 pipeline-specific ACL。
 - 保護現有 ADO repo 的可執行分支／歷史定義與 pipeline 編輯權限，盤點可 queue 身分能否透過 `resources.repositories.self` 選到不受信任 YAML。payload 的正常 ref pin 不是防止持有人改 request 的安全邊界。
 - 對 Environment／pool／Library 只授權這支 pipeline；保留既有測試環境權限，正式資源必須有放行邊界。
@@ -135,9 +136,10 @@ try {
 
 | 欄位 | 設定 |
 |---|---|
-| URL | `{ADO_COLLECTION_URL}/Deployment/_apis/pipelines/5/runs?api-version=7.1` |
+| URL | `http://10.92.4.86/DefaultCollection/Deployment/_apis/pipelines/5/runs?api-version=7.1` |
 | Custom headers → Name | `Authorization` |
-| Custom headers → Value | 上一步剪貼簿的 `Basic <base64>` |
+| Custom headers → Value | 直接貼上一步剪貼簿的完整字串（已含 `Basic`＋一個空格，不加尖括號／引號） |
+| Custom headers → 第二筆 Name／Value | `Content-Type`／`application/json`（現場使用者已補齊） |
 | Trigger | 只勾 **Push events** |
 | Push branch filter | **Wildcard pattern**，填 `poc/cicd`；不是 regex，不加 `refs/heads/` |
 | Secret token | 留空；它不是 ADO PAT 欄位，也不是 ADO HMAC |
@@ -165,6 +167,36 @@ try {
 這是 **GitLab webhook template**，不是 `.gitlab-ci.yml`。`checkout_sha` 綁定這次 push，不是用 GitLab SHA 覆寫 ADO repo 的 `self.version`。本檔及連結 JSON **已依使用者指定的 PRIVATE NETWORK HTTP POC 明確設為 `allowInsecureHttpLab: true`**，不是通用安全預設；來源改 HTTPS 時應改回 false。script／手動 YAML 的預設仍為 false。這個參數只允許 HTTP Git 取碼，不會加密流量或保護 GitLab → ADO 的 PAT 傳輸。template 不含 PAT，Authorization 仍只在 GitLab Custom headers 設定。
 
 建議正常請求再於 `self` 加上 `version: <已審核的ADO工具完整commit SHA>` 釘住工具版本，後續更新工具時同步；這仍不取代 queue ACL／repo 信任邊界。Server 若回 API version unsupported，保留非敏感錯誤核對安裝版；不因 cloud 文件而猜最新版本可用。[3]
+
+### 目前 400：唯讀核對 pipeline 綁定與 ref，不再擴權
+
+使用者已提供上述完整 URL，並回報加入 `Code → Read` 仍是同一個 unresolved-ref 400。**目前不更改 GitLab source branch、不把 ADO ref 改成 main、不刪除 `resources` 以碰運氣使用預設分支，也不新增 repo 寫入／管理權限。**
+
+下載[唯讀查詢工具](../../cicd/gitlab-ado/tools/Test-AdoPipelineReference.ps1)到你本機 Windows 的工作目錄（不是放進 GitLab repo，也不是新增 pipeline task），用 **Windows PowerShell** 執行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Test-AdoPipelineReference.ps1
+```
+
+提示時輸入 **與 webhook 相同的原始 ADO PAT**，不是 `Basic ...` 編碼後的整串，也不是 GitLab deploy token。PAT 以隱藏輸入接收，不寫入檔案或輸出；此工具同樣依本次 HTTP POC 使用已提供的內網 URL。預設 project URL、pipeline `5`、`refs/heads/poc/webhook-smoke` 都已填好。
+
+工具只執行 GET，**不建立 run、不執行 pipeline、不改 ADO／GitLab 設定、不派送 VM2**，也不跟隨 redirect／使用 Windows 自動登入。查詢：
+
+1. Build definition 5：實際 repo ID／名稱／類型、default branch、YAML path。
+2. 該 repo 的精確 ref（用前綴查詢後再核對 exact name）：HTTP status、可見的 exact count／tip commit。
+3. 同 definition 最近一筆成功 run：repo ID、ADO source branch／tool commit，以便比較 pipeline 是否換了綁定。
+
+只回報篩選後的 JSON 欄位；server error body、其他 definition variables、身份詳細資料、Authorization／cookies 都不輸出。可貼這份工具輸出的 JSON，不要貼 PAT 或 GitLab Request headers。`lastSuccessfulAdoToolCommit` 是 **ADO 流程 repo** 的 commit，不是 GitLab app 的 SHA，不能拿來填 `gitlabCommitSha`。
+
+判讀不超出證據：
+
+- `definitionHttpStatus` 非 200：先處理此 PAT／URL 下的 definition 讀取結果，工具不再繼續查其他 endpoint。
+- `refsHttpStatus` 401／403／404：讀取被拒或資源不可見，`exactRefCount` 保持 null，不當成分支已被刪除。
+- `refsHttpStatus=200`、`exactRefCount=0`：這次查詢沒有精確匹配的可見 ref，不拿相似名稱（例如 `...-old`）當成成功。
+- `exactRefCount=1`：此 PAT 已能讀到該 ref；若 Runs 仍 400，接著比對 GitLab 實際送出的 `resources.repositories.self` 與這份 report，而不是再加權限。
+- 現在的 `adoRepoId` 與 `lastSuccessfulRepoId` 不同：有 definition 綁定／成功 run 來源差異的直接證據，先核對再決定修正，不自動切換 repo 或版本。
+
+本機以假的 ADO HTTP fixture 執行真實 PowerShell 工具，驗證 **7/7 通過**：正常 metadata、相似 ref、ref 拒絕、非預期 JSON、repo 差異、redirect 不跟隨、definition 401 不洩漏資料且不繼續呼叫。這不是公司 ADO 的根因重現；目前需要的是這支工具的現場報告。[16][17][18]
 
 ### 5.3 真 push 驗收
 
@@ -404,6 +436,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 | D: absent／Access denied | 查 VM2 本機 D: 與 Agent 服務帳號 ACL，不給 GitLab VM 密碼或改成 VM1 share copy。 |
 | LFS／submodule／symlink refused | 本 POC 未支援；先定義需求，不略過檢查當完整交付。 |
 | ZIP hash／run／SHA mismatch | 停止，查是否下載錯 run 或 artifact 被替換；不 fallback 到 latest。 |
+| Webhook 已通認證但 unresolved-ref 400；補 Code Read 無效 | 不再擴權／改成 main；在本機執行 `tools/Test-AdoPipelineReference.ps1`，用相同 PAT 唯讀核對 definition 5 的 repo／精確 ref／最近成功 run。 |
 | GitLab webhook 401／403 | 分辨 ADO／IIS／proxy；查 PAT、有效 queue ACL、傳輸政策，不開 IIS Basic。[5] |
 | HTTP 200 但檔案未到 | 200 只代表新 run 被建立；查 Package／Deliver／Environment checks 與新 run ID。 |
 
@@ -422,6 +455,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 [13]: https://git-scm.com/docs/git-ls-remote
 [14]: https://git-scm.com/docs/http-protocol
 [15]: https://git-scm.com/docs/git#Documentation/git.txt-GIT_TRACE_CURL
+[16]: https://learn.microsoft.com/en-us/rest/api/azure/devops/build/definitions/get?view=azure-devops-server-rest-7.1
+[17]: https://learn.microsoft.com/en-us/rest/api/azure/devops/git/refs/list?view=azure-devops-server-rest-7.1
+[18]: https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/list?view=azure-devops-server-rest-7.1
 
 原 Publish task 的 [Container 分支](https://github.com/microsoft/azure-pipelines-tasks/blob/master/Tasks/PublishBuildArtifactsV1/publishbuildartifacts.ts) 發出 `artifact.upload`；[FileContainerServer source](https://github.com/microsoft/azure-pipelines-agent/blob/v2.214.1/src/Agent.Worker/Build/FileContainerServer.cs) 處理目錄內容與相對路徑。
 
