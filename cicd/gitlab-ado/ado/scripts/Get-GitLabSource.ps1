@@ -191,7 +191,10 @@ function Get-GitLabSource {
         }
         Write-Host '[GitSource] Git ref probe passed; fixed source ref is readable. Starting exact-commit fetch.'
         # Fetch the fixed branch, not a caller-selected URL; verify SHA ancestry.
-        $null = Invoke-SourceGit @gitBase -Arguments @('fetch','--progress','--no-tags','--no-recurse-submodules','origin',("+${SourceRef}:refs/remotes/origin/selected")) -AuthHeader $auth -RepositoryUrl $RepositoryUrl -TimeoutSeconds 300
+        # Allow 15 minutes after the user reported Receiving objects 92% before
+        # the previous 300-second deadline. Keep the existing low-speed
+        # protection, ref validation and exact-SHA/ancestry checks unchanged.
+        $null = Invoke-SourceGit @gitBase -Arguments @('fetch','--progress','--no-tags','--no-recurse-submodules','origin',("+${SourceRef}:refs/remotes/origin/selected")) -AuthHeader $auth -RepositoryUrl $RepositoryUrl -TimeoutSeconds 900
         $auth = $null
         $resolved = Invoke-SourceGit @gitBase -Arguments @('rev-parse','--verify',"${CommitSha}^{commit}")
         if ($resolved -cne $CommitSha) { throw 'Git object differs from the selected exact commit.' }

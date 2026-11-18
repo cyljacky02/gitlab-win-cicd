@@ -24,7 +24,7 @@ pool:
 jobs:
   - job: ReadGitLabSource
     displayName: VM1 - read exact GitLab source, no application build/deployment
-    timeoutInMinutes: 15
+    timeoutInMinutes: 20 # Leave room around the script's 15-minute fetch allowance.
     workspace:
       clean: all
     steps:

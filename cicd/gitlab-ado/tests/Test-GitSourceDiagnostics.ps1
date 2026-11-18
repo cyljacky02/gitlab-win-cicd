@@ -106,7 +106,8 @@ public class DiagnosticGit {
     $result = Invoke-SourceGit -GitPath $fixture -Directory $root -Arguments @('config','--fixture-success') -TimeoutSeconds 5
     Assert-Check ($result -ceq 'expected-command-result') 'Status logs do not contaminate the Git stdout return value'
     $code = [IO.File]::ReadAllText((Join-Path $package 'ado/scripts/Get-GitLabSource.ps1'))
-    Assert-Check ($code -match "'fetch','--progress'" -and $code -match '-TimeoutSeconds 300') 'Fetch exposes progress but retains the 300-second timeout and existing source contract'
+    Assert-Check ($code -match "'fetch','--progress'" -and $code -match '-TimeoutSeconds 900') 'Full-history fetch retains progress with a bounded 15-minute allowance'
+    Assert-Check ($code -match 'http.lowSpeedLimit=1' -and $code -match 'http.lowSpeedTime=30' -and $code -match "'ls-remote'.*-TimeoutSeconds 30") 'HTTP low-speed settings and the short ref probe are not relaxed'
 } finally {
     if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
 }

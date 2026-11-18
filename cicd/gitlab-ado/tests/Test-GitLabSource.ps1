@@ -114,7 +114,7 @@ try {
         Assert-Test ($persisted -notmatch 'offline-token|offline-user|Authorization:|extraHeader') 'Credential persisted to config/evidence.'
         $networkCalls = @($script:calls | Where-Object HasAuth)
         Assert-Test ($networkCalls.Count -eq 2 -and $networkCalls[0].Arguments[0] -ceq 'ls-remote' -and $networkCalls[1].Arguments[0] -ceq 'fetch') 'Only ref probe then fetch may receive the transient credential.'
-        Assert-Test ($networkCalls[0].TimeoutSeconds -eq 30 -and $networkCalls[1].TimeoutSeconds -eq 300) 'Probe must be short without changing the full fetch deadline.'
+        Assert-Test ($networkCalls[0].TimeoutSeconds -eq 30 -and $networkCalls[1].TimeoutSeconds -eq 900) 'Probe remains 30 seconds while the active-transfer fetch allowance is 15 minutes.'
         Assert-Test (@(Get-ChildItem $script:caseDir -Force -Filter '.gitlab-*').Count -eq 0) 'Temporary directories leaked.'
     }
     Reject 'ref probe timeout stops before fetch and publishes nothing' {param($p) $script:failProbe=$true} 'Fake ls-remote timed out' -BeforeFetch
