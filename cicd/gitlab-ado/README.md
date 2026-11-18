@@ -3,7 +3,7 @@
 **目前 POC：GitLab `Cathaysec.Com.Smt.Rayin`／`poc/cicd` 提供來源與 push 事件；VM1 ADO Agent 取碼、封裝原始碼 ZIP 並存版；VM2 接收 ZIP 本身。不編譯、不解壓、不啟停服務，不需要 GitLab Runner／CI artifacts。**
 
 - **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／`poc/webhook-smoke`；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
-- **最新現場回報：VM1 Git preflight／ADO checkout 已通過；取碼／ZIP task 綠燈但 package 目錄不存在。** 已在本機重現 `PowerShell@2 filePath` dot-source 使入口 guard 跳過 main；新版把 Get／New／Copy 都改成 inline `&` 呼叫，ZIP 後立即驗 manifest。之前綠燈不能當成實際取碼／封裝驗收。原缺 Node16 的 Publish 已改用 PowerShell 發出 Agent 原生 Container 上傳指令；實際 GitLab 取碼／artifact／VM2 仍待現場重新驗收。
+- **最新現場回報：VM1 Git preflight／ADO checkout 已通過；修正入口後，Read task 約 5 分鐘 3 秒 timeout。** 現在真正執行腳本，先前綠燈不代表已有來源／ZIP。新版 Get script 加上子命令時限、15 秒 pack bytes heartbeat 及安全數字摘要；不直接延長 300 秒 fetch 或更換版本。現場網路／Server／傳輸量根因尚未確認，artifact／VM2 仍未驗收。
 - 已回報通過：[先前 Tools.Rs 專案的 GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；不等於 Rayin 真 push 自動觸發或來源驗章。
 - [VM1 → Rayin 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。現有 YAML 已改為新 repo／ref；不直接升級未驗章 smoke。
 
@@ -21,6 +21,7 @@
 | [`tests/Test-GitCheckoutBootstrap.ps1`](tests/Test-GitCheckoutBootstrap.ps1) | checkout 前的 Git 選用檢查（本機 7/7） |
 | [`tests/Test-BuildArtifactUpload.ps1`](tests/Test-BuildArtifactUpload.ps1) | 原生上傳 logging command／檔案範圍的離線檢查（12/12，不連 Server） |
 | [`tests/Test-PowerShellTaskEntrypoints.ps1`](tests/Test-PowerShellTaskEntrypoints.ps1) | 執行實際 YAML inline wrappers，驗真實 ZIP／Copy 及入口不空跑（8/8，不連公司 GitLab／ADO） |
+| [`tests/Test-GitSourceDiagnostics.ps1`](tests/Test-GitSourceDiagnostics.ps1) | 實際 process timeout／heartbeat／安全數字摘要與分類（13/13，受控 executable，不連公司 GitLab） |
 
 **新 ZIP／VM2 流程已提供，本機實際 Git／ZIP／copy 操作檢查通過；現場手動整條線與 authenticated 真 push 均尚未驗收。** source-only pipeline 仍只發 metadata，不會送檔。完整流程請只建新的 `GitLab-Rayin-Zip-Delivery`，不把舊 smoke 改成有權限的工作。不要求 solution／SDK／MSBuild／publish command。來源目前 HTTP，預設拒絕送 credential；HTTPS 優先，隔離 HTTP 例外必須明確允許並使用短效專案唯讀 token；GitLab → ADO PAT 傳輸要獨立核准。
 

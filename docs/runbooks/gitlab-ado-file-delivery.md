@@ -26,7 +26,7 @@ GitLab Rayin / poc/cicd push
 | 取碼 credential／variable group | 使用者已回報完成；不用重建 |
 | 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
-先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：VM1 Git preflight 與 ADO checkout 已通過，取碼／ZIP task 顯示綠燈，但上傳時 `source-package` 目錄不存在。** 本機已重現 `filePath` dot-source 與腳本入口 guard 造成的成功空跑，故先前取碼／封裝的綠燈不能算實際檔案驗收。Rayin 的真實取碼／ZIP、真 push、自動 artifact 上傳／下載及 VM2 放檔仍待依新版輸出重新驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
+先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：修正 task 入口後，Rayin Read task 實際執行，但在約 5 分鐘 3 秒回報 `Git timed out`，與 fetch 的 300 秒上限相符。** VM1 Git preflight／ADO checkout 已通過；先前取碼／ZIP 的綠燈因 entrypoint 空跑不能算檔案驗收。目前新增階段／安全進度診斷，但尚不能確定是路由／proxy／Server 等待或傳輸量／速度。Rayin 的真實取碼／ZIP、真 push、artifact 上傳／下載及 VM2 放檔仍待驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
@@ -265,11 +265,42 @@ Microsoft 的 PowerShell@2 Windows／TypeScript runner 都會將 `targetType: fi
 
 本機回歸直接執行 YAML inline wrappers，以 real Git fixture 實際產生 ZIP、複製到暫存目的地並核對內容／SHA／hash；Get wrapper 以無效 SHA 驗證確實進入 main 且在 network／credential 之前拒絕。這修正了先前測試只以 `& script.ps1` 執行、沒有覆蓋 task 呼叫方式的缺口；不宣稱已連公司 GitLab 或完成現場交付。
 
+## Read task 約 5 分鐘 timeout：先取得實際 fetch 證據
+
+使用者回報新版 Read task 執行約 **5 分鐘 3 秒** 後 `Git timed out; no source checkout accepted`。fetch 的設定上限是 300 秒，其他 Git 子命令是 120 秒；這強烈指向 fetch，但舊錯誤沒有標出子命令，不能光靠耗時就確定網路／認證／速度根因。
+
+現有 fetch 會讀取固定 branch 的歷史，以驗證指定 SHA 的 ancestry；不是只下載一個 ZIP 或一個 commit。若 repo 歷史很大可能影響時間，但**未取得進度前不直接增加 timeout，也不偷改 shallow／latest，避免變更精確版本驗證契約**。
+
+本輪只為 `Get-GitLabSource.ps1` 補診斷：
+
+- 每個 Git 子命令的 start／completed、已用時間及自己的 timeout。
+- fetch 等待期間每 15 秒回報暫存 pack 檔總 bytes；增加代表本機 pack 活動，**一直為 0 不等於證明 TCP／HTTP 從未連上**。
+- fetch 改 `--progress`，但不原樣輸出 stderr；結束或超時時，只報 Counting／Receiving／Resolving 的白名單數字摘要。
+- 已返回的明確錯誤僅報 authentication／connection／name-resolution／tls／low-speed 類別，不輸出 URL、headers、token、remote 文字、stdout 或完整 argv。
+- timeout 仍是 300 秒，逾時終止 Git process tree，不發布 source／evidence／ZIP，不切換版本或目標。
+
+**本次現場只更新 script，不用再改 YAML**：ADO 原 repo → `poc/webhook-smoke` → `/scripts/Get-GitLabSource.ps1`，完整取代為[最新版](../../cicd/gitlab-ado/ado/scripts/Get-GitLabSource.ps1)。保留已修正 inline `&` 的交付 YAML，按 Run pipeline 開新 run、沿用完整 SHA、勾 `allowInsecureHttpLab`。
+
+回報以下 `[GitSource]` 行即可，不需 token 或全份 debug log：
+
+```text
+[GitSource] start fetch; timeout=300s
+[GitSource] fetch elapsed=15s; temporary-pack-bytes=...
+...
+[GitSource] Receiving objects ...
+Git timed out during fetch after 300s; no source checkout accepted.
+```
+
+若出現持續增加的 pack bytes／Receiving，下一步才評估傳輸量／速度與 timeout／封裝策略。若沒有這類證據，先核對 VM1 → GitLab 的連線／proxy／Server 回應；不能把 GitLab → ADO webhook 已通當作反向取碼也通。已有[無憑證 connectivity pipeline](../../cicd/gitlab-ado/ado/azure-pipelines-gitlab-connectivity.yml)可獨立核對 HTTP response，但其 .NET HTTP 路徑與 Git/proxy 不一定相同，亦不代表 authenticated fetch 成功。
+
+這是診斷增補，**不是已解決現場 fetch timeout**。本機用受控 executable 重現實際 runner 的 timeout／終止路徑（縮短至 1 秒），另以 16 秒等待驗 heartbeat，並檢查憑證及 remote 文字不出現在日誌；沒有連公司 GitLab。
+
 ## 本機檢查與現場故障排查
 
-本機 Windows PowerShell 5.1：task entrypoint 檢查 **8/8 通過**（實際 YAML wrappers、real Git ZIP／manifest／Copy／hash、Get 入口前置驗證、helper import 不執行 main）；原生 artifact upload 檢查 **12/12 通過**（直接執行 YAML inline code：固定 artifact／root、只發一次目錄指令、path escaping、缺檔／額外檔案／假 ZIP 目錄不發上傳指令、不修改 package；未測 Server 傳輸）。Git bootstrap 檢查 **7/7 通過**（正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **19/19 通過**。
+本機 Windows PowerShell 5.1：Git process 診斷檢查 **13/13 通過**（受控 executable 驗 timeout／heartbeat／安全分類／數字進度及 stderr 不洩漏，未測公司 GitLab）；task entrypoint 檢查 **8/8 通過**（實際 YAML wrappers、real Git ZIP／manifest／Copy／hash、Get 入口前置驗證、helper import 不執行 main）；原生 artifact upload 檢查 **12/12 通過**（直接執行 YAML inline code：固定 artifact／root、只發一次目錄指令、path escaping、缺檔／額外檔案／假 ZIP 目錄不發上傳指令、不修改 package；未測 Server 傳輸）。Git bootstrap 檢查 **7/7 通過**（正常 Git、無法啟動的 executable、exit 0 但沒有版本、完全無可用 Git、PATH 輸出及 checkout 前順序）；這不是 ADO Agent 的現場重現。既有取碼回歸 **19/19 通過**。
 
 ```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitSourceDiagnostics.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-PowerShellTaskEntrypoints.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-BuildArtifactUpload.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\Test-GitCheckoutBootstrap.ps1
@@ -284,6 +315,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\cicd\gitlab-ado\tests\
 | HTTP refused | 預期安全預設；本次內網 HTTP POC 勾 `allowInsecureHttpLab`，不關 TLS。 |
 | Fetch 401／403 | Rayin 的 token Username／期限／`read_repository`；勿誤用 Tools.Rs project token。 |
 | Environment/resource not found | `test-deploy-agent`、`SECSVR4-80`、case-sensitive `virtualMachine`、Agent online／pipeline resource authorization。 |
+| Read task 約 5 分鐘 timeout | 更新 `/scripts/Get-GitLabSource.ps1` 取得 fetch operation／pack bytes／安全摘要；不先增加 timeout、不換成 latest，現場根因尚未確定。 |
 | ZIP task 綠燈但 source package directory missing | 更新交付 YAML 的三個 inline `&` wrappers；確認 Get／ZIP 的實際 SHA、包名與完整目錄輸出，不只看 task 綠燈。 |
 | VM1 Publish 缺少 `externals\node16\bin\node.exe` | 更新同一份 YAML，使用 PowerShell 發出原生 Build Artifact upload 指令；不重新建 token 或自動安裝 Node。 |
 | DownloadBuildArtifacts@1 不存在／缺 runtime | 查 VM2 的 Server task／Agent runtime；VM1 上傳修正不代表 VM2 已驗收，提供該下載 task 的非敏感錯誤再定位。[1] |

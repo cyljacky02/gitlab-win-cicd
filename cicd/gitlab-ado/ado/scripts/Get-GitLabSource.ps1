@@ -13,6 +13,10 @@ $ErrorActionPreference = 'Stop'
 
 function Invoke-SourceGit {
     param([string]$GitPath, [string]$Directory, [string[]]$Arguments, [string]$AuthHeader, [string]$RepositoryUrl, [int]$TimeoutSeconds = 120)
+    # Log only an allowlisted operation, never argv, URL, headers or raw stderr.
+    $operation = 'git-command'
+    if ($Arguments.Count -gt 0 -and $Arguments[0] -in @('--version','check-ref-format','init','config','remote','fetch','rev-parse','merge-base','checkout','diff','ls-tree')) { $operation = $Arguments[0] }
+    Write-Host "[GitSource] start $operation; timeout=${TimeoutSeconds}s"
     $start = New-Object Diagnostics.ProcessStartInfo
     $start.FileName = $GitPath
     $start.WorkingDirectory = $Directory
@@ -50,19 +54,60 @@ function Invoke-SourceGit {
     }
     $process = New-Object Diagnostics.Process
     $process.StartInfo = $start
+    $clock = [Diagnostics.Stopwatch]::StartNew()
     try {
         if (-not $process.Start()) { throw 'Git could not start.' }
         $stdout = $process.StandardOutput.ReadToEndAsync()
         $stderr = $process.StandardError.ReadToEndAsync()
-        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
-            & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F *> $null
-            throw 'Git timed out; no source checkout accepted.'
+        $timedOut = $false
+        $nextReport = 15
+        while (-not $process.WaitForExit(1000)) {
+            if ($clock.Elapsed.TotalSeconds -ge $TimeoutSeconds) {
+                & "$env:SystemRoot\System32\taskkill.exe" /PID $process.Id /T /F *> $null
+                $null = $process.WaitForExit(5000)
+                $timedOut = $true
+                break
+            }
+            if ($operation -eq 'fetch' -and $clock.Elapsed.TotalSeconds -ge $nextReport) {
+                # Git writes incoming pack data here. Increasing bytes is evidence of
+                # local pack activity; zero does NOT prove the connection never opened.
+                $packBytes = [long]0
+                $packDirectory = Join-Path $Directory '.git/objects/pack'
+                foreach ($file in @(Get-ChildItem -LiteralPath $packDirectory -File -Force -ErrorAction SilentlyContinue)) { $packBytes += $file.Length }
+                Write-Host "[GitSource] fetch elapsed=$([int]$clock.Elapsed.TotalSeconds)s; temporary-pack-bytes=$packBytes"
+                $nextReport += 15
+            }
         }
+        $diagnostics = ''
+        if ($stderr.Wait(2000)) { $diagnostics = $stderr.GetAwaiter().GetResult() }
+        if ($operation -eq 'fetch') {
+            $hasProgress = $false
+            foreach ($phase in @('Counting objects', 'Receiving objects', 'Resolving deltas')) {
+                $progress = [regex]::Matches($diagnostics, ([regex]::Escape($phase) + ':\s*(\d{1,3})%\s*\((\d{1,12})/(\d{1,12})\)'))
+                if ($progress.Count -gt 0) {
+                    $last = $progress[$progress.Count - 1]
+                    Write-Host "[GitSource] $phase $($last.Groups[1].Value)% ($($last.Groups[2].Value)/$($last.Groups[3].Value))"
+                    $hasProgress = $true
+                }
+            }
+            if (-not $hasProgress) { Write-Host '[GitSource] fetch: no numeric transfer progress captured; connection state is not established by this observation.' }
+        }
+        if ($timedOut) { throw "Git timed out during $operation after ${TimeoutSeconds}s; no source checkout accepted." }
+        if ($process.ExitCode -ne 0) {
+            $category = 'unspecified'
+            if ($diagnostics -match 'Authentication failed|HTTP[^\r\n]*(?:401|403)|could not read Username') { $category = 'authentication' }
+            elseif ($diagnostics -match 'Could not resolve host|Could not resolve proxy') { $category = 'name-resolution' }
+            elseif ($diagnostics -match 'Failed to connect|Connection refused|Connection timed out|Could not connect') { $category = 'connection' }
+            elseif ($diagnostics -match 'SSL certificate|certificate problem|schannel:') { $category = 'tls' }
+            elseif ($diagnostics -match 'Operation too slow|Less than .* bytes/sec') { $category = 'low-speed' }
+            throw "Git failed. operation=$operation; category=$category. Check repository permission, URL, TLS, branch and SHA; raw Git output is not logged."
+        }
+        if (-not $stdout.Wait(2000)) { throw "Git output collection timed out during $operation; no source checkout accepted." }
         $text = $stdout.GetAwaiter().GetResult()
-        $null = $stderr.GetAwaiter().GetResult()
-        if ($process.ExitCode -ne 0) { throw 'Git failed. Check repository permission, URL, TLS, branch and SHA; raw Git output is not logged.' }
+        Write-Host "[GitSource] completed $operation; elapsed=$([int]$clock.Elapsed.TotalSeconds)s"
         return $text.Trim()
     } finally {
+        $clock.Stop()
         $start.EnvironmentVariables.Remove('GIT_CONFIG_VALUE_0')
         $process.Dispose()
     }
@@ -114,7 +159,7 @@ function Get-GitLabSource {
         $null = Invoke-SourceGit @gitBase -Arguments @('config','core.hooksPath', $empty)
         $null = Invoke-SourceGit @gitBase -Arguments @('remote','add','origin',$RepositoryUrl)
         # Fetch the fixed branch, not a caller-selected URL; verify SHA ancestry.
-        $null = Invoke-SourceGit @gitBase -Arguments @('fetch','--quiet','--no-tags','--no-recurse-submodules','origin',("+${SourceRef}:refs/remotes/origin/selected")) -AuthHeader $auth -RepositoryUrl $RepositoryUrl -TimeoutSeconds 300
+        $null = Invoke-SourceGit @gitBase -Arguments @('fetch','--progress','--no-tags','--no-recurse-submodules','origin',("+${SourceRef}:refs/remotes/origin/selected")) -AuthHeader $auth -RepositoryUrl $RepositoryUrl -TimeoutSeconds 300
         $auth = $null
         $resolved = Invoke-SourceGit @gitBase -Arguments @('rev-parse','--verify',"${CommitSha}^{commit}")
         if ($resolved -cne $CommitSha) { throw 'Git object differs from the selected exact commit.' }
