@@ -8,6 +8,6 @@
   },
   "templateParameters": {
     "gitlabCommitSha": "{{checkout_sha}}",
-    "allowInsecureHttpLab": false
+    "allowInsecureHttpLab": true
   }
 }

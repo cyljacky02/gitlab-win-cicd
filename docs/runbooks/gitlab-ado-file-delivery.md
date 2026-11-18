@@ -19,6 +19,7 @@ GitLab Rayin / poc/cicd push
 | GitLab source ref | `refs/heads/poc/cicd` |
 | ADO project／repo | 沿用 `Deployment`／原本的受控測試 repo |
 | ADO YAML branch | 沿用 `poc/webhook-smoke`，不是 GitLab branch |
+| ADO 交付 pipeline／definitionId | `GitLab-Rayin-Zip-Delivery`／`5`（使用者已確認） |
 | VM1 pool／Agent.Name | `Default`／`SECSVR004-086T` |
 | VM2 Environment／VM resource | `test-deploy-agent`／`SECSVR4-80`；不是一般 pool 或 Classic Deployment Group |
 | VM2 目的目錄 | 本次使用 `D:\TestCICD`；Agent 服務帳號須有寫入權，D: 須存在 |
@@ -26,7 +27,7 @@ GitLab Rayin / poc/cicd push
 | 取碼 credential／variable group | 使用者已回報完成；不用重建 |
 | 本次傳輸 | 使用者指定 PRIVATE NETWORK 的 HTTP；手動 Run 勾 `allowInsecureHttpLab`，HTTP 仍非加密傳輸 |
 
-先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：ref probe 成功，fetch 的 GET／兩次 POST 均為 200，Counting 為 100%（6194/6194），Receiving 已達 92%（5731/6194），之後撞到原 300 秒上限。** 這證明實際傳輸已發生，先前 pack bytes=0 不能解讀成沒有下載。根據這項新證據，fetch 總上限調為 900 秒（15 分鐘），保留既有低速／精確 SHA／失敗停止規則；尚不保證必能在新上限內完成，若停在固定進度仍需查傳輸或大物件等證據。取碼完成、ZIP、artifact、VM2 與真 push 仍待現場驗收。本機未連公司內網，沒有代設 credentials 或操作 VM。
+先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場回報：fetch 總上限改為 900 秒後，使用者已確認手動 `GitLab-Rayin-Zip-Delivery` 整筆執行成功，並提供 definitionId `5`。** 這是使用者現場回報，尚未提供成功 run ID／ZIP hash／VM2 檔案對帳證據，本機未連公司內網代驗。現在進入 Rayin `poc/cicd` 的 authenticated webhook 設定；真 push 自動觸發與該次交付尚未驗收。過程中的 Receiving 92%／原 300 秒 deadline 等歷程保留於下方故障排查。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
@@ -134,7 +135,7 @@ try {
 
 | 欄位 | 設定 |
 |---|---|
-| URL | `{ADO_COLLECTION_URL}/Deployment/_apis/pipelines/{交付pipeline的definition ID}/runs?api-version=7.1` |
+| URL | `{ADO_COLLECTION_URL}/Deployment/_apis/pipelines/5/runs?api-version=7.1` |
 | Custom headers → Name | `Authorization` |
 | Custom headers → Value | 上一步剪貼簿的 `Basic <base64>` |
 | Trigger | 只勾 **Push events** |
@@ -156,12 +157,12 @@ try {
   },
   "templateParameters": {
     "gitlabCommitSha": "{{checkout_sha}}",
-    "allowInsecureHttpLab": false
+    "allowInsecureHttpLab": true
   }
 }
 ```
 
-這是 **GitLab webhook template**，不是 `.gitlab-ci.yml`。`checkout_sha` 綁定這次 push，不是用 GitLab SHA 覆寫 ADO repo 的 `self.version`。HTTP Git source 若已明確獲准，可將此 template 的 `allowInsecureHttpLab` 改為 `true`；未核准則維持 false 並先改 GitLab HTTPS。它不控制或保護 GitLab → ADO 那一段 PAT 傳輸。
+這是 **GitLab webhook template**，不是 `.gitlab-ci.yml`。`checkout_sha` 綁定這次 push，不是用 GitLab SHA 覆寫 ADO repo 的 `self.version`。本檔及連結 JSON **已依使用者指定的 PRIVATE NETWORK HTTP POC 明確設為 `allowInsecureHttpLab: true`**，不是通用安全預設；來源改 HTTPS 時應改回 false。script／手動 YAML 的預設仍為 false。這個參數只允許 HTTP Git 取碼，不會加密流量或保護 GitLab → ADO 的 PAT 傳輸。template 不含 PAT，Authorization 仍只在 GitLab Custom headers 設定。
 
 建議正常請求再於 `self` 加上 `version: <已審核的ADO工具完整commit SHA>` 釘住工具版本，後續更新工具時同步；這仍不取代 queue ACL／repo 信任邊界。Server 若回 API version unsupported，保留非敏感錯誤核對安裝版；不因 cloud 文件而猜最新版本可用。[3]
 
