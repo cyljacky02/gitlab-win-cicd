@@ -1,0 +1,258 @@
+# APPROVAL VERSION of azure-pipelines-gitlab-file-delivery.yml (pipeline 5).
+# Same Package/Deliver contract; only the run name and approver evidence differ.
+# The approval itself is NOT in this file: it is the native Approvals check on
+# Environment test-deploy-agent, evaluated before the Deliver stage starts.
+# Stored in the existing ADO repo / poc/webook-smoke branch (no h; do not rename).
+# Do NOT attach the unauthenticated incoming-webhook smoke connection.
+trigger: none
+pr: none
+
+# Approvers see the exact GitLab SHA in the run name on the approval screen.
+name: rayin-approval-${{ parameters.gitlabCommitSha }}-$(Date:yyyyMMdd)$(Rev:.r)
+
+parameters:
+  - name: gitlabCommitSha
+    displayName: Full GitLab poc/cicd push commit SHA (40 hex characters)
+    type: string
+    default: ''
+  - name: allowInsecureHttpLab
+    displayName: Explicitly approved isolated-lab HTTP source exception
+    type: boolean
+    default: false
+
+stages:
+  - stage: Package
+    displayName: VM1 - fetch exact GitLab SHA and package source only
+    jobs:
+      - job: PackageSource
+        timeoutInMinutes: 20
+        variables:
+          # Authorize ONLY this controlled pipeline. Never authorize the smoke.
+          - group: gitlab-source-readonly
+          # Avoid the agent-bundled Git launcher when a working installed Git exists.
+          - name: System.PreferGitFromPath
+            value: 'true'
+        pool:
+          name: Default
+          demands:
+            - Agent.Name -equals SECSVR004-086T
+        workspace:
+          clean: all
+        steps:
+          # Inline and before checkout: a repo script cannot repair failed checkout.
+          - task: PowerShell@2
+            displayName: Select and validate Git before VM1 checkout
+            inputs:
+              targetType: inline
+              workingDirectory: '$(Agent.TempDirectory)'
+              pwsh: false
+              script: |
+                # BEGIN CHECKOUT GIT BOOTSTRAP
+                $ErrorActionPreference = 'Stop'
+                function Get-WorkingGitVersion([string]$File) {
+                    $start = New-Object Diagnostics.ProcessStartInfo
+                    $start.FileName = $File
+                    $start.Arguments = 'version'
+                    $start.WorkingDirectory = $env:AGENT_TEMPDIRECTORY
+                    $start.UseShellExecute = $false
+                    $start.CreateNoWindow = $true
+                    $start.RedirectStandardOutput = $true
+                    $start.RedirectStandardError = $true
+                    $process = New-Object Diagnostics.Process
+                    $process.StartInfo = $start
+                    try {
+                        if (-not $process.Start()) { return $null }
+                        $stdout = $process.StandardOutput.ReadToEndAsync()
+                        $stderr = $process.StandardError.ReadToEndAsync()
+                        if (-not $process.WaitForExit(15000)) {
+                            $process.Kill()
+                            return $null
+                        }
+                        $version = $stdout.GetAwaiter().GetResult().Trim()
+                        $null = $stderr.GetAwaiter().GetResult()
+                        if ($process.ExitCode -ne 0 -or $version -notmatch '^git version (\d+)\.(\d+)\.') { return $null }
+                        if ([int]$Matches[1] -lt 2 -or ([int]$Matches[1] -eq 2 -and [int]$Matches[2] -lt 31)) { return $null }
+                        return $version
+                    } catch {
+                        return $null
+                    } finally {
+                        $process.Dispose()
+                    }
+                }
+                $candidates = @(
+                    foreach ($base in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+                        if ($base) { Join-Path $base 'Git\cmd\git.exe' }
+                    }
+                    Get-Command git.exe -CommandType Application -All -ErrorAction SilentlyContinue | ForEach-Object { $_.Source }
+                    if ($env:AGENT_HOMEDIRECTORY) { Join-Path $env:AGENT_HOMEDIRECTORY 'externals\git\cmd\git.exe' }
+                )
+                $selected = $null
+                foreach ($candidate in ($candidates | Select-Object -Unique)) {
+                    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+                    $version = Get-WorkingGitVersion $candidate
+                    if ($version) { $selected = $candidate; break }
+                    Write-Host "Git candidate cannot run or is below 2.31: $candidate"
+                }
+                if (-not $selected) {
+                    throw 'No working Git for Windows 2.31+ found under the agent service account. Have the VM administrator install/repair approved Git or the agent Git bundle, then retry.'
+                }
+                $gitDirectory = Split-Path -Parent $selected
+                Write-Host "Selected checkout Git: $selected"
+                Write-Host $version
+                $env:PATH = $gitDirectory + ';' + $env:PATH
+                Write-Host "##vso[task.prependpath]$gitDirectory"
+                # END CHECKOUT GIT BOOTSTRAP
+          - checkout: self
+            clean: true
+            persistCredentials: false
+          - task: PowerShell@2
+            displayName: Reject missing, invalid or branch-deletion SHA before fetch
+            inputs:
+              targetType: inline
+              pwsh: false
+              script: |
+                $ErrorActionPreference = 'Stop'
+                if ($env:EXPECTED_COMMIT_SHA -cnotmatch '\A[0-9a-fA-F]{40}\z' -or $env:EXPECTED_COMMIT_SHA -eq ('0' * 40)) {
+                  throw 'A nonzero full GitLab push SHA is required; no latest fallback.'
+                }
+                Write-Host "Package agent: $env:AGENT_NAME; computer: $env:COMPUTERNAME"
+            env:
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+          - task: PowerShell@2
+            displayName: Read fixed Rayin poc/cicd source and verify detached SHA
+            inputs:
+              targetType: inline
+              pwsh: false
+              script: |
+                # BEGIN SOURCE CHECKOUT INVOCATION
+                $ErrorActionPreference = 'Stop'
+                & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/Get-GitLabSource.ps1') `
+                  -OutputDirectory (Join-Path $env:PIPELINE_WORKSPACE 'gitlab-source') `
+                  -EvidenceDirectory (Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-provenance')
+                # END SOURCE CHECKOUT INVOCATION
+            env:
+              SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+              SOURCE_REF: refs/heads/poc/cicd
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+              ALLOW_INSECURE_HTTP_LAB: ${{ parameters.allowInsecureHttpLab }}
+              GITLAB_GIT_USERNAME: $(GITLAB_GIT_USERNAME)
+              GITLAB_GIT_TOKEN: $(GITLAB_GIT_TOKEN)
+          - task: PowerShell@2
+            displayName: ZIP tracked checkout files, without .git or application execution
+            inputs:
+              targetType: inline
+              pwsh: false
+              script: |
+                # BEGIN SOURCE PACKAGE INVOCATION
+                $ErrorActionPreference = 'Stop'
+                $package = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-package'
+                & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/New-GitLabSourcePackage.ps1') `
+                  -SourceDirectory (Join-Path $env:PIPELINE_WORKSPACE 'gitlab-source') `
+                  -ProvenanceDirectory (Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-provenance') `
+                  -PackageDirectory $package
+                if (-not (Test-Path -LiteralPath (Join-Path $package 'source-package.json') -PathType Leaf)) {
+                  throw "Packaging returned without its manifest: $package"
+                }
+                Write-Host "Source package directory: $package"
+                # END SOURCE PACKAGE INVOCATION
+            env:
+              SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+              SOURCE_REF: refs/heads/poc/cicd
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+          # Display aid for approvers only; Deliver still verifies the manifest itself.
+          - task: PowerShell@2
+            displayName: Tag run with ZIP SHA-256 for approvers
+            inputs:
+              targetType: inline
+              pwsh: false
+              script: |
+                # BEGIN APPROVAL EVIDENCE
+                $ErrorActionPreference = 'Stop'
+                $manifestPath = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-package\source-package.json'
+                $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
+                if ([string]$manifest.gitlabCommitSha -ine $env:EXPECTED_COMMIT_SHA) { throw 'Manifest SHA differs from the requested GitLab SHA; nothing tagged.' }
+                if ([string]$manifest.zipSha256 -cnotmatch '\A[0-9a-f]{64}\z') { throw 'Manifest has no valid ZIP SHA-256; nothing tagged.' }
+                Write-Host "Approval evidence: GitLab SHA $($manifest.gitlabCommitSha); ZIP $($manifest.zipFileName); SHA-256 $($manifest.zipSha256)"
+                Write-Host "##vso[build.addbuildtag]zip-sha256-$($manifest.zipSha256)"
+                # END APPROVAL EVIDENCE
+            env:
+              EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}
+          # PublishBuildArtifacts@1 on this Server requires a missing Node16 runner.
+          # Use the same agent-native Container upload command via working PowerShell.
+          - task: PowerShell@2
+            displayName: Store ZIP and integrity/provenance for this ADO run
+            inputs:
+              targetType: inline
+              pwsh: false
+              script: |
+                # BEGIN NATIVE BUILD ARTIFACT UPLOAD
+                $ErrorActionPreference = 'Stop'
+                [Console]::OutputEncoding = New-Object Text.UTF8Encoding($false)
+                $package = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'source-package'
+                Write-Host "Source package directory for upload: $package"
+                if (-not (Test-Path -LiteralPath $package -PathType Container)) { throw "Source package directory is missing: $package; nothing published." }
+                $directory = Get-Item -LiteralPath $package -Force
+                $files = @(Get-ChildItem -LiteralPath $package -Force)
+                if (($directory.Attributes -band [IO.FileAttributes]::ReparsePoint) -or $files.Count -ne 3 -or
+                    @($files | Where-Object { $_.PSIsContainer -or ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) }).Count -ne 0 -or
+                    @($files | Where-Object { $_.Extension -ieq '.zip' }).Count -ne 1 -or
+                    $files.Name -notcontains 'source-package.json' -or $files.Name -notcontains 'source-provenance.json') {
+                    throw 'Expected only the source ZIP, manifest and provenance regular files; nothing published.'
+                }
+                # Escape command data, not file contents. One directory command lets
+                # the agent finish upload before associating this current-run artifact.
+                $path = $directory.FullName.Replace('%', '%AZP25').Replace("`r", '%0D').Replace("`n", '%0A').Replace(';', '%3B').Replace(']', '%5D')
+                Write-Host 'Publishing source-package through the agent-native Build Artifact Container uploader.'
+                Write-Host "##vso[artifact.upload containerfolder=source-package;artifactname=source-package;]$path"
+                # END NATIVE BUILD ARTIFACT UPLOAD
+
+  - stage: Deliver
+    displayName: VM2 - deliver ZIP itself to D:\TestCICD
+    dependsOn: Package
+    condition: succeeded()
+    # Waits here for the Environment Approvals check; no VM2 job, checkout,
+    # download or copy happens until an approver approves this exact run.
+    jobs:
+      - deployment: DeliverSourceZip
+        displayName: SECSVR4-80 - verified ZIP only, no extraction
+        timeoutInMinutes: 15
+        workspace:
+          clean: all
+        environment:
+          name: test-deploy-agent
+          resourceName: SECSVR4-80
+          resourceType: virtualMachine
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Disable implicit artifact downloads; select this exact run below.
+                - download: none
+                - checkout: self
+                  clean: true
+                  persistCredentials: false
+                - task: DownloadBuildArtifacts@1
+                  displayName: Download source-package from THIS run, never latest
+                  inputs:
+                    buildType: current
+                    downloadType: single
+                    artifactName: source-package
+                    downloadPath: '$(Pipeline.Workspace)/current-source-package'
+                    cleanDestinationFolder: true
+                - task: PowerShell@2
+                  displayName: Verify SHA/run/hash and copy ZIP without overwrite
+                  inputs:
+                    targetType: inline
+                    pwsh: false
+                    script: |
+                      # BEGIN SOURCE DELIVERY INVOCATION
+                      $ErrorActionPreference = 'Stop'
+                      & (Join-Path $env:BUILD_SOURCESDIRECTORY 'scripts/Copy-GitLabSourcePackage.ps1') `
+                        -ArtifactDirectory (Join-Path $env:PIPELINE_WORKSPACE 'current-source-package/source-package') `
+                        -DestinationDirectory $env:DELIVERY_DIRECTORY
+                      # END SOURCE DELIVERY INVOCATION
+                  env:
+                    DELIVERY_DIRECTORY: 'D:\TestCICD' # CD-owned constant, not webhook data
+                    SOURCE_REPOSITORY_URL: 'http://10.93.19.25/grp-smt-maint/Cathaysec.Com.Smt.Rayin.git'
+                    SOURCE_REF: refs/heads/poc/cicd
+                    EXPECTED_COMMIT_SHA: ${{ parameters.gitlabCommitSha }}

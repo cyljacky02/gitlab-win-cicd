@@ -3,13 +3,16 @@
 **目前 POC：GitLab `Cathaysec.Com.Smt.Rayin`／`poc/cicd` 提供來源與 push 事件；VM1 ADO Agent 取碼、封裝原始碼 ZIP 並存版；VM2 接收 ZIP 本身。不編譯、不解壓、不啟停服務，不需要 GitLab Runner／CI artifacts。**
 
 - **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／**`poc/webook-smoke`（現場拼字沒有 h）**；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
-- **最新現場證據：截圖確認 ADO 分支實為 `poc/webook-smoke`，但 webhook template 曾誤填 `poc/webhook-smoke`，因此 ref 查詢為 0 並回 unresolved-ref 400。** 已修正 template 與診斷預設值，保留現場分支，不重建、不改 main、不再擴權。手動交付已回報成功（definitionId `5`）；修正後的真 push 自動交付仍待現場驗收。
+- **最新現場證據：截圖確認 ADO 分支實為 `poc/webook-smoke`，但 webhook template 曾誤填 `poc/webhook-smoke`，因此 ref 查詢為 0 並回 unresolved-ref 400。** 已修正 template 與診斷預設值，保留現場分支，不重建、不改 main、不再擴權。手動交付已回報成功（definitionId `5`）；修正後的真 push 自動交付也已由使用者回報成功（run ID／SHA／hash 對帳資料未取得）。
+- **下一階段（未驗收）：[帶核准的交付](../../docs/runbooks/gitlab-ado-approval-delivery.md)**：另建核准版 pipeline，Environment `test-deploy-agent` 加原生「核准」check，ADO Server 主機本機帳號 `ado-approver`（POC 共用，留言填員工編號）。
 - 已回報通過：[先前 Tools.Rs 專案的 GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；不等於 Rayin 真 push 自動觸發或來源驗章。
 - [VM1 → Rayin 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。現有 YAML 已改為新 repo／ref；不直接升級未驗章 smoke。
 
 | 目前檔案 | 用途 |
 |---|---|
 | [`ado/azure-pipelines-gitlab-file-delivery.yml`](ado/azure-pipelines-gitlab-file-delivery.yml) | **本輪主流程**：精確 SHA → ZIP → Server Build Artifact → Environment VM2 驗 hash／只放 ZIP |
+| [`ado/azure-pipelines-gitlab-file-delivery-approval.yml`](ado/azure-pipelines-gitlab-file-delivery-approval.yml) | **核准版**：同主流程，run 名稱帶 SHA、run 標籤帶 ZIP SHA-256；核准本身在 Environment check |
+| [`tests/Test-ApprovalPipelineYaml.ps1`](tests/Test-ApprovalPipelineYaml.ps1) | 核准版 YAML 與主流程僅差 name／標籤步驟，標籤步驟拒絕 SHA 不符／無效 hash（10/10，不連 Server；不能代替現場核准驗收） |
 | [`ado/scripts/New-GitLabSourcePackage.ps1`](ado/scripts/New-GitLabSourcePackage.ps1) | 只封裝 tracked regular files，排除 `.git`／untracked，拒絕 LFS pointer／symlink／submodule |
 | [`ado/scripts/Copy-GitLabSourcePackage.ps1`](ado/scripts/Copy-GitLabSourcePackage.ps1) | 驗 repo／ref／SHA／run／hash，暫存後 rename，不解壓、不覆蓋不同內容 |
 | [`ado/gitlab-file-delivery-push.template.json`](ado/gitlab-file-delivery-push.template.json) | 本次 HTTP POC 的 Custom webhook template（`allowInsecureHttpLab: true`）；傳 push SHA，不含 credential |
@@ -25,7 +28,7 @@
 | [`tests/Test-PowerShellTaskEntrypoints.ps1`](tests/Test-PowerShellTaskEntrypoints.ps1) | 執行實際 YAML inline wrappers，驗真實 ZIP／Copy 及入口不空跑（8/8，不連公司 GitLab／ADO） |
 | [`tests/Test-GitSourceDiagnostics.ps1`](tests/Test-GitSourceDiagnostics.ps1) | 實際 process timeout／heartbeat／安全數字摘要、HTTP method/status 與分類（26/26，受控 executable，不連公司 GitLab） |
 
-**新 ZIP／VM2 流程已提供，本機實際 Git／ZIP／copy 操作檢查通過，使用者已回報手動整條線成功；authenticated 真 push 尚未驗收。** source-only pipeline 仍只發 metadata，不會送檔。完整流程使用 `GitLab-Rayin-Zip-Delivery`（definitionId `5`），不把舊 smoke 改成有權限的工作。不要求 solution／SDK／MSBuild／publish command。script／手動 YAML 仍預設拒絕 HTTP credential；本次 webhook template 依使用者指定的 PRIVATE NETWORK HTTP POC 明確設為 true，不是通用安全預設，亦不會加密 GitLab／ADO PAT 流量。
+**新 ZIP／VM2 流程已提供，本機實際 Git／ZIP／copy 操作檢查通過，使用者已回報手動及 authenticated 真 push 整條線成功。** source-only pipeline 仍只發 metadata，不會送檔。完整流程使用 `GitLab-Rayin-Zip-Delivery`（definitionId `5`），不把舊 smoke 改成有權限的工作。不要求 solution／SDK／MSBuild／publish command。script／手動 YAML 仍預設拒絕 HTTP credential；本次 webhook template 依使用者指定的 PRIVATE NETWORK HTTP POC 明確設為 true，不是通用安全預設，亦不會加密 GitLab／ADO PAT 流量。
 
 ## 較早的 GitLab CI artifact 交接備選（不是本輪必做）
 
