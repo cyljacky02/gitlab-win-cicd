@@ -85,7 +85,7 @@ Get-LocalGroup | Where-Object { @(Get-LocalGroupMember -Group $_ -ErrorAction Si
    - 先做這步再做下面的群組；沒有明確指定的帳號會落入預設存取層級（通常是 Basic，會佔名額）。
    - 搜尋不到 → **停在這一步並回報**（本機帳號在已加入網域的主機上不可用，改走 AD）。
    - 預期 Stakeholder 不佔 Express 的 5 個 Basic 名額；若 UI 顯示要佔用，回報實際畫面。
-2. **專案群組**：`Deployment` → Project settings → Permissions → 新增群組 **`Rayin Deployment Approvers`** → Members 加入 `主機名\ado-approver`。
+2. **專案群組**：`Deployment` → 左下齒輪「專案設定」→ 左欄「一般」底下的 **「安全性」**（英文版叫 Permissions；不是 Boards 的「專案組態」、也不是「小組」）→ 建立／新增群組 **`Rayin Deployment Approvers`** → Members 加入 `主機名\ado-approver`。
 3. 同一頁打開內建 **Readers** 群組 → Members → 加入 `Rayin Deployment Approvers`。不要加入 Contributors、Build Administrators 或 Project Administrators。
 
 ### 第 5 步：在 Environment 加上「核准」check
