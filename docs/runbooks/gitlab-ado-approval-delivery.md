@@ -153,7 +153,16 @@ Pipelines → Environments → **`test-deploy-agent`** → 右上「⋮」→ **
 改成：http://10.92.4.86/DefaultCollection/Deployment/_apis/pipelines/新ID/runs?api-version=7.1
 ```
 
-例如新 ID 是 7，就把 `/5/` 改成 `/7/`。Custom headers（同一個 PAT）、Push events、`poc/cicd` filter、Custom webhook template **全部不變**。
+例如新 ID 是 7，就把 `/5/` 改成 `/7/`。Push events、`poc/cicd` filter、Custom webhook template 不變。
+
+**注意：GitLab 只要 URL 改變，存檔時就會清空這個 webhook 的所有 Custom headers 與 Secret token**（防止把既有憑證送到新網址；GitLab 原始碼 `WebHooks::Hook#reset_custom_headers`）。現場已遇到：只改 URL 後 ADO 回 **401 not authenticated**。因此改 URL 後要在**同一個編輯畫面**重新加回兩筆 header：
+
+| Name | Value |
+|---|---|
+| `Authorization` | 用[主 runbook 5.1 的 PowerShell](gitlab-ado-file-delivery.md#51-ado-觸發-credential) 重新產生（`Basic ` 開頭），可沿用同一個 PAT |
+| `Content-Type` | `application/json` |
+
+PAT 不是綁特定 pipeline 的；Build (Read & execute) 對整個 collection 有效，改指 pipeline 7 不需要新 PAT。
 
 存檔後在 `poc/cicd` 做一次真 push：核准版出現新 run（名稱含這次 push 的 SHA）→ Package 完成 → 等待核准 → 用 `ado-approver` 核准 → VM2 收到同一 hash 的 ZIP。pipeline 5 不應出現新 run。
 
