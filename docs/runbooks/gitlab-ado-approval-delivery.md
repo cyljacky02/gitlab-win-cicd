@@ -80,11 +80,11 @@ Get-LocalGroup | Where-Object { @(Get-LocalGroupMember -Group $_ -ErrorAction Si
 
 以管理者帳號登入 ADO 網頁：
 
-1. **存取層級**：打開集合首頁 `http://10.92.4.86/DefaultCollection/`（專案清單那一頁；若在專案內，點左上 Azure DevOps 標誌回去）→ 左下角 **「存取層級（Access levels）」**（在「集合設定」旁，不是 `_settings/security`）→ 選 **Stakeholder** → 新增 → 輸入第 3 步印出的 `主機名\ado-approver` → 儲存。
+1. **存取層級**：打開集合首頁 `http://10.92.4.86/DefaultCollection/`（專案清單那一頁；若在專案內，點左上 Azure DevOps 標誌回去）→ 左下角 **「存取層級（Access levels）」**（在「集合設定」旁，不是 `_settings/security`）→ 選 **Basic** → 新增 → 輸入第 3 步印出的 `主機名\ado-approver` → 儲存。
+   - **現場已驗證：要用 Basic，不能用 Stakeholder。** 設成 Stakeholder 時，即使群組權限正確（pipeline 的「檢視組建」為允許），帳號仍看不到 Pipelines／Environments，無法核准；改成 Basic 後即可。因此核准帳號**會佔 Express 5 個 Basic 名額中的 1 個**。實際可做的事仍由下面的群組權限（Readers）限制。
    - 看不到這個連結 → 目前登入者不是伺服器管理員；也可直接開 `http://10.92.4.86/_admin/_licenses`（**使用者已確認可用**）。「集合設定」頁裡沒有這項。
    - 先做這步再做下面的群組；沒有明確指定的帳號會落入預設存取層級（通常是 Basic，會佔名額）。
    - 搜尋不到 → **停在這一步並回報**（本機帳號在已加入網域的主機上不可用，改走 AD）。
-   - 預期 Stakeholder 不佔 Express 的 5 個 Basic 名額；若 UI 顯示要佔用，回報實際畫面。
 2. **專案群組**：`Deployment` → 左下齒輪「專案設定」→ 左欄「一般」底下的 **「安全性」**（英文版叫 Permissions；不是 Boards 的「專案組態」、也不是「小組」）→ 建立／新增群組 **`Rayin Deployment Approvers`** → Members 加入 `主機名\ado-approver`。
 3. 同一頁打開內建 **Readers** 群組 → Members → 加入 `Rayin Deployment Approvers`。不要加入 Contributors、Build Administrators 或 Project Administrators。
 
@@ -173,10 +173,10 @@ Pipelines → Environments → **`test-deploy-agent`** → 右上「⋮」→ **
 
 ## 之後改用 AD 或個人帳號
 
-把個人帳號（本機或 AD）加入 `Rayin Deployment Approvers`、存取層級設 Stakeholder，再把 `ado-approver` 從群組移除並在主機停用（`Disable-LocalUser -Name ado-approver`）即可。Environment check 指向群組，不用改。
+把個人帳號（本機或 AD）加入 `Rayin Deployment Approvers`、存取層級設 Basic（每人佔 1 個名額），再把 `ado-approver` 從群組移除並在主機停用（`Disable-LocalUser -Name ado-approver`）即可。Environment check 指向群組，不用改。
 
 ## 參考
 
 - Microsoft，[Approvals and checks](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals?view=azure-devops-2022)：check 在 stage 使用資源前評估；核准者、指示、是否允許核准自己的 run、逾時後 stage 略過；只有資源管理權限可 bypass。
-- Microsoft，[Stakeholder access](https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops-2022)：Stakeholder 不限人數，可檢視與核准 pipeline。Express 實際行為依第 4 步現場確認。
+- Microsoft，[Stakeholder access](https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops-2022)：文件稱 Stakeholder 可檢視與核准 pipeline，**但本站 Express 現場實測不行**（見第 4 步）。
 - 既有研究：[`gitlab-ado-server-integration.md` §10.2](../research/gitlab-ado-server-integration.md)。
