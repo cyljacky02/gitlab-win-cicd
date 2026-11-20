@@ -81,7 +81,7 @@ Get-LocalGroup | Where-Object { @(Get-LocalGroupMember -Group $_ -ErrorAction Si
 以管理者帳號登入 ADO 網頁：
 
 1. **存取層級**：打開集合首頁 `http://10.92.4.86/DefaultCollection/`（專案清單那一頁；若在專案內，點左上 Azure DevOps 標誌回去）→ 左下角 **「存取層級（Access levels）」**（在「集合設定」旁，不是 `_settings/security`）→ 選 **Stakeholder** → 新增 → 輸入第 3 步印出的 `主機名\ado-approver` → 儲存。
-   - 看不到這個連結 → 目前登入者不是伺服器管理員；也可試 `http://10.92.4.86/_admin/_licenses`（舊版路徑，未在現場確認）。
+   - 看不到這個連結 → 目前登入者不是伺服器管理員；也可直接開 `http://10.92.4.86/_admin/_licenses`（**使用者已確認可用**）。「集合設定」頁裡沒有這項。
    - 先做這步再做下面的群組；沒有明確指定的帳號會落入預設存取層級（通常是 Basic，會佔名額）。
    - 搜尋不到 → **停在這一步並回報**（本機帳號在已加入網域的主機上不可用，改走 AD）。
    - 預期 Stakeholder 不佔 Express 的 5 個 Basic 名額；若 UI 顯示要佔用，回報實際畫面。
