@@ -115,7 +115,7 @@ Pipelines → Environments → **`test-deploy-agent`** → 右上「⋮」→ **
 
 ### 第 6 步：手動 Run 驗收「核准」
 
-1. 新 pipeline → **Run pipeline** → Branch `poc/webook-smoke` → `gitlabCommitSha` 填一個已知的完整 SHA（例如上次自動成功的那個）→ **勾** `allowInsecureHttpLab` → Run。
+1. Pipelines → 點第 2 步建立的 **`GitLab-Rayin-Zip-Delivery-Approval`**（YAML `/azure-pipelines-gitlab-file-delivery-approval.yml`、第 2 步記下的新 definitionId；**不是** pipeline 5 `GitLab-Rayin-Zip-Delivery`）→ **Run pipeline** → Branch `poc/webook-smoke` → `gitlabCommitSha` 填一個已知的完整 SHA（例如上次自動成功的那個）→ **勾** `allowInsecureHttpLab` → Run。
 2. 若出現「需要權限才能存取資源」，管理者按 View → **Permit**（variable group `gitlab-source-readonly`、pool `Default`、Environment `test-deploy-agent`）。這是資源授權，**不是核准**。
 3. 確認：
    - Run 名稱含完整 SHA；Package 成功；run 頁面有 `zip-sha256-…` 標籤。
