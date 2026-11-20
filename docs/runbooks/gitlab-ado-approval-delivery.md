@@ -64,13 +64,14 @@ ADO → `Deployment` → Repos → 原 repo → 分支 **`poc/webook-smoke`**（
 ```powershell
 $name = 'ado-approver'
 $password = Read-Host "為 $name 設定密碼（輸入時不顯示）" -AsSecureString
-New-LocalUser -Name $name -Password $password -FullName 'ADO Deployment Approver (POC shared)' -Description 'ADO environment approval only. Not an administrator.' -AccountNeverExpires
+New-LocalUser -Name $name -Password $password -FullName 'ADO Deployment Approver (POC shared)' -Description 'ADO environment approval only; not admin' -AccountNeverExpires
 Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $name   # 內建 Users 群組
 $password = $null
 Write-Host "第 4 步在 ADO 輸入的帳號：$env:COMPUTERNAME\$name"
 Get-LocalGroup | Where-Object { @(Get-LocalGroupMember -Group $_ -ErrorAction SilentlyContinue | Where-Object Name -eq "$env:COMPUTERNAME\$name").Count -gt 0 } | Select-Object Name, SID
 ```
 
+- Description 上限 48 字元（目前 40）。
 - 密碼需符合主機的密碼原則；失敗就換一組重新執行 `New-LocalUser` 那行。
 - 最後一段只應列出 Users（SID `S-1-5-32-545`）。**不要加入 Administrators 或 Remote Desktop Users。**
 - 記下印出的 `主機名\ado-approver`。之後有人離開或密碼外流，就在這台主機改密碼。
