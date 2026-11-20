@@ -4,7 +4,7 @@
 
 - **[操作指南：先手動 ZIP 交付，再設定 authenticated webhook](../../docs/runbooks/gitlab-ado-file-delivery.md)**：沿用 ADO `Deployment`／原 repo／**`poc/webook-smoke`（現場拼字沒有 h）**；VM2 為 Environment `test-deploy-agent` 的 VM resource `SECSVR4-80`，本次目錄 `D:\TestCICD`。使用者已確認 GitLab 有 Custom headers／Custom webhook template。
 - **最新現場證據：截圖確認 ADO 分支實為 `poc/webook-smoke`，但 webhook template 曾誤填 `poc/webhook-smoke`，因此 ref 查詢為 0 並回 unresolved-ref 400。** 已修正 template 與診斷預設值，保留現場分支，不重建、不改 main、不再擴權。手動交付已回報成功（definitionId `5`）；修正後的真 push 自動交付也已由使用者回報成功（run ID／SHA／hash 對帳資料未取得）。
-- **下一階段（未驗收）：[帶核准的交付](../../docs/runbooks/gitlab-ado-approval-delivery.md)**：另建核准版 pipeline，Environment `test-deploy-agent` 加原生「核准」check，ADO Server 主機本機帳號 `ado-approver`（POC 共用，留言填員工編號）。
+- **目前主流程：[帶核准的交付](../../docs/runbooks/gitlab-ado-approval-delivery.md)（使用者回報已跑通，definitionId `7`）**：webhook 已改指 pipeline 7；核准帳號需 Basic；改 webhook URL 會清空 Custom headers。另建核准版 pipeline，Environment `test-deploy-agent` 加原生「核准」check，ADO Server 主機本機帳號 `ado-approver`（POC 共用，留言填員工編號）。
 - 已回報通過：[先前 Tools.Rs 專案的 GitLab 手動 Test → ADO agentless probe](../../docs/runbooks/gitlab-ado-webhook-smoke.md)；不等於 Rayin 真 push 自動觸發或來源驗章。
 - [VM1 → Rayin 匿名連通、指定 SHA 手動取碼指南](../../docs/runbooks/gitlab-ado-source-build.md)。現有 YAML 已改為新 repo／ref；不直接升級未驗章 smoke。
 

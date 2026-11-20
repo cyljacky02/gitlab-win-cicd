@@ -1,6 +1,6 @@
 # 帶核准的 ZIP 交付：核准版 pipeline＋本機核准帳號（POC）
 
-**狀態：檔案與步驟已備，現場尚未設定、尚未驗收。** 前提是[無核准版](gitlab-ado-file-delivery.md)（pipeline 5）已由使用者回報 GitLab push 自動交付成功。
+**狀態：使用者回報現場已跑通。** 核准版 pipeline **definitionId `7`**；本機帳號 `ado-approver` 可加入 ADO（需 **Basic**，Stakeholder 看不到 Pipelines）；手動 run 的核准後交付與 VM2 hash 一致、拒絕不交付已回報通過；GitLab webhook 改指 `/pipelines/7/runs` 並重新填回 Custom headers 後，真 push → 等核准 → 交付跑通。尚未記錄：各 run ID／SHA／ZIP hash／核准留言的對帳資料，以及第 9 步 pipeline 5 是否已停用。 前提是[無核准版](gitlab-ado-file-delivery.md)（pipeline 5）已由使用者回報 GitLab push 自動交付成功。
 
 ```text
 GitLab poc/cicd push
@@ -178,7 +178,7 @@ PAT 不是綁特定 pipeline 的；Build (Read & execute) 對整個 collection �
 - 第 8 步：真 push 的 run ID 與結果
 - 第 4／5 步若有任何畫面跟本文不同，附截圖
 
-收到後再把本文與主 runbook 的狀態改成「已驗收」。
+已依使用者回報將狀態改為「已跑通」；對帳資料補齊後可記入本節。
 
 ## 之後改用 AD 或個人帳號
 

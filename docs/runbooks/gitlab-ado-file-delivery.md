@@ -30,7 +30,7 @@ GitLab Rayin / poc/cicd push
 
 先前通過的是 Tools.Rs 的網頁 Test → ADO 零動作探針。**最新現場證據：使用者截圖確認現存 ADO 分支是 `poc/webook-smoke`（沒有 h），而 template／診斷原本查的是 `poc/webhook-smoke`。這個拼字不一致解釋了 `exactRefCount=0` 與 unresolved-ref 400，並非重新授權就能修正。** 已更正 Custom webhook template 的 `self.refName`、診斷預設與操作說明；保留現有分支，不改 main、不重建分支、不再擴權。手動交付已回報成功；**修正後的真 push 自動交付也已由使用者回報成功**（GitLab push → ADO → VM2 收到 ZIP）。該次自動 run 的 run ID／SHA／ZIP hash 對帳資料尚未取得。本機沒有代設公司 ADO／GitLab 或宣稱已代驗成功。
 
-**下一階段：帶核准的交付**改用另建的核准版 pipeline，見[核准版操作指南](gitlab-ado-approval-delivery.md)。核准設在 Environment `test-deploy-agent`，設定後本 pipeline 5 也會被擋；核准版驗收後 webhook 改指新 ID 並停用 pipeline 5。
+**已改用帶核准的交付（使用者回報已跑通）**：GitLab webhook 現在指向核准版 pipeline **7**，見[核准版操作指南](gitlab-ado-approval-delivery.md)。本文的 pipeline 5 為前一階段基線。核准設在 Environment `test-deploy-agent`，設定後本 pipeline 5 也會被擋；核准版驗收後 webhook 改指新 ID 並停用 pipeline 5。
 
 若 VM2 是正式環境，送 ZIP／下載到 Agent workspace 都是 **Production Access**。必須先由授權部署人員放行指定版本與目標，才能開始 `Deliver` stage；在 Environment 資源端設妥 checks／權限並實測，YAML 寫 `environment:` 本身不是核准機制。一般隔離測試環境不額外強迫雙人審批。
 
